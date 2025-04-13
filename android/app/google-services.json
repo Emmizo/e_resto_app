@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "322982009700",
+    "project_id": "resto-finder-d4214",
+    "storage_bucket": "resto-finder-d4214.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:322982009700:android:7d016e37400c4364593871",
+        "android_client_info": {
+          "package_name": "com.resto.finder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "322982009700-62fsnkdtocm7ng74ljo6kb6bkrn7a7e0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.resto.finder",
+            "certificate_hash": "c7610ca8d83548bdf695955b455da6ee8e7a8bc4"
+          }
+        },
+        {
+          "client_id": "322982009700-82hamsd00lirjjio5si67rahrco18evh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgma96unqeJCMqpb-xwIEnYHuddy0Wkzs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "322982009700-82hamsd00lirjjio5si67rahrco18evh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "322982009700-s8k4evd445oelsrcrptskdb5pkg96d43.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.resto.finder"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
