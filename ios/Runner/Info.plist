@@ -85,6 +85,13 @@
     <key>NSMicrophoneUsageDescription</key>
     <string>Required for voice search functionality</string>
 
+    <!-- Profile Image -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to the photo library to select profile images.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>This app needs access to the camera to take profile pictures.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app needs access to the microphone for video recording.</string>
     <!-- Push Notifications (For Firebase Messaging) -->
     <key>FirebaseAppDelegateProxyEnabled</key>
     <false/>

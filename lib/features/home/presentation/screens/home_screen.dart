@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 import '../../../restaurant/presentation/screens/all_restaurants_screen.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -201,6 +202,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.watch<ThemeProvider>().isDarkMode;
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+    final name = user != null ? user.firstName : 'Guest';
 
     return Scaffold(
       body: Stack(
@@ -301,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hello, John!',
+                              'Hello, $name!',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium

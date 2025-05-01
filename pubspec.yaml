@@ -54,6 +54,11 @@ dependencies:
   flutter_animate: ^4.5.0
   flutter_lints: ^2.0.0
   uuid: ^4.3.3
+  image_picker: ^1.0.7
+  image_cropper: ^5.0.1
+  # photofilters: ^2.2.0 # Uncomment if you want to use filters
+  firebase_core: ^2.30.0
+  firebase_messaging: ^14.7.10
 
 dev_dependencies:
   flutter_test:

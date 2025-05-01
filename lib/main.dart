@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:dio/dio.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'features/home/presentation/screens/main_screen.dart';
@@ -8,11 +9,38 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/providers/cart_provider.dart';
 import 'features/reservation/presentation/screens/reservation_screen.dart';
+import 'features/profile/presentation/screens/profile_screen.dart';
+import 'features/order/presentation/screens/order_history_screen.dart';
+import 'features/reservation/presentation/screens/my_reservations_screen.dart';
+import 'features/restaurant/presentation/screens/favorite_restaurants_screen.dart';
+import 'features/profile/presentation/screens/saved_addresses_screen.dart';
+import 'features/payment/presentation/screens/payment_methods_screen.dart';
+import 'features/profile/presentation/screens/notification_preferences_screen.dart';
+import 'features/auth/data/datasources/auth_remote_datasource.dart';
+import 'features/auth/data/repositories/auth_repository.dart';
+import 'features/auth/domain/providers/auth_provider.dart';
+import 'features/auth/presentation/screens/signup_screen.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   final prefs = await SharedPreferences.getInstance();
-  runApp(MyApp(prefs: prefs));
+  final dio = Dio();
+  final authRepo = AuthRepository(AuthRemoteDatasource(dio), prefs);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider(authRepo)),
+        ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+        ChangeNotifierProvider(create: (_) => CartProvider(prefs)),
+        ChangeNotifierProvider(create: (_) => ReservationProvider(prefs)),
+      ],
+      child: MyApp(prefs: prefs),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -37,6 +65,17 @@ class MyApp extends StatelessWidget {
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             home: const SplashScreen(),
+            routes: {
+              '/profile': (context) => const ProfileScreen(),
+              '/order-history': (context) => const OrderHistoryScreen(),
+              '/my-reservations': (context) => const MyReservationsScreen(),
+              '/favorite-restaurants': (context) =>
+                  const FavoriteRestaurantsScreen(),
+              '/saved-addresses': (context) => const SavedAddressesScreen(),
+              '/payment-methods': (context) => const PaymentMethodsScreen(),
+              '/settings': (context) => const NotificationPreferencesScreen(),
+              '/signup': (context) => const SignupScreen(),
+            },
           );
         },
       ),
@@ -61,9 +100,15 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _navigateToHome() async {
     try {
       await Future.delayed(const Duration(seconds: 2));
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final isLoggedIn =
+          authProvider.user != null && authProvider.token != null;
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
+          MaterialPageRoute(
+            builder: (context) =>
+                isLoggedIn ? const MainScreen() : const LoginScreen(),
+          ),
         );
       }
     } catch (e) {

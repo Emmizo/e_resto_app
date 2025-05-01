@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'forgot_password_screen.dart';
+import 'package:provider/provider.dart';
+import '../../domain/providers/auth_provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +16,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoginMode = true;
 
@@ -20,6 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -29,8 +38,50 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      fcmToken = null;
+    }
+    if (_isLoginMode) {
+      final success = await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        fcmToken: fcmToken,
+      );
+      if (success) {
+        Navigator.pop(context); // or navigate to home
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authProvider.error ?? 'Login failed')),
+        );
+      }
+    } else {
+      final success = await authProvider.signup(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        address: _addressController.text.trim(),
+        fcmToken: fcmToken,
+      );
+      if (success) {
+        Navigator.pop(context); // or navigate to home
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authProvider.error ?? 'Sign up failed')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -96,6 +147,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(delay: 300.ms).slideY(),
                     const SizedBox(height: 40),
+                    if (!_isLoginMode) ...[
+                      _buildTextField(
+                        controller: _nameController,
+                        label: 'Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                        delay: 350,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     // Email Field
                     _buildTextField(
                       controller: _emailController,
@@ -161,6 +227,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         delay: 600,
                       ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _phoneController,
+                        label: 'Phone Number',
+                        prefixIcon: Icons.phone,
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your phone number';
+                          }
+                          return null;
+                        },
+                        delay: 650,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _addressController,
+                        label: 'Address',
+                        prefixIcon: Icons.location_on,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your address';
+                          }
+                          return null;
+                        },
+                        delay: 700,
+                      ),
                     ],
                     const SizedBox(height: 24),
                     // Forgot Password (Login only)
@@ -183,16 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
                     // Sign In/Up Button
                     ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Handle login/signup
-                          if (_isLoginMode) {
-                            // TODO: Implement login
-                          } else {
-                            // TODO: Implement signup
-                          }
-                        }
-                      },
+                      onPressed: authProvider.isLoading ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(

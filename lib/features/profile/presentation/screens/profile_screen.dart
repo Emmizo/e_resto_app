@@ -9,12 +9,92 @@ import '../../../restaurant/presentation/screens/favorite_restaurants_screen.dar
 import '../../../payment/presentation/screens/payment_methods_screen.dart';
 import 'notification_preferences_screen.dart';
 import 'saved_addresses_screen.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return _ProfileScreenBody();
+  }
+}
+
+class _ProfileScreenBody extends StatefulWidget {
+  @override
+  State<_ProfileScreenBody> createState() => _ProfileScreenBodyState();
+}
+
+class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
+  File? _profileImage;
+  static const _profileImageKey = 'profile_image_path';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString(_profileImageKey);
+    if (path != null && path.isNotEmpty) {
+      setState(() {
+        _profileImage = File(path);
+      });
+    }
+  }
+
+  Future<void> _pickAndEditImage({bool fromCamera = false}) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+        source: fromCamera ? ImageSource.camera : ImageSource.gallery);
+    if (picked == null) return;
+    // Crop
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9,
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image',
+          toolbarColor: Color(0xFF184C55),
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          title: 'Crop Image',
+        ),
+      ],
+    );
+    if (cropped == null) return;
+    // TODO: Add filter step here if using photofilters
+    setState(() {
+      _profileImage = File(cropped.path);
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_profileImageKey, cropped.path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+    final name =
+        user != null ? (user.firstName + ' ' + user.lastName) : 'Guest';
+    final email = user?.email ?? '';
+    final profilePic = user?.profilePicture;
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -25,14 +105,7 @@ class ProfileScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withAlpha(204),
-                    ],
-                  ),
+                  color: Color(0xFFFFFFFF),
                 ),
                 child: SafeArea(
                   child: Padding(
@@ -43,14 +116,87 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundColor: Color(0xFFFFFFFF),
-                              child: Icon(
-                                Icons.person,
-                                size: 40,
-                                color: Color(0xFF184C55),
-                              ),
+                            Stack(
+                              children: [
+                                GestureDetector(
+                                  onTap: _pickAndEditImage,
+                                  child: CircleAvatar(
+                                    radius: 40,
+                                    backgroundColor: const Color(0xFFFFFFFF),
+                                    backgroundImage: _profileImage != null
+                                        ? FileImage(_profileImage!)
+                                        : (profilePic != null &&
+                                                profilePic.isNotEmpty
+                                            ? NetworkImage(profilePic)
+                                                as ImageProvider<Object>?
+                                            : null),
+                                    child: _profileImage == null &&
+                                            (profilePic == null ||
+                                                profilePic.isEmpty)
+                                        ? Icon(Icons.person,
+                                            size: 40, color: Color(0xFF184C55))
+                                        : null,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        shape: const RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.vertical(
+                                              top: Radius.circular(24)),
+                                        ),
+                                        builder: (context) => SafeArea(
+                                          child: Wrap(
+                                            children: [
+                                              ListTile(
+                                                leading: const Icon(
+                                                    Icons.photo_camera),
+                                                title: const Text('Take Photo'),
+                                                onTap: () async {
+                                                  Navigator.pop(context);
+                                                  await _pickAndEditImage(
+                                                      fromCamera: true);
+                                                },
+                                              ),
+                                              ListTile(
+                                                leading: const Icon(
+                                                    Icons.photo_library),
+                                                title: const Text(
+                                                    'Choose from Gallery'),
+                                                onTap: () async {
+                                                  Navigator.pop(context);
+                                                  await _pickAndEditImage(
+                                                      fromCamera: false);
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: const Icon(Icons.edit,
+                                          size: 18, color: Color(0xFF184C55)),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -58,24 +204,23 @@ class ProfileScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'John Doe',
+                                    name,
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall
                                         ?.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFFFFFFFF),
+                                          color: Color(0xFF184C55),
                                         ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'john.doe@example.com',
+                                    email,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(
-                                          color: const Color(0xFFFFFFFF)
-                                              .withAlpha(204),
+                                          color: Colors.grey[600],
                                         ),
                                   ),
                                 ],
@@ -83,9 +228,18 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             IconButton(
                               icon: const Icon(Icons.edit,
-                                  color: Color(0xFFFFFFFF)),
+                                  color: Color(0xFF184C55)),
                               onPressed: () {
-                                // TODO: Implement edit profile
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(24)),
+                                  ),
+                                  builder: (context) =>
+                                      const _EditProfileForm(),
+                                );
                               },
                             ),
                           ],
@@ -102,7 +256,7 @@ class ProfileScreen extends StatelessWidget {
                   context.watch<ThemeProvider>().themeMode == ThemeMode.dark
                       ? Icons.light_mode
                       : Icons.dark_mode,
-                  color: Colors.white,
+                  color: Color(0xFF184C55),
                 ),
                 onPressed: () {
                   final themeProvider = context.read<ThemeProvider>();
@@ -408,6 +562,99 @@ class _ProfileOption extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditProfileForm extends StatefulWidget {
+  const _EditProfileForm();
+
+  @override
+  State<_EditProfileForm> createState() => _EditProfileFormState();
+}
+
+class _EditProfileFormState extends State<_EditProfileForm> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    // In a real app, fetch these from user profile provider or state
+    _nameController = TextEditingController(text: 'John Doe');
+    _emailController = TextEditingController(text: 'john.doe@example.com');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        top: 24,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Edit Profile',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Please enter your name'
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Please enter your email'
+                  : null,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        // TODO: Save profile changes
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
