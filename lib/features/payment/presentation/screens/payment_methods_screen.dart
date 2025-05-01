@@ -101,7 +101,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                   method['type'] == 'Credit Card'
                       ? Icons.credit_card
                       : Icons.payment,
-                  color: Theme.of(context).primaryColor,
+                  color: Color(0xFF184C55),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -130,13 +130,13 @@ class PaymentMethodsScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: const Color(0xFF184C55).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Default',
                       style: TextStyle(
-                        color: Theme.of(context).primaryColor,
+                        color: Color(0xFF184C55),
                         fontSize: 12,
                       ),
                     ),

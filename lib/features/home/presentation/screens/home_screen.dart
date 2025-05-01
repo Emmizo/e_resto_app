@@ -289,11 +289,10 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor:
-                            Theme.of(context).colorScheme.primary.withAlpha(16),
+                        backgroundColor: const Color(0xFF184C55).withAlpha(16),
                         child: Icon(
                           Icons.person,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Color(0xFF184C55),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -325,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen>
                       IconButton(
                         icon: Icon(
                           isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Color(0xFF184C55),
                         ),
                         onPressed: () {
                           final themeProvider = context.read<ThemeProvider>();
@@ -475,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
                           isScrollable: true,
                           indicatorSize: TabBarIndicatorSize.label,
                           indicatorColor: Theme.of(context).colorScheme.primary,
-                          labelColor: Theme.of(context).colorScheme.primary,
+                          labelColor: Color(0xFF184C55),
                           unselectedLabelColor: Colors.grey,
                           tabs: _categories
                               .map((category) => Tab(
@@ -485,9 +484,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       decoration: BoxDecoration(
                                         color: _selectedCategoryIndex ==
                                                 _categories.indexOf(category)
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .primary
+                                            ? const Color(0xFF184C55)
                                                 .withAlpha(16)
                                             : Colors.transparent,
                                         borderRadius: BorderRadius.circular(20),

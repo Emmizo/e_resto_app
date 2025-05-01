@@ -128,8 +128,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            color: const Color(0xFF184C55).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -138,7 +137,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(context).primaryColor,
+                                  color: Color(0xFF184C55),
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),

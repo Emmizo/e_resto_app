@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
             end: Alignment.bottomCenter,
             colors: [
               Theme.of(context).primaryColor.withOpacity(0.1),
-              Colors.white,
+              Color(0xFFFFFFFF),
             ],
           ),
         ),
@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                                color: Color(0xFF184C55),
                               ),
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(delay: 200.ms).slideY(),
@@ -267,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _isLoginMode ? 'Sign Up' : 'Sign In',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor,
+                              color: Color(0xFF184C55),
                             ),
                           ),
                         ),
@@ -295,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -318,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Color(0xFFFFFFFF),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
@@ -341,7 +341,7 @@ class _SocialLoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -361,7 +361,7 @@ class _SocialLoginButton extends StatelessWidget {
             child: Icon(
               icon,
               size: 24,
-              color: Theme.of(context).primaryColor,
+              color: Color(0xFF184C55),
             ),
           ),
         ),

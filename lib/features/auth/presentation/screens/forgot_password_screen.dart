@@ -84,14 +84,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Icon(
             Icons.lock_reset,
             size: 80,
-            color: Theme.of(context).primaryColor,
+            color: Color(0xFF184C55),
           ).animate().fadeIn().scale(),
           const SizedBox(height: 24),
           Text(
             'Forgot Your Password?',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  color: Color(0xFF184C55),
                 ),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 200.ms).slideY(),

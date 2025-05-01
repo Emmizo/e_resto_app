@@ -207,12 +207,12 @@ class _AddressCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    color: const Color(0xFF184C55).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     _getAddressTypeIcon(),
-                    color: Theme.of(context).primaryColor,
+                    color: Color(0xFF184C55),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -239,16 +239,14 @@ class _AddressCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .primaryColor
-                                    .withOpacity(0.1),
+                                color: const Color(0xFF184C55).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Default',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).primaryColor,
+                                  color: Color(0xFF184C55),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

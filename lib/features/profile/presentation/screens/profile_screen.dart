@@ -45,11 +45,11 @@ class ProfileScreen extends StatelessWidget {
                           children: [
                             CircleAvatar(
                               radius: 40,
-                              backgroundColor: Colors.white,
+                              backgroundColor: Color(0xFFFFFFFF),
                               child: Icon(
                                 Icons.person,
                                 size: 40,
-                                color: Theme.of(context).primaryColor,
+                                color: Color(0xFF184C55),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -64,7 +64,7 @@ class ProfileScreen extends StatelessWidget {
                                         .headlineSmall
                                         ?.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: Color(0xFFFFFFFF),
                                         ),
                                   ),
                                   const SizedBox(height: 4),
@@ -74,14 +74,16 @@ class ProfileScreen extends StatelessWidget {
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(
-                                          color: Colors.white.withAlpha(204),
+                                          color: const Color(0xFFFFFFFF)
+                                              .withAlpha(204),
                                         ),
                                   ),
                                 ],
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.white),
+                              icon: const Icon(Icons.edit,
+                                  color: Color(0xFFFFFFFF)),
                               onPressed: () {
                                 // TODO: Implement edit profile
                               },
@@ -138,7 +140,7 @@ class ProfileScreen extends StatelessWidget {
       title,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: Color(0xFF184C55),
           ),
     ).animate().fadeIn().slideX();
   }
@@ -340,11 +342,10 @@ class _ProfileOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isDestructive ? Colors.red : Theme.of(context).colorScheme.primary;
+    final color = isDestructive ? Colors.red : Color(0xFF184C55);
     final backgroundColor = isDestructive
         ? Colors.red.withAlpha(26)
-        : Theme.of(context).colorScheme.primary.withAlpha(26);
+        : const Color(0xFF184C55).withAlpha(26);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

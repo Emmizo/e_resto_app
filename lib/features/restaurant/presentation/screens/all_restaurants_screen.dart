@@ -234,7 +234,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                               Icon(
                                 _getSortIcon(option),
                                 color: _selectedSort == option
-                                    ? Theme.of(context).colorScheme.primary
+                                    ? Color(0xFF184C55)
                                     : null,
                                 size: 20,
                               ),
@@ -243,7 +243,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                 option,
                                 style: TextStyle(
                                   color: _selectedSort == option
-                                      ? Theme.of(context).colorScheme.primary
+                                      ? Color(0xFF184C55)
                                       : null,
                                   fontWeight: _selectedSort == option
                                       ? FontWeight.bold
@@ -304,7 +304,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                               Icon(
                                 _getFilterIcon(option),
                                 color: _selectedFilter == option
-                                    ? Theme.of(context).colorScheme.primary
+                                    ? Color(0xFF184C55)
                                     : null,
                                 size: 20,
                               ),
@@ -313,7 +313,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                 option,
                                 style: TextStyle(
                                   color: _selectedFilter == option
-                                      ? Theme.of(context).colorScheme.primary
+                                      ? Color(0xFF184C55)
                                       : null,
                                   fontWeight: _selectedFilter == option
                                       ? FontWeight.bold

@@ -7,8 +7,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
-        primary: Colors.blue,
-        secondary: Colors.blueAccent,
+        primary: Color(0xFF184C55),
+        secondary: Color(0xFFFFFFFF),
         surface: Colors.white,
         error: Colors.red,
       ),
@@ -17,7 +17,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: Color(0xFF184C55),
       ),
       cardTheme: CardTheme(
         elevation: 2,
@@ -47,7 +47,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blue),
+          borderSide: const BorderSide(color: Color(0xFF184C55)),
         ),
       ),
     );
@@ -58,8 +58,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: Colors.blue,
-        secondary: Colors.blueAccent,
+        primary: Color(0xFF184C55),
+        secondary: Color(0xFFFFFFFF),
         surface: Colors.grey[900]!,
         error: Colors.redAccent,
       ),
@@ -68,7 +68,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         backgroundColor: Colors.grey[900],
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFFFFFFF),
       ),
       cardTheme: CardTheme(
         elevation: 2,
@@ -98,7 +98,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blue),
+          borderSide: const BorderSide(color: Color(0xFF184C55)),
         ),
       ),
     );
