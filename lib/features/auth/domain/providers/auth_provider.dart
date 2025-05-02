@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
+import 'dart:convert';
+import 'package:dio/dio.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository repository;
@@ -8,6 +10,7 @@ class AuthProvider extends ChangeNotifier {
   String? _token;
   bool _loading = false;
   String? _error;
+  static const String _userKey = 'auth_user';
 
   AuthProvider(this.repository) {
     _user = repository.getUser();
@@ -32,10 +35,19 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = 'Invalid credentials';
+        _error = 'Invalid email or password. Please try again.';
       }
     } catch (e) {
-      _error = e.toString();
+      if (e is DioException) {
+        if (e.response?.statusCode == 401) {
+          _error = 'Invalid email or password. Please try again.';
+        } else {
+          _error =
+              'An error occurred: \\${e.response?.statusMessage ?? e.message}';
+        }
+      } else {
+        _error = 'An unexpected error occurred. Please try again.';
+      }
     }
     _loading = false;
     notifyListeners();
@@ -50,7 +62,8 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> signup({
-    required String name,
+    required String firstName,
+    required String lastName,
     required String email,
     required String password,
     required String phoneNumber,
@@ -62,7 +75,8 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final user = await repository.signup(
-        name: name,
+        firstName: firstName,
+        lastName: lastName,
         email: email,
         password: password,
         phoneNumber: phoneNumber,
@@ -76,13 +90,51 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = 'Signup failed';
+        _error = 'Sign up failed ${user}';
       }
     } catch (e) {
-      _error = e.toString();
+      if (e is DioException) {
+        if (e.response?.statusCode == 422) {
+          final data = e.response?.data;
+          if (data is Map && data['errors'] != null) {
+            final errors = data['errors'] as Map;
+            _error = errors.values.expand((v) => v).join('\n');
+          } else if (data is Map && data['message'] != null) {
+            _error = data['message'];
+          } else {
+            _error = 'Invalid input. Please check your details and try again.';
+          }
+        } else {
+          _error =
+              'An error occurred: \\${e.response?.statusMessage ?? e.message}';
+        }
+      } else {
+        _error = 'An unexpected error occurred. Please try again.';
+      }
     }
     _loading = false;
     notifyListeners();
     return false;
+  }
+
+  void updateProfilePicture(String url) {
+    if (_user != null) {
+      _user = UserModel(
+        id: _user!.id,
+        firstName: _user!.firstName,
+        lastName: _user!.lastName,
+        profilePicture: url,
+        email: _user!.email,
+        has2faEnabled: _user!.has2faEnabled,
+        status: _user!.status,
+        fcmToken: _user!.fcmToken,
+        google2faSecret: _user!.google2faSecret,
+      );
+      repository.prefs.setString(
+        _userKey,
+        jsonEncode(_user!.toJson()),
+      );
+      notifyListeners();
+    }
   }
 }

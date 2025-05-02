@@ -47,7 +47,7 @@
 
     <!-- Network Permissions (For Flutter Debugging) -->
     <key>NSLocalNetworkUsageDescription</key>
-    <string>This app uses the local network to enable Flutter debugging and hot reload features</string>
+    <string>This app uses the local network for debugging and development purposes.</string>
     <key>NSBonjourServices</key>
     <array>
         <string>_dartobservatory._tcp</string>
@@ -56,16 +56,16 @@
 
     <!-- Firebase and Auth Requirements -->
     <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>com.googleusercontent.apps.322982009700-s8k4evd445oelsrcrptskdb5pkg96d43</string>
-            </array>
-        </dict>
-    </array>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.322982009700-s8k4evd445oelsrcrptskdb5pkg96d43</string>
+			</array>
+		</dict>
+	</array>
 
     <!-- Location Services -->
     <key>NSLocationWhenInUseUsageDescription</key>

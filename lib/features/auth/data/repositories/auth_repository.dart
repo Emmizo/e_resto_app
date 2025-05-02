@@ -15,7 +15,9 @@ class AuthRepository {
   Future<UserModel?> login(String email, String password,
       {String? fcmToken}) async {
     final data = await remote.login(email, password, fcmToken: fcmToken);
-    if (data['success'] == true && data['token'] != null) {
+    if (data['success'] == true &&
+        data['token'] != null &&
+        data['user'] != null) {
       await prefs.setString(_tokenKey, data['token']);
       await prefs.setString(_userKey, jsonEncode(data['user']));
       return UserModel.fromJson(data['user']);
@@ -28,7 +30,13 @@ class AuthRepository {
   UserModel? getUser() {
     final userStr = prefs.getString(_userKey);
     if (userStr == null) return null;
-    return UserModel.fromJson(jsonDecode(userStr));
+    try {
+      return UserModel.fromJson(jsonDecode(userStr));
+    } catch (e) {
+      // If parsing fails, clear the bad data and return null
+      prefs.remove(_userKey);
+      return null;
+    }
   }
 
   Future<void> logout() async {
@@ -37,25 +45,30 @@ class AuthRepository {
   }
 
   Future<UserModel?> signup({
-    required String name,
+    required String firstName,
+    required String lastName,
     required String email,
     required String password,
     required String phoneNumber,
     required String address,
     String? fcmToken,
   }) async {
-    final data = await remote.signup(
-      name: name,
+    final response = await remote.signup(
+      firstName: firstName,
+      lastName: lastName,
       email: email,
       password: password,
+      passwordConfirmation: password,
       phoneNumber: phoneNumber,
       address: address,
       fcmToken: fcmToken,
     );
-    if (data['success'] == true && data['token'] != null) {
-      await prefs.setString(_tokenKey, data['token']);
-      await prefs.setString(_userKey, jsonEncode(data['user']));
-      return UserModel.fromJson(data['user']);
+    if (response['success'] == true &&
+        response['token'] != null &&
+        response['user'] != null) {
+      await prefs.setString(_tokenKey, response['token']);
+      await prefs.setString(_userKey, jsonEncode(response['user']));
+      return UserModel.fromJson(response['user']);
     }
     return null;
   }

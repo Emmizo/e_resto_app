@@ -14,6 +14,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart';
+import 'package:dio/dio.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -33,6 +35,7 @@ class _ProfileScreenBody extends StatefulWidget {
 class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
   File? _profileImage;
   static const _profileImageKey = 'profile_image_path';
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -58,13 +61,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     // Crop
     final cropped = await ImageCropper().cropImage(
       sourcePath: picked.path,
-      aspectRatioPresets: [
-        CropAspectRatioPreset.square,
-        CropAspectRatioPreset.ratio3x2,
-        CropAspectRatioPreset.original,
-        CropAspectRatioPreset.ratio4x3,
-        CropAspectRatioPreset.ratio16x9,
-      ],
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Image',
@@ -72,19 +68,75 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
           toolbarWidgetColor: Colors.white,
           initAspectRatio: CropAspectRatioPreset.original,
           lockAspectRatio: false,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+            CropAspectRatioPreset.ratio3x2,
+            CropAspectRatioPreset.original,
+            CropAspectRatioPreset.ratio4x3,
+            CropAspectRatioPreset.ratio16x9,
+          ],
         ),
         IOSUiSettings(
           title: 'Crop Image',
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+            CropAspectRatioPreset.ratio3x2,
+            CropAspectRatioPreset.original,
+            CropAspectRatioPreset.ratio4x3,
+            CropAspectRatioPreset.ratio16x9,
+          ],
         ),
       ],
     );
     if (cropped == null) return;
-    // TODO: Add filter step here if using photofilters
     setState(() {
       _profileImage = File(cropped.path);
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_profileImageKey, cropped.path);
+    // Upload to backend
+    await _uploadProfilePicture(File(cropped.path));
+  }
+
+  Future<void> _uploadProfilePicture(File imageFile) async {
+    setState(() {
+      _isUploading = true;
+    });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final dio = Dio();
+    final profileDatasource = ProfileRemoteDatasource(dio);
+    try {
+      final response = await profileDatasource.uploadProfilePicture(
+        imageFile,
+        token: authProvider.token,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Try to get the new profile picture URL from the response
+        String? newUrl;
+        if (response.data is Map && response.data['profile_picture'] != null) {
+          newUrl = response.data['profile_picture'] as String;
+        }
+        if (newUrl != null && newUrl.isNotEmpty) {
+          authProvider.updateProfilePicture(newUrl);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to upload: \\${response.statusMessage}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload error: \\${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
   }
 
   @override
@@ -96,194 +148,211 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     final email = user?.email ?? '';
     final profilePic = user?.profilePicture;
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Custom App Bar with Profile Header
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFFFFFFFF),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              // Custom App Bar with Profile Header
+              SliverAppBar(
+                expandedHeight: 200,
+                pinned: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFFFFFF),
+                    ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Stack(
+                            Row(
                               children: [
-                                GestureDetector(
-                                  onTap: _pickAndEditImage,
-                                  child: CircleAvatar(
-                                    radius: 40,
-                                    backgroundColor: const Color(0xFFFFFFFF),
-                                    backgroundImage: _profileImage != null
-                                        ? FileImage(_profileImage!)
-                                        : (profilePic != null &&
-                                                profilePic.isNotEmpty
-                                            ? NetworkImage(profilePic)
-                                                as ImageProvider<Object>?
-                                            : null),
-                                    child: _profileImage == null &&
-                                            (profilePic == null ||
-                                                profilePic.isEmpty)
-                                        ? Icon(Icons.person,
-                                            size: 40, color: Color(0xFF184C55))
-                                        : null,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(24)),
-                                        ),
-                                        builder: (context) => SafeArea(
-                                          child: Wrap(
-                                            children: [
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.photo_camera),
-                                                title: const Text('Take Photo'),
-                                                onTap: () async {
-                                                  Navigator.pop(context);
-                                                  await _pickAndEditImage(
-                                                      fromCamera: true);
-                                                },
+                                Stack(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: _pickAndEditImage,
+                                      child: CircleAvatar(
+                                        radius: 40,
+                                        backgroundColor:
+                                            const Color(0xFFFFFFFF),
+                                        backgroundImage: _profileImage != null
+                                            ? FileImage(_profileImage!)
+                                            : (profilePic != null &&
+                                                    profilePic.isNotEmpty
+                                                ? NetworkImage(profilePic)
+                                                    as ImageProvider<Object>?
+                                                : null),
+                                        child: _profileImage == null &&
+                                                (profilePic == null ||
+                                                    profilePic.isEmpty)
+                                            ? Icon(Icons.person,
+                                                size: 40,
+                                                color: Color(0xFF184C55))
+                                            : null,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                      top: Radius.circular(24)),
+                                            ),
+                                            builder: (context) => SafeArea(
+                                              child: Wrap(
+                                                children: [
+                                                  ListTile(
+                                                    leading: const Icon(
+                                                        Icons.photo_camera),
+                                                    title: const Text(
+                                                        'Take Photo'),
+                                                    onTap: () async {
+                                                      Navigator.pop(context);
+                                                      await _pickAndEditImage(
+                                                          fromCamera: true);
+                                                    },
+                                                  ),
+                                                  ListTile(
+                                                    leading: const Icon(
+                                                        Icons.photo_library),
+                                                    title: const Text(
+                                                        'Choose from Gallery'),
+                                                    onTap: () async {
+                                                      Navigator.pop(context);
+                                                      await _pickAndEditImage(
+                                                          fromCamera: false);
+                                                    },
+                                                  ),
+                                                ],
                                               ),
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.photo_library),
-                                                title: const Text(
-                                                    'Choose from Gallery'),
-                                                onTap: () async {
-                                                  Navigator.pop(context);
-                                                  await _pickAndEditImage(
-                                                      fromCamera: false);
-                                                },
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                blurRadius: 2,
                                               ),
                                             ],
                                           ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: const Icon(Icons.edit,
+                                              size: 18,
+                                              color: Color(0xFF184C55)),
                                         ),
-                                      );
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.1),
-                                            blurRadius: 2,
-                                          ),
-                                        ],
                                       ),
-                                      padding: const EdgeInsets.all(4),
-                                      child: const Icon(Icons.edit,
-                                          size: 18, color: Color(0xFF184C55)),
                                     ),
+                                  ],
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF184C55),
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        email,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: Colors.grey[600],
+                                            ),
+                                      ),
+                                    ],
                                   ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit,
+                                      color: Color(0xFF184C55)),
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(24)),
+                                      ),
+                                      builder: (context) =>
+                                          const _EditProfileForm(),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF184C55),
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    email,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Colors.grey[600],
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.edit,
-                                  color: Color(0xFF184C55)),
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(24)),
-                                  ),
-                                  builder: (context) =>
-                                      const _EditProfileForm(),
-                                );
-                              },
-                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      context.watch<ThemeProvider>().themeMode == ThemeMode.dark
+                          ? Icons.light_mode
+                          : Icons.dark_mode,
+                      color: Color(0xFF184C55),
+                    ),
+                    onPressed: () {
+                      final themeProvider = context.read<ThemeProvider>();
+                      themeProvider.toggleTheme();
+                    },
+                  ),
+                ],
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  context.watch<ThemeProvider>().themeMode == ThemeMode.dark
-                      ? Icons.light_mode
-                      : Icons.dark_mode,
-                  color: Color(0xFF184C55),
+
+              // Profile Options
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle(context, 'Account'),
+                      const SizedBox(height: 16),
+                      _buildProfileOptions(context),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle(context, 'Settings'),
+                      const SizedBox(height: 16),
+                      _buildSettingsOptions(context),
+                    ],
+                  ),
                 ),
-                onPressed: () {
-                  final themeProvider = context.read<ThemeProvider>();
-                  themeProvider.toggleTheme();
-                },
               ),
             ],
           ),
-
-          // Profile Options
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle(context, 'Account'),
-                  const SizedBox(height: 16),
-                  _buildProfileOptions(context),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle(context, 'Settings'),
-                  const SizedBox(height: 16),
-                  _buildSettingsOptions(context),
-                ],
+          if (_isUploading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(),
               ),
             ),
-          ),
         ],
       ),
     );

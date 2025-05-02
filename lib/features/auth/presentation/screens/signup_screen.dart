@@ -31,7 +31,8 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.signup(
-      name: _nameController.text.trim(),
+      firstName: _nameController.text.trim(),
+      lastName: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
       phoneNumber: _phoneController.text.trim(),

@@ -4,6 +4,7 @@ import 'forgot_password_screen.dart';
 import 'package:provider/provider.dart';
 import '../../domain/providers/auth_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../../../home/presentation/screens/main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,9 +17,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoginMode = true;
 
@@ -26,9 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -54,15 +57,23 @@ class _LoginScreenState extends State<LoginScreen> {
         fcmToken: fcmToken,
       );
       if (success) {
-        Navigator.pop(context); // or navigate to home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authProvider.error ?? 'Login failed')),
+          SnackBar(
+            content: Text(authProvider.error ?? 'Login failed'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
         );
       }
     } else {
       final success = await authProvider.signup(
-        name: _nameController.text.trim(),
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
@@ -70,7 +81,10 @@ class _LoginScreenState extends State<LoginScreen> {
         fcmToken: fcmToken,
       );
       if (success) {
-        Navigator.pop(context); // or navigate to home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(authProvider.error ?? 'Sign up failed')),
@@ -149,16 +163,29 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 40),
                     if (!_isLoginMode) ...[
                       _buildTextField(
-                        controller: _nameController,
-                        label: 'Name',
+                        controller: _firstNameController,
+                        label: 'First Name',
                         prefixIcon: Icons.person,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
+                            return 'Please enter your first name';
                           }
                           return null;
                         },
                         delay: 350,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _lastNameController,
+                        label: 'Last Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your last name';
+                          }
+                          return null;
+                        },
+                        delay: 360,
                       ),
                       const SizedBox(height: 16),
                     ],
