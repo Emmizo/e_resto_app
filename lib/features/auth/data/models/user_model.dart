@@ -21,17 +21,22 @@ class UserModel {
     this.google2faSecret,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'],
-        firstName: json['first_name'],
-        lastName: json['last_name'],
-        profilePicture: json['profile_picture'],
-        email: json['email'],
-        has2faEnabled: json['has_2fa_enabled'],
-        status: json['status'],
-        fcmToken: json['fcm_token'],
-        google2faSecret: json['google2fa_secret'],
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    print('UserModel.fromJson input: $json');
+    return UserModel(
+      id: json['id'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      profilePicture: json['profile_picture'],
+      email: json['email'],
+      has2faEnabled: json['has_2fa_enabled'] is bool
+          ? json['has_2fa_enabled']
+          : json['has_2fa_enabled'] == 1,
+      status: json['status'],
+      fcmToken: json['fcm_token'],
+      google2faSecret: json['google2fa_secret'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

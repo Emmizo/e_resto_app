@@ -63,9 +63,8 @@ class AuthRepository {
       address: address,
       fcmToken: fcmToken,
     );
-    if (response['success'] == true &&
-        response['token'] != null &&
-        response['user'] != null) {
+    print('Signup repository response: $response');
+    if (response['token'] != null && response['user'] != null) {
       await prefs.setString(_tokenKey, response['token']);
       await prefs.setString(_userKey, jsonEncode(response['user']));
       return UserModel.fromJson(response['user']);
