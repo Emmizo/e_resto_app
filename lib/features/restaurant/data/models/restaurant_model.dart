@@ -67,9 +67,9 @@ class RestaurantModel {
   final String email;
   final String? website;
   final String openingHours;
-  final String cuisineType;
+  final int? cuisineId;
   final String priceRange;
-  final String image;
+  final String? image;
   final int ownerId;
   final bool isApproved;
   final bool status;
@@ -86,7 +86,7 @@ class RestaurantModel {
     required this.email,
     this.website,
     required this.openingHours,
-    required this.cuisineType,
+    required this.cuisineId,
     required this.priceRange,
     required this.image,
     required this.ownerId,
@@ -107,7 +107,16 @@ class RestaurantModel {
         email: json['email'],
         website: json['website'],
         openingHours: json['opening_hours'],
-        cuisineType: json['cuisine_type'],
+        cuisineId: (() {
+          final val = json['cuisine_id'];
+          if (val == null) return null;
+          if (val is int) return val;
+          if (val is String) {
+            final parsed = int.tryParse(val);
+            return parsed;
+          }
+          return null;
+        })(),
         priceRange: json['price_range'],
         image: json['image'],
         ownerId: json['owner_id'],

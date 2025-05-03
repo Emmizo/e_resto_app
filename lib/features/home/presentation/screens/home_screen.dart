@@ -14,6 +14,17 @@ import 'package:dio/dio.dart';
 import '../../../restaurant/data/restaurant_remote_datasource.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 
+// Cuisine ID to name mapping (example, adjust as needed)
+const Map<int, String> kCuisineIdToName = {
+  1: 'Italian',
+  2: 'Japanese',
+  3: 'Chinese',
+  4: 'Indian',
+  5: 'Mexican',
+  6: 'American',
+  7: 'Thai',
+};
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -110,18 +121,24 @@ class _HomeScreenState extends State<HomeScreen>
       _filteredRestaurants = _searchQuery.isEmpty
           ? List.from(_restaurants)
           : _restaurants.where((restaurant) {
+              final cuisineName = restaurant.cuisineId != null
+                  ? kCuisineIdToName[restaurant.cuisineId!] ?? ''
+                  : '';
               return restaurant.name
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase()) ||
-                  restaurant.cuisineType
+                  cuisineName
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase());
             }).toList();
 
       // Apply category filter if not "All"
       if (_selectedCategoryIndex > 0) {
+        final selectedCategory = _categories[_selectedCategoryIndex];
         _filteredRestaurants = _filteredRestaurants
-            .where((r) => r.cuisineType == _categories[_selectedCategoryIndex])
+            .where((r) =>
+                r.cuisineId != null &&
+                kCuisineIdToName[r.cuisineId!] == selectedCategory)
             .toList();
       }
       // Optionally sort by name or other field
@@ -656,7 +673,8 @@ class _ApiRestaurantCard extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => RestaurantDetailsScreen(
                 restaurantName: restaurant.name,
-                restaurantImage: ApiConfig.imageBaseUrl + restaurant.image,
+                restaurantImage:
+                    ApiConfig.imageBaseUrl + (restaurant.image ?? ''),
                 rating: 0.0, // Placeholder, as rating is not available
                 location: restaurant.address,
                 openUntil: restaurant.openingHours,
@@ -672,18 +690,26 @@ class _ApiRestaurantCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  ApiConfig.imageBaseUrl + restaurant.image,
-                  width: double.infinity,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: double.infinity,
-                    height: 100,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.restaurant, color: Colors.grey),
-                  ),
-                ),
+                child: restaurant.image != null
+                    ? Image.network(
+                        ApiConfig.imageBaseUrl + restaurant.image!,
+                        width: double.infinity,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: double.infinity,
+                          height: 100,
+                          color: Colors.grey[200],
+                          child:
+                              const Icon(Icons.restaurant, color: Colors.grey),
+                        ),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        height: 100,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.restaurant, color: Colors.grey),
+                      ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -696,7 +722,9 @@ class _ApiRestaurantCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                restaurant.cuisineType,
+                restaurant.cuisineId != null
+                    ? (kCuisineIdToName[restaurant.cuisineId!] ?? 'Unknown')
+                    : 'Unknown',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[600],
                     ),

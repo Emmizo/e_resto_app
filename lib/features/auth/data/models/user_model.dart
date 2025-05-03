@@ -22,7 +22,6 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    print('UserModel.fromJson input: $json');
     return UserModel(
       id: json['id'],
       firstName: json['first_name'],

@@ -32,6 +32,30 @@ class Restaurant {
   });
 }
 
+// Cuisine model
+class Cuisine {
+  final int id;
+  final String name;
+  Cuisine({required this.id, required this.name});
+  factory Cuisine.fromJson(Map<String, dynamic> json) {
+    return Cuisine(
+      id: json['id'],
+      name: json['name'],
+    );
+  }
+}
+
+// Cuisine datasource
+class CuisineRemoteDatasource {
+  final Dio dio;
+  CuisineRemoteDatasource(this.dio);
+  Future<List<Cuisine>> fetchCuisines() async {
+    final response = await dio.get('/cuisines');
+    final data = response.data['data'] as List;
+    return data.map((json) => Cuisine.fromJson(json)).toList();
+  }
+}
+
 class AllRestaurantsScreen extends StatefulWidget {
   const AllRestaurantsScreen({super.key});
 
@@ -63,12 +87,23 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
   List<RestaurantModel> _filteredRestaurants = [];
   bool _isLoading = true;
   String? _error;
+  Map<int, String> _cuisineIdToName = {};
 
   @override
   void initState() {
     super.initState();
+    _fetchCuisines();
     _fetchRestaurants();
     _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _fetchCuisines() async {
+    final dio = Dio();
+    final datasource = CuisineRemoteDatasource(dio);
+    final cuisines = await datasource.fetchCuisines();
+    setState(() {
+      _cuisineIdToName = {for (var c in cuisines) c.id: c.name};
+    });
   }
 
   Future<void> _fetchRestaurants() async {
@@ -123,7 +158,9 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
               return restaurant.name
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase()) ||
-                  restaurant.cuisineType
+                  (restaurant.cuisineId != null
+                          ? (_cuisineIdToName[restaurant.cuisineId!] ?? '')
+                          : '')
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase());
             }).toList();
@@ -205,7 +242,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Error: $_error'))
+              ? Center(child: Text('Error here: $_error'))
               : Column(
                   children: [
                     // Filters and Sort Section
@@ -436,7 +473,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                                 BorderRadius.circular(8),
                                             child: Image.network(
                                               ApiConfig.imageBaseUrl +
-                                                  restaurant.image,
+                                                  (restaurant.image ?? ''),
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
@@ -470,7 +507,12 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  restaurant.cuisineType,
+                                                  restaurant.cuisineId != null
+                                                      ? (_cuisineIdToName[
+                                                              restaurant
+                                                                  .cuisineId!] ??
+                                                          'Unknown')
+                                                      : 'Unknown',
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodySmall
@@ -514,7 +556,10 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                       ),
                                     ),
                                   ),
-                                );
+                                )
+                                    .animate(delay: (index * 80).ms)
+                                    .fadeIn()
+                                    .slideY(begin: 0.1);
                               },
                             ),
                     ),
