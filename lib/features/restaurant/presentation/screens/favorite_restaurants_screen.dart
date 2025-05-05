@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import 'restaurant_details_screen.dart';
+import '../../data/models/restaurant_model.dart';
 
 class FavoriteRestaurantsScreen extends StatelessWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -238,6 +239,28 @@ class _RestaurantCard extends StatelessWidget {
     required this.onRemove,
   });
 
+  RestaurantModel _toRestaurantModel(_Restaurant r) {
+    return RestaurantModel(
+      id: int.tryParse(r.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+      name: r.name,
+      description: '',
+      address: '',
+      longitude: '',
+      latitude: '',
+      phoneNumber: '',
+      email: '',
+      website: null,
+      openingHours: '',
+      cuisineId: null,
+      priceRange: '',
+      image: r.imageUrl,
+      ownerId: 0,
+      isApproved: true,
+      status: r.isOpen,
+      menus: [],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -251,12 +274,7 @@ class _RestaurantCard extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => RestaurantDetailsScreen(
-                restaurantName: restaurant.name,
-                restaurantImage: restaurant.imageUrl,
-                rating: restaurant.rating,
-                location:
-                    '${restaurant.cuisine} • ${restaurant.distance.toStringAsFixed(1)} km away',
-                openUntil: '10:00 PM',
+                restaurant: _toRestaurantModel(restaurant),
               ),
             ),
           );
@@ -299,7 +317,7 @@ class _RestaurantCard extends StatelessWidget {
                         Icon(
                           Icons.star,
                           size: 16,
-                          color: Colors.amber[700],
+                          color: Colors.amber,
                         ),
                         const SizedBox(width: 4),
                         Text(

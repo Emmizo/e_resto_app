@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import '../../data/restaurant_remote_datasource.dart';
 import '../../data/models/restaurant_model.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import 'package:provider/provider.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 
 class Restaurant {
   final String name;
@@ -112,9 +114,31 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       _error = null;
     });
     try {
+      print('Starting _fetchRestaurants...');
       final dio = Dio();
       final datasource = RestaurantRemoteDatasource(dio);
-      final restaurants = await datasource.fetchRestaurants();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      print('Fetching restaurants with token: ' + (token ?? 'NO TOKEN'));
+      final response = await dio.get(
+        ApiEndpoints.restaurants,
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      print('Raw restaurant API response: ${response.data}');
+      final data = response.data['data'] as List;
+      print('Raw data list: ' + data.toString());
+      List<RestaurantModel> restaurants = [];
+      try {
+        restaurants =
+            data.map((json) => RestaurantModel.fromJson(json)).toList();
+      } catch (e) {
+        print('Error mapping RestaurantModel: $e');
+        rethrow;
+      }
       setState(() {
         _restaurants = restaurants;
         _filteredRestaurants = restaurants;
@@ -122,6 +146,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       });
       _applyFiltersAndSort();
     } catch (e) {
+      print('Error in _fetchRestaurants: $e');
       setState(() {
         _isLoading = false;
         _error = e.toString();
@@ -155,12 +180,17 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       _filteredRestaurants = _searchQuery.isEmpty
           ? List.from(_restaurants)
           : _restaurants.where((restaurant) {
+              final cuisineId = restaurant.cuisineId is int
+                  ? restaurant.cuisineId
+                  : int.tryParse(restaurant.cuisineId.toString());
+              final cuisineName =
+                  (cuisineId != null && _cuisineIdToName.containsKey(cuisineId))
+                      ? _cuisineIdToName[cuisineId]!
+                      : '';
               return restaurant.name
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase()) ||
-                  (restaurant.cuisineId != null
-                          ? (_cuisineIdToName[restaurant.cuisineId!] ?? '')
-                          : '')
+                  cuisineName
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase());
             }).toList();
@@ -453,12 +483,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               RestaurantDetailsScreen(
-                                            restaurantName: restaurant.name,
-                                            restaurantImage: restaurant.image,
-                                            rating:
-                                                0.0, // Placeholder, as rating is not available
-                                            location: restaurant.address,
-                                            openUntil: restaurant.openingHours,
+                                            restaurant: restaurant,
                                           ),
                                         ),
                                       );
@@ -507,12 +532,21 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  restaurant.cuisineId != null
-                                                      ? (_cuisineIdToName[
-                                                              restaurant
-                                                                  .cuisineId!] ??
-                                                          'Unknown')
-                                                      : 'Unknown',
+                                                  (() {
+                                                    final cuisineId = restaurant
+                                                            .cuisineId is int
+                                                        ? restaurant.cuisineId
+                                                        : int.tryParse(
+                                                            restaurant.cuisineId
+                                                                .toString());
+                                                    return (cuisineId != null &&
+                                                            _cuisineIdToName
+                                                                .containsKey(
+                                                                    cuisineId))
+                                                        ? _cuisineIdToName[
+                                                            cuisineId]!
+                                                        : 'Unknown';
+                                                  })(),
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodySmall

@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../features/restaurant/presentation/screens/restaurant_details_screen.dart';
+import '../../../restaurant/data/models/restaurant_model.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -106,11 +107,25 @@ class _MapScreenState extends State<MapScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => RestaurantDetailsScreen(
-                    restaurantName: restaurant['name'],
-                    restaurantImage: restaurant['image'],
-                    rating: restaurant['rating'],
-                    location: '${restaurant['cuisine']} • 0.5 km away',
-                    openUntil: '10:00 PM',
+                    restaurant: RestaurantModel(
+                      id: 0,
+                      name: restaurant['name'],
+                      description: '',
+                      address: '',
+                      longitude: restaurant['position'].longitude.toString(),
+                      latitude: restaurant['position'].latitude.toString(),
+                      phoneNumber: '',
+                      email: '',
+                      website: null,
+                      openingHours: '',
+                      cuisineId: null,
+                      priceRange: '',
+                      image: restaurant['image'],
+                      ownerId: 0,
+                      isApproved: true,
+                      status: true,
+                      menus: [],
+                    ),
                   ),
                 ),
               );

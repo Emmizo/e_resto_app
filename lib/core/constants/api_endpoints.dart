@@ -9,5 +9,7 @@ class ApiEndpoints {
   static const String uploadProfilePicture =
       '${ApiConfig.baseUrl}/user/profile-picture';
   static const String restaurants = '${ApiConfig.baseUrl}/restaurants';
+  static const String cuisines = '${ApiConfig.baseUrl}/cuisines';
+  static const String orders = '${ApiConfig.baseUrl}/orders';
   // Add more endpoints as needed
 }

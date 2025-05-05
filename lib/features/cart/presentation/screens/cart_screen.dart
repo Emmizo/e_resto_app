@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/providers/cart_provider.dart';
+import 'package:dio/dio.dart';
+import '../../../../core/constants/api_endpoints.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -82,11 +85,17 @@ class _CartItemCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
+              child: Image.network(
                 item.imageUrl,
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.fastfood, color: Colors.grey),
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -168,6 +177,170 @@ class _CartSummary extends StatelessWidget {
 
   const _CartSummary({required this.total});
 
+  void _showPaymentOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose Payment Option'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.payments),
+              title: const Text('Pay Now'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('You chose to Pay Now')),
+                );
+                // TODO: Navigate to payment screen or handle payment
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.schedule),
+              title: const Text('Pay Later'),
+              onTap: () {
+                Navigator.pop(context);
+                _showPayLaterForm(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPayLaterForm(BuildContext context) {
+    final addressController = TextEditingController();
+    final instructionsController = TextEditingController();
+    String orderType = 'dine_in';
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Pay Later - Order Details'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: orderType,
+                decoration: const InputDecoration(
+                  labelText: 'Order Type',
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'dine_in', child: Text('Dine In')),
+                  DropdownMenuItem(value: 'takeaway', child: Text('Takeaway')),
+                  DropdownMenuItem(value: 'delivery', child: Text('Delivery')),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => orderType = value);
+                },
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(
+                  labelText: 'Delivery Address',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: instructionsController,
+                decoration: const InputDecoration(
+                  labelText: 'Special Instructions',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _submitPayLaterOrder(
+                  context,
+                  addressController.text,
+                  instructionsController.text,
+                  orderType,
+                );
+              },
+              child: const Text('Place Order'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitPayLaterOrder(BuildContext context, String address,
+      String instructions, String orderType) async {
+    final cartProvider = context.read<CartProvider>();
+    if (cartProvider.items.isEmpty) return;
+    final restaurantId =
+        int.tryParse(cartProvider.items.first.restaurantId) ?? 0;
+    final items = cartProvider.items
+        .map((item) => {
+              'menu_item_id': int.tryParse(item.id) ?? 0,
+              'quantity': item.quantity,
+            })
+        .toList();
+    final data = {
+      'restaurant_id': restaurantId,
+      'delivery_address': address,
+      'special_instructions': instructions,
+      'order_type': orderType,
+      'items': items,
+    };
+    print('Order data being sent: ' + data.toString());
+    try {
+      final dio = Dio();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      await dio.post(
+        ApiEndpoints.orders,
+        data: data,
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      await cartProvider.clearCart();
+      _showPayLaterConfirmation(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showPayLaterConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Order Placed!'),
+        content: const Text(
+          'Your order has been placed. Please pay at the restaurant or upon delivery.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Optionally: Navigate to order history or home
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -208,14 +381,7 @@ class _CartSummary extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement checkout
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Checkout functionality coming soon!'),
-                    ),
-                  );
-                },
+                onPressed: () => _showPaymentOptions(context),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

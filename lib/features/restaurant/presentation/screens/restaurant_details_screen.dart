@@ -6,29 +6,18 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/providers/cart_provider.dart';
 import '../../../cart/presentation/screens/cart_screen.dart';
 import '../../../reservation/presentation/screens/reservation_screen.dart';
+import '../../../restaurant/data/models/restaurant_model.dart';
 
 class RestaurantDetailsScreen extends StatelessWidget {
-  final String? restaurantName;
-  final String? restaurantImage;
-  final double? rating;
-  final String? location;
-  final String? openUntil;
-
-  const RestaurantDetailsScreen({
-    super.key,
-    this.restaurantName = 'Restaurant Name',
-    this.restaurantImage,
-    this.rating = 4.5,
-    this.location = '123 Restaurant Street, City',
-    this.openUntil = '10:00 PM',
-  });
+  final RestaurantModel restaurant;
+  const RestaurantDetailsScreen({super.key, required this.restaurant});
 
   void _handleReservation(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ReservationScreen(
-          restaurantName: restaurantName,
+          restaurantName: restaurant.name,
         ),
       ),
     );
@@ -145,44 +134,53 @@ class RestaurantDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _MenuCategory(
-                      title: 'Popular Items',
-                      items: List.generate(
-                        3,
-                        (index) => _MenuItem(
-                          id: const Uuid().v4(),
-                          name: 'Popular Item ${index + 1}',
-                          description:
-                              'Delicious description for item ${index + 1}',
-                          price: (index + 1) * 10.99,
-                          imageUrl: 'assets/images/tea-m.jpg',
-                          restaurantId: 'restaurant-1',
-                          restaurantName: restaurantName!,
-                          onAddToCart: () {
-                            _addToCart(context, index);
-                          },
-                        ),
+                    if (restaurant.menus.isEmpty) Text('No menu available.'),
+                    for (final menu in restaurant.menus)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            menu.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          for (final item in menu.menuItems)
+                            Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ListTile(
+                                leading: item.image.isNotEmpty
+                                    ? Image.network(
+                                        item.image.startsWith('http')
+                                            ? item.image
+                                            : 'http://localhost:8000/${item.image}',
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.fastfood),
+                                title: Text(item.name),
+                                subtitle: Text(item.description),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('₣${item.price}'),
+                                    IconButton(
+                                      icon:
+                                          const Icon(Icons.add_circle_outline),
+                                      onPressed: () {
+                                        _addMenuItemToCart(context, item);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    _MenuCategory(
-                      title: 'Starters',
-                      items: List.generate(
-                        3,
-                        (index) => _MenuItem(
-                          id: const Uuid().v4(),
-                          name: 'Starter ${index + 1}',
-                          description: 'Tasty starter description ${index + 1}',
-                          price: (index + 1) * 5.99,
-                          imageUrl: 'assets/images/tea.jpg',
-                          restaurantId: 'restaurant-1',
-                          restaurantName: restaurantName!,
-                          onAddToCart: () {
-                            _addToCart(context, index + 3);
-                          },
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -210,24 +208,18 @@ class RestaurantDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _addToCart(BuildContext context, int index) {
+  void _addMenuItemToCart(BuildContext context, MenuItemModel item) {
     try {
       final cartProvider = context.read<CartProvider>();
-      final item = CartItem(
-        id: const Uuid().v4(),
-        name: index < 3 ? 'Popular Item ${index + 1}' : 'Starter ${index - 2}',
-        description: index < 3
-            ? 'Delicious description for item ${index + 1}'
-            : 'Tasty starter description ${index - 2}',
-        price: index < 3 ? (index + 1) * 10.99 : (index - 2) * 5.99,
-        imageUrl:
-            index < 3 ? 'assets/images/tea-m.jpg' : 'assets/images/tea.jpg',
-        restaurantId: 'restaurant-1',
-        restaurantName: restaurantName!,
-      );
-
-      cartProvider.addItem(item);
-
+      cartProvider.addItem(CartItem(
+        id: item.id.toString(),
+        name: item.name,
+        description: item.description,
+        price: double.tryParse(item.price) ?? 0.0,
+        imageUrl: item.image,
+        restaurantId: restaurant.id.toString(),
+        restaurantName: restaurant.name,
+      ));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Added ${item.name} to cart'),
@@ -265,10 +257,15 @@ class RestaurantDetailsScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    restaurantImage ?? 'assets/images/tea.jpg',
-                    fit: BoxFit.cover,
-                  ),
+                  restaurant.image != null && restaurant.image!.isNotEmpty
+                      ? Image.network(
+                          restaurant.image!,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'assets/images/tea.jpg',
+                          fit: BoxFit.cover,
+                        ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -284,7 +281,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                 ],
               ),
               title: Text(
-                restaurantName!,
+                restaurant.name,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -302,29 +299,10 @@ class RestaurantDetailsScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      RatingBarIndicator(
-                        rating: rating!,
-                        itemBuilder: (context, _) => const Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                        ),
-                        itemCount: 5,
-                        itemSize: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '$rating (120 reviews)',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
                       const Icon(Icons.location_on, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        location!,
+                        restaurant.address,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -335,7 +313,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                       const Icon(Icons.access_time, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        'Open • Closes at $openUntil',
+                        'Open • Closes at ${restaurant.openingHours}',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -379,44 +357,41 @@ class RestaurantDetailsScreen extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 16),
-                  _MenuCategory(
-                    title: 'Popular Items',
-                    items: List.generate(
-                      3,
-                      (index) => _MenuItem(
-                        id: const Uuid().v4(),
-                        name: 'Popular Item ${index + 1}',
-                        description:
-                            'Delicious description for item ${index + 1}',
-                        price: (index + 1) * 10.99,
-                        imageUrl: 'assets/images/tea-m.jpg',
-                        restaurantId: 'restaurant-1',
-                        restaurantName: restaurantName!,
-                        onAddToCart: () {
-                          _addToCart(context, index);
-                        },
-                      ),
+                  if (restaurant.menus.isEmpty) Text('No menu available.'),
+                  for (final menu in restaurant.menus)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          menu.name,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        for (final item in menu.menuItems)
+                          Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              leading: item.image.isNotEmpty
+                                  ? Image.network(
+                                      item.image.startsWith('http')
+                                          ? item.image
+                                          : 'http://localhost:8000/${item.image}',
+                                      width: 56,
+                                      height: 56,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Icon(Icons.fastfood),
+                              title: Text(item.name),
+                              subtitle: Text(item.description),
+                              trailing: Text('₣${item.price}'),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  _MenuCategory(
-                    title: 'Starters',
-                    items: List.generate(
-                      3,
-                      (index) => _MenuItem(
-                        id: const Uuid().v4(),
-                        name: 'Starter ${index + 1}',
-                        description: 'Tasty starter description ${index + 1}',
-                        price: (index + 1) * 5.99,
-                        imageUrl: 'assets/images/tea.jpg',
-                        restaurantId: 'restaurant-1',
-                        restaurantName: restaurantName!,
-                        onAddToCart: () {
-                          _addToCart(context, index + 3);
-                        },
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

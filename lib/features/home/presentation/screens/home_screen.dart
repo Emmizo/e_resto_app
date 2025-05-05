@@ -14,16 +14,11 @@ import 'package:dio/dio.dart';
 import '../../../restaurant/data/restaurant_remote_datasource.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 
-// Cuisine ID to name mapping (example, adjust as needed)
-const Map<int, String> kCuisineIdToName = {
-  1: 'Italian',
-  2: 'Japanese',
-  3: 'Chinese',
-  4: 'Indian',
-  5: 'Mexican',
-  6: 'American',
-  7: 'Thai',
-};
+class CuisineCategory {
+  final int? id; // null for 'All'
+  final String name;
+  CuisineCategory({this.id, required this.name});
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -49,36 +44,54 @@ class _HomeScreenState extends State<HomeScreen>
   List<RestaurantModel> _filteredRestaurants = [];
   bool _isRestaurantLoading = true;
   String? _restaurantError;
-
-  final List<String> _categories = [
-    'All',
-    'Italian',
-    'Japanese',
-    'Chinese',
-    'Indian',
-    'Mexican',
-    'American',
-    'Thai',
-  ];
+  List<CuisineCategory> _categories = [CuisineCategory(id: null, name: 'All')];
+  bool _isCategoriesLoading = true;
+  String? _categoriesError;
 
   @override
   void initState() {
     super.initState();
-    _initializeTabController();
+    _fetchCategories();
     _initializeMap();
     _fetchRestaurants();
     _searchController.addListener(_onSearchChanged);
   }
 
-  void _initializeTabController() {
-    _tabController = TabController(length: _categories.length, vsync: this);
-    _tabController?.addListener(() {
-      if (_tabController?.indexIsChanging ?? false) {
-        setState(() {
-          _selectedCategoryIndex = _tabController?.index ?? 0;
-        });
-      }
+  Future<void> _fetchCategories() async {
+    setState(() {
+      _isCategoriesLoading = true;
+      _categoriesError = null;
     });
+    try {
+      final dio = Dio();
+      final response = await dio.get(ApiEndpoints.cuisines);
+      final data = response.data['data'] as List;
+      final cuisineCategories = data
+          .map((c) =>
+              CuisineCategory(id: c['id'] as int, name: c['name'] as String))
+          .toList();
+      setState(() {
+        _categories = [
+          CuisineCategory(id: null, name: 'All'),
+          ...cuisineCategories
+        ];
+        _isCategoriesLoading = false;
+        _tabController?.dispose();
+        _tabController = TabController(length: _categories.length, vsync: this);
+        _tabController?.addListener(() {
+          if (_tabController?.indexIsChanging ?? false) {
+            setState(() {
+              _selectedCategoryIndex = _tabController?.index ?? 0;
+            });
+          }
+        });
+      });
+    } catch (e) {
+      setState(() {
+        _isCategoriesLoading = false;
+        _categoriesError = e.toString();
+      });
+    }
   }
 
   @override
@@ -94,22 +107,29 @@ class _HomeScreenState extends State<HomeScreen>
       _isRestaurantLoading = true;
       _restaurantError = null;
     });
-    try {
-      final dio = Dio();
-      final datasource = RestaurantRemoteDatasource(dio);
-      final restaurants = await datasource.fetchRestaurants();
-      setState(() {
-        _restaurants = restaurants;
-        _filteredRestaurants = restaurants;
-        _isRestaurantLoading = false;
-      });
-      _applyFiltersAndSearch();
-    } catch (e) {
+    // try {
+    final dio = Dio();
+    final datasource = RestaurantRemoteDatasource(dio);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    final restaurants = await datasource.fetchRestaurants(token: token);
+    debugPrint('Fetched restaurants:');
+    for (var r in restaurants) {
+      debugPrint('Restaurant: \\${r.name}, cuisineId: \\${r.cuisineId}');
+    }
+    setState(() {
+      _restaurants = restaurants;
+      _filteredRestaurants = restaurants;
+      _isRestaurantLoading = false;
+    });
+    _applyFiltersAndSearch();
+    /*  } catch (e) {
+      debugPrint('Error fetching restaurants: \\${e.toString()}');
       setState(() {
         _isRestaurantLoading = false;
         _restaurantError = e.toString();
       });
-    }
+    } */
   }
 
   void _onSearchChanged() {
@@ -121,27 +141,28 @@ class _HomeScreenState extends State<HomeScreen>
       _filteredRestaurants = _searchQuery.isEmpty
           ? List.from(_restaurants)
           : _restaurants.where((restaurant) {
-              final cuisineName = restaurant.cuisineId != null
-                  ? kCuisineIdToName[restaurant.cuisineId!] ?? ''
-                  : '';
+              final cuisineName = _categories
+                  .firstWhere(
+                    (cat) => cat.id == restaurant.cuisineId,
+                    orElse: () => CuisineCategory(id: null, name: ''),
+                  )
+                  .name;
               return restaurant.name
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase()) ||
-                  cuisineName
-                      .toLowerCase()
-                      .contains(_searchQuery.toLowerCase());
+                  (cuisineName.isNotEmpty &&
+                      cuisineName
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()));
             }).toList();
 
       // Apply category filter if not "All"
       if (_selectedCategoryIndex > 0) {
         final selectedCategory = _categories[_selectedCategoryIndex];
         _filteredRestaurants = _filteredRestaurants
-            .where((r) =>
-                r.cuisineId != null &&
-                kCuisineIdToName[r.cuisineId!] == selectedCategory)
+            .where((r) => r.cuisineId == selectedCategory.id)
             .toList();
       }
-      // Optionally sort by name or other field
     });
   }
 
@@ -316,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Consumer<AuthProvider>(
                         builder: (context, authProvider, _) {
                           final profileUrl = authProvider.user?.profilePicture;
-                          debugPrint('HomeScreen profileUrl: $profileUrl');
+
                           String? fullUrl;
                           if (profileUrl != null && profileUrl.isNotEmpty) {
                             fullUrl = profileUrl.startsWith('http')
@@ -512,6 +533,12 @@ class _HomeScreenState extends State<HomeScreen>
                       ).animate().fadeIn(),
 
                     // Categories TabBar
+                    if (_isCategoriesLoading)
+                      const Center(child: CircularProgressIndicator()),
+                    if (_categoriesError != null)
+                      Center(
+                          child: Text(
+                              'Failed to load categories: $_categoriesError')),
                     if (_tabController != null)
                       Container(
                         height: 48,
@@ -536,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen>
                                             : Colors.transparent,
                                         borderRadius: BorderRadius.circular(20),
                                       ),
-                                      child: Text(category),
+                                      child: Text(category.name),
                                     ),
                                   ))
                               .toList(),
@@ -636,7 +663,9 @@ class _HomeScreenState extends State<HomeScreen>
                                           final restaurant =
                                               _filteredRestaurants[index];
                                           return _ApiRestaurantCard(
-                                                  restaurant: restaurant)
+                                            restaurant: restaurant,
+                                            categories: _categories,
+                                          )
                                               .animate(delay: (50 * index).ms)
                                               .fadeIn()
                                               .slideY();
@@ -657,7 +686,9 @@ class _HomeScreenState extends State<HomeScreen>
 
 class _ApiRestaurantCard extends StatelessWidget {
   final RestaurantModel restaurant;
-  const _ApiRestaurantCard({required this.restaurant});
+  final List<CuisineCategory> categories;
+  const _ApiRestaurantCard(
+      {required this.restaurant, required this.categories});
 
   @override
   Widget build(BuildContext context) {
@@ -672,12 +703,7 @@ class _ApiRestaurantCard extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => RestaurantDetailsScreen(
-                restaurantName: restaurant.name,
-                restaurantImage:
-                    ApiConfig.imageBaseUrl + (restaurant.image ?? ''),
-                rating: 0.0, // Placeholder, as rating is not available
-                location: restaurant.address,
-                openUntil: restaurant.openingHours,
+                restaurant: restaurant,
               ),
             ),
           );
@@ -690,9 +716,9 @@ class _ApiRestaurantCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: restaurant.image != null
+                child: restaurant.image != null && restaurant.image!.isNotEmpty
                     ? Image.network(
-                        ApiConfig.imageBaseUrl + restaurant.image!,
+                        restaurant.image!,
                         width: double.infinity,
                         height: 100,
                         fit: BoxFit.cover,
@@ -708,7 +734,20 @@ class _ApiRestaurantCard extends StatelessWidget {
                         width: double.infinity,
                         height: 100,
                         color: Colors.grey[200],
-                        child: const Icon(Icons.restaurant, color: Colors.grey),
+                        child: Center(
+                          child: CircleAvatar(
+                            radius: 32,
+                            backgroundColor: Colors.grey[300],
+                            child: Text(
+                              restaurant.id.toString(),
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
               ),
               const SizedBox(height: 8),
@@ -722,9 +761,12 @@ class _ApiRestaurantCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                restaurant.cuisineId != null
-                    ? (kCuisineIdToName[restaurant.cuisineId!] ?? 'Unknown')
-                    : 'Unknown',
+                categories
+                    .firstWhere(
+                      (cat) => cat.id == restaurant.cuisineId,
+                      orElse: () => CuisineCategory(id: null, name: 'Unknown'),
+                    )
+                    .name,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[600],
                     ),
