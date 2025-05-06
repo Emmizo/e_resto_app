@@ -541,15 +541,26 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                   shadowColor: Colors.black.withOpacity(0.08),
                                   child: InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              RestaurantDetailsScreen(
-                                            restaurant: restaurant,
+                                      if (!restaurant.status) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'Restaurant is currently closed.'),
+                                            backgroundColor: Colors.red,
                                           ),
-                                        ),
-                                      );
+                                        );
+                                      } else {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                RestaurantDetailsScreen(
+                                              restaurant: restaurant,
+                                            ),
+                                          ),
+                                        );
+                                      }
                                     },
                                     borderRadius: BorderRadius.circular(18),
                                     child: Padding(

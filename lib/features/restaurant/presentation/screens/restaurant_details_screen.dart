@@ -151,6 +151,8 @@ class RestaurantDetailsScreen extends StatelessWidget {
                           for (final item in menu.menuItems)
                             _MenuItemCard(
                               item: item,
+                              restaurantId: restaurant.id,
+                              restaurantName: restaurant.name,
                             ),
                           const SizedBox(height: 16),
                         ],
@@ -445,6 +447,8 @@ class RestaurantDetailsScreen extends StatelessWidget {
                         for (final item in menu.menuItems)
                           _MenuItemCard(
                             item: item,
+                            restaurantId: restaurant.id,
+                            restaurantName: restaurant.name,
                           ),
                         const SizedBox(height: 16),
                       ],
@@ -461,7 +465,12 @@ class RestaurantDetailsScreen extends StatelessWidget {
 
 class _MenuItemCard extends StatefulWidget {
   final MenuItemModel item;
-  const _MenuItemCard({required this.item});
+  final int restaurantId;
+  final String restaurantName;
+  const _MenuItemCard(
+      {required this.item,
+      required this.restaurantId,
+      required this.restaurantName});
 
   @override
   State<_MenuItemCard> createState() => _MenuItemCardState();
@@ -575,8 +584,8 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                   description: item.description,
                   price: double.tryParse(item.price) ?? 0.0,
                   imageUrl: item.image,
-                  restaurantId: '',
-                  restaurantName: '',
+                  restaurantId: widget.restaurantId.toString(),
+                  restaurantName: widget.restaurantName,
                 ));
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Added ${item.name} to cart')),
