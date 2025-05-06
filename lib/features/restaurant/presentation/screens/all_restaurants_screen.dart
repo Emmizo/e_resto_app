@@ -89,12 +89,14 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
   bool _isLoading = true;
   String? _error;
   Map<int, String> _cuisineIdToName = {};
+  Set<int> _favoriteRestaurantIds = {};
 
   @override
   void initState() {
     super.initState();
     _fetchCuisines();
     _fetchRestaurants();
+    _fetchFavoriteRestaurantIds();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -140,12 +142,75 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
         _filteredRestaurants = restaurants;
         _isLoading = false;
       });
+      print('Fetched restaurants count: \\${restaurants.length}');
+      if (restaurants.isNotEmpty) {
+        print(
+            'First few restaurants: \\${restaurants.take(3).map((r) => r.name).toList()}');
+      }
       _applyFiltersAndSort();
     } catch (e) {
       setState(() {
         _isLoading = false;
         _error = e.toString();
       });
+    }
+  }
+
+  Future<void> _fetchFavoriteRestaurantIds() async {
+    try {
+      final dio = Dio();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      final response = await dio.get(
+        ApiEndpoints.restaurantFavorites,
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      final data = response.data['data'] as List;
+      setState(() {
+        _favoriteRestaurantIds = data
+            .map((item) {
+              final restaurant = item['restaurant'] ?? item;
+              return restaurant['id'] is int
+                  ? restaurant['id']
+                  : int.tryParse(restaurant['id'].toString()) ?? 0;
+            })
+            .toSet()
+            .cast<int>();
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite(int restaurantId) async {
+    final isFavorite = _favoriteRestaurantIds.contains(restaurantId);
+    final dio = Dio();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    final endpoint = isFavorite
+        ? ApiEndpoints.restaurantUnfavorite
+        : ApiEndpoints.restaurantFavorite;
+    try {
+      await dio.post(
+        endpoint,
+        data: {'restaurant_id': restaurantId},
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      setState(() {
+        if (isFavorite) {
+          _favoriteRestaurantIds.remove(restaurantId);
+        } else {
+          _favoriteRestaurantIds.add(restaurantId);
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Failed: [0m${e.toString()}'),
+            backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -428,7 +493,6 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                         ],
                       ),
                     ),
-
                     // Restaurant List
                     Expanded(
                       child: _filteredRestaurants.isEmpty
@@ -465,12 +529,16 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                               itemCount: _filteredRestaurants.length,
                               itemBuilder: (context, index) {
                                 final restaurant = _filteredRestaurants[index];
+                                print(
+                                    'Rendering badge for: ${restaurant.name} with rating: ${restaurant.averageRating}');
                                 return Card(
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  elevation: 2,
+                                  margin: const EdgeInsets.only(
+                                      bottom: 18, left: 4, right: 4),
+                                  elevation: 4,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(18),
                                   ),
+                                  shadowColor: Colors.black.withOpacity(0.08),
                                   child: InkWell(
                                     onTap: () {
                                       Navigator.push(
@@ -483,33 +551,39 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                         ),
                                       );
                                     },
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(18),
                                     child: Padding(
-                                      padding: const EdgeInsets.all(12),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 16),
                                       child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Image.network(
-                                              ApiConfig.imageBaseUrl +
-                                                  (restaurant.image ?? ''),
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  Container(
-                                                width: 80,
-                                                height: 80,
-                                                color: Colors.grey[200],
-                                                child: const Icon(
-                                                    Icons.restaurant,
-                                                    color: Colors.grey),
+                                          Stack(
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                child: Image.network(
+                                                  restaurant.image ?? '',
+                                                  width: 72,
+                                                  height: 72,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error,
+                                                          stackTrace) =>
+                                                      Container(
+                                                    width: 72,
+                                                    height: 72,
+                                                    color: Colors.grey[200],
+                                                    child: const Icon(
+                                                        Icons.restaurant,
+                                                        color: Colors.grey),
+                                                  ),
+                                                ),
                                               ),
-                                            ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 12),
+                                          const SizedBox(width: 16),
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment:
@@ -523,9 +597,13 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                                       ?.copyWith(
                                                         fontWeight:
                                                             FontWeight.bold,
+                                                        fontSize: 17,
                                                       ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
-                                                const SizedBox(height: 4),
+                                                const SizedBox(height: 6),
                                                 Text(
                                                   (() {
                                                     final cuisineId = restaurant
@@ -548,6 +626,9 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                                       ?.copyWith(
                                                         color: Colors.grey[600],
                                                       ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
@@ -558,9 +639,27 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                                       ?.copyWith(
                                                         color: Colors.grey[600],
                                                       ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ],
                                             ),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              _favoriteRestaurantIds
+                                                      .contains(restaurant.id)
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: Colors.red,
+                                            ),
+                                            tooltip: _favoriteRestaurantIds
+                                                    .contains(restaurant.id)
+                                                ? 'Unfavorite'
+                                                : 'Favorite',
+                                            onPressed: () =>
+                                                _toggleFavorite(restaurant.id),
                                           ),
                                           if (!restaurant.status)
                                             Container(
@@ -570,13 +669,13 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
                                               decoration: BoxDecoration(
                                                 color: Colors.red,
                                                 borderRadius:
-                                                    BorderRadius.circular(4),
+                                                    BorderRadius.circular(6),
                                               ),
                                               child: const Text(
                                                 'CLOSED',
                                                 style: TextStyle(
                                                   color: Colors.white,
-                                                  fontSize: 10,
+                                                  fontSize: 11,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),

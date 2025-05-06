@@ -8,6 +8,7 @@ import 'home_screen.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import 'package:e_resta_app/features/profile/presentation/screens/favorite_tab_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -173,9 +174,14 @@ class _MainScreenState extends State<MainScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.favorite, color: Color(0xFF184C55)),
-              title: const Text('Favorite Restaurants'),
+              title: const Text('Favorites'),
               onTap: () {
-                Navigator.pushNamed(context, '/favorite-restaurants');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FavoriteTabScreen(),
+                  ),
+                );
               },
             ),
             const Divider(),
@@ -220,10 +226,9 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: _currentIndex == 2
+          ? const FavoriteTabScreen()
+          : _screens[_currentIndex > 2 ? _currentIndex - 1 : _currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
@@ -241,6 +246,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map),
             label: 'Map',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.favorite_border),
+            selectedIcon: Icon(Icons.favorite),
+            label: 'Favorite',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

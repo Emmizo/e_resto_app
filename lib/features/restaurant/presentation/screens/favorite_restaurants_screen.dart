@@ -1,123 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/providers/theme_provider.dart';
 import 'restaurant_details_screen.dart';
 import '../../data/models/restaurant_model.dart';
+import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 
-class FavoriteRestaurantsScreen extends StatelessWidget {
+class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Mock data for favorite restaurants
-    final restaurants = [
-      _Restaurant(
-        id: 'rest-1',
-        name: 'Italian Bistro',
-        cuisine: 'Italian',
-        rating: 4.8,
-        reviews: 245,
-        distance: 1.2,
-        imageUrl: 'assets/images/tea.jpg',
-        isOpen: true,
-        deliveryTime: '25-35 min',
-        deliveryFee: 2.99,
-        minOrder: 15.00,
-      ),
-      _Restaurant(
-        id: 'rest-2',
-        name: 'Sushi Master',
-        cuisine: 'Japanese',
-        rating: 4.6,
-        reviews: 189,
-        distance: 0.8,
-        imageUrl: 'assets/images/tea-m.jpg',
-        isOpen: true,
-        deliveryTime: '30-40 min',
-        deliveryFee: 3.99,
-        minOrder: 20.00,
-      ),
-      _Restaurant(
-        id: 'rest-3',
-        name: 'Burger Joint',
-        cuisine: 'American',
-        rating: 4.5,
-        reviews: 312,
-        distance: 1.5,
-        imageUrl: 'assets/images/tea.jpg',
-        isOpen: true,
-        deliveryTime: '20-30 min',
-        deliveryFee: 1.99,
-        minOrder: 10.00,
-      ),
-      _Restaurant(
-        id: 'rest-4',
-        name: 'Pasta Paradise',
-        cuisine: 'Italian',
-        rating: 4.7,
-        reviews: 156,
-        distance: 2.1,
-        imageUrl: 'assets/images/tea-m.jpg',
-        isOpen: true,
-        deliveryTime: '35-45 min',
-        deliveryFee: 3.49,
-        minOrder: 18.00,
-      ),
-      _Restaurant(
-        id: 'rest-5',
-        name: 'Taco Tuesday',
-        cuisine: 'Mexican',
-        rating: 4.4,
-        reviews: 278,
-        distance: 1.8,
-        imageUrl: 'assets/images/tea.jpg',
-        isOpen: true,
-        deliveryTime: '25-35 min',
-        deliveryFee: 2.49,
-        minOrder: 12.00,
-      ),
-      _Restaurant(
-        id: 'rest-6',
-        name: 'Pizza Palace',
-        cuisine: 'Italian',
-        rating: 4.3,
-        reviews: 423,
-        distance: 2.5,
-        imageUrl: 'assets/images/tea-m.jpg',
-        isOpen: true,
-        deliveryTime: '30-40 min',
-        deliveryFee: 2.99,
-        minOrder: 15.00,
-      ),
-      _Restaurant(
-        id: 'rest-7',
-        name: 'Green Garden',
-        cuisine: 'Vegetarian',
-        rating: 4.9,
-        reviews: 98,
-        distance: 3.2,
-        imageUrl: 'assets/images/tea.jpg',
-        isOpen: true,
-        deliveryTime: '35-45 min',
-        deliveryFee: 3.99,
-        minOrder: 20.00,
-      ),
-      _Restaurant(
-        id: 'rest-8',
-        name: 'Dessert Delight',
-        cuisine: 'Desserts',
-        rating: 4.7,
-        reviews: 167,
-        distance: 1.7,
-        imageUrl: 'assets/images/tea-m.jpg',
-        isOpen: true,
-        deliveryTime: '25-35 min',
-        deliveryFee: 2.99,
-        minOrder: 15.00,
-      ),
-    ];
+  State<FavoriteRestaurantsScreen> createState() =>
+      _FavoriteRestaurantsScreenState();
+}
 
+class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
+  List<dynamic> _restaurants = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFavorites();
+  }
+
+  Future<void> _fetchFavorites() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final dio = Dio();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      final response = await dio.get(
+        ApiEndpoints.restaurantFavorites,
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      setState(() {
+        _restaurants = response.data['data'] as List;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _unfavoriteRestaurant(int restaurantId, int index) async {
+    try {
+      final dio = Dio();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      await dio.post(
+        ApiEndpoints.restaurantUnfavorite,
+        data: {'restaurant_id': restaurantId},
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      setState(() {
+        _restaurants.removeAt(index);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Removed from favorites')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Failed: [0m${e.toString()}'),
+            backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Favorite Restaurants'),
@@ -135,20 +100,30 @@ class FavoriteRestaurantsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: restaurants.isEmpty
-          ? _buildEmptyState(context)
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: restaurants.length,
-              itemBuilder: (context, index) {
-                return _RestaurantCard(
-                  restaurant: restaurants[index],
-                  onRemove: () {
-                    _showRemoveConfirmation(context, restaurants[index]);
-                  },
-                ).animate(delay: (100 * index).ms).fadeIn().slideX();
-              },
-            ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text('Error: $_error'))
+              : _restaurants.isEmpty
+                  ? _buildEmptyState(context)
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _restaurants.length,
+                      itemBuilder: (context, index) {
+                        final item = _restaurants[index];
+                        final restaurant = item['restaurant'] ??
+                            item; // fallback if API returns just restaurant
+                        return _RestaurantCard(
+                          restaurant: restaurant,
+                          onRemove: () => _unfavoriteRestaurant(
+                              restaurant['id'] is int
+                                  ? restaurant['id']
+                                  : int.tryParse(restaurant['id'].toString()) ??
+                                      0,
+                              index),
+                        ).animate(delay: (100 * index).ms).fadeIn().slideX();
+                      },
+                    ),
     );
   }
 
@@ -188,78 +163,16 @@ class FavoriteRestaurantsScreen extends StatelessWidget {
       ),
     ).animate().fadeIn();
   }
-
-  void _showRemoveConfirmation(BuildContext context, _Restaurant restaurant) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove from Favorites'),
-        content: Text(
-            'Are you sure you want to remove ${restaurant.name} from your favorites?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${restaurant.name} removed from favorites'),
-                  action: SnackBarAction(
-                    label: 'Undo',
-                    onPressed: () {
-                      // TODO: Implement undo functionality
-                    },
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _RestaurantCard extends StatelessWidget {
-  final _Restaurant restaurant;
+  final dynamic restaurant;
   final VoidCallback onRemove;
 
   const _RestaurantCard({
     required this.restaurant,
     required this.onRemove,
   });
-
-  RestaurantModel _toRestaurantModel(_Restaurant r) {
-    return RestaurantModel(
-      id: int.tryParse(r.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      name: r.name,
-      description: '',
-      address: '',
-      longitude: '',
-      latitude: '',
-      phoneNumber: '',
-      email: '',
-      website: null,
-      openingHours: '',
-      cuisineId: null,
-      priceRange: '',
-      image: r.imageUrl,
-      ownerId: 0,
-      isApproved: true,
-      status: r.isOpen,
-      menus: [],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +187,46 @@ class _RestaurantCard extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => RestaurantDetailsScreen(
-                restaurant: _toRestaurantModel(restaurant),
+                restaurant: RestaurantModel(
+                  id: restaurant['id'] is int
+                      ? restaurant['id']
+                      : int.tryParse(restaurant['id'].toString()) ?? 0,
+                  name: restaurant['name'] ?? '',
+                  description: restaurant['description'] ?? '',
+                  address: restaurant['address'] ?? '',
+                  longitude: restaurant['longitude']?.toString() ?? '',
+                  latitude: restaurant['latitude']?.toString() ?? '',
+                  phoneNumber: restaurant['phone_number'] ?? '',
+                  email: restaurant['email'] ?? '',
+                  website: restaurant['website'],
+                  openingHours: restaurant['opening_hours'] ?? '',
+                  cuisineId: restaurant['cuisine_id'] is int
+                      ? restaurant['cuisine_id']
+                      : int.tryParse(
+                          restaurant['cuisine_id']?.toString() ?? ''),
+                  priceRange: restaurant['price_range'] ?? '',
+                  image: restaurant['image'],
+                  ownerId: restaurant['owner_id'] is int
+                      ? restaurant['owner_id']
+                      : int.tryParse(
+                              restaurant['owner_id']?.toString() ?? '') ??
+                          0,
+                  isApproved: restaurant['is_approved'] is bool
+                      ? restaurant['is_approved']
+                      : restaurant['is_approved'] == 1,
+                  status: restaurant['status'] is bool
+                      ? restaurant['status']
+                      : restaurant['status'] == 1,
+                  menus: [],
+                  averageRating: (restaurant['average_rating'] is int)
+                      ? (restaurant['average_rating'] as int).toDouble()
+                      : (restaurant['average_rating'] is double)
+                          ? restaurant['average_rating']
+                          : double.tryParse(
+                                  restaurant['average_rating']?.toString() ??
+                                      '0') ??
+                              0.0,
+                ),
               ),
             ),
           );
@@ -286,12 +238,20 @@ class _RestaurantCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  restaurant.imageUrl,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
+                child: restaurant['image'] != null &&
+                        restaurant['image'].toString().isNotEmpty
+                    ? Image.network(
+                        restaurant['image'],
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.asset(
+                        'assets/images/tea.jpg',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -299,14 +259,14 @@ class _RestaurantCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      restaurant.name,
+                      restaurant['name'] ?? '',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${restaurant.cuisine} • ${restaurant.distance.toStringAsFixed(1)} km away',
+                      '${restaurant['cuisine'] ?? ''}${restaurant['distance'] != null ? ' • ${restaurant['distance'].toStringAsFixed(1)} km away' : ''}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.grey[600],
                           ),
@@ -321,12 +281,15 @@ class _RestaurantCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          restaurant.rating.toString(),
+                          (restaurant['average_rating'] ??
+                                  restaurant['rating'] ??
+                                  0)
+                              .toString(),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '(${restaurant.reviews} reviews)',
+                          '(${restaurant['reviews'] ?? 0} reviews)',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey[600],
@@ -344,7 +307,7 @@ class _RestaurantCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          restaurant.deliveryTime,
+                          restaurant['delivery_time'] ?? '',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey[600],
@@ -358,7 +321,9 @@ class _RestaurantCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '\$${restaurant.deliveryFee.toStringAsFixed(2)}',
+                          restaurant['delivery_fee'] != null
+                              ? '\$${restaurant['delivery_fee']}'
+                              : '',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey[600],
@@ -379,32 +344,4 @@ class _RestaurantCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Restaurant {
-  final String id;
-  final String name;
-  final String cuisine;
-  final double rating;
-  final int reviews;
-  final double distance;
-  final String imageUrl;
-  final bool isOpen;
-  final String deliveryTime;
-  final double deliveryFee;
-  final double minOrder;
-
-  _Restaurant({
-    required this.id,
-    required this.name,
-    required this.cuisine,
-    required this.rating,
-    required this.reviews,
-    required this.distance,
-    required this.imageUrl,
-    required this.isOpen,
-    required this.deliveryTime,
-    required this.deliveryFee,
-    required this.minOrder,
-  });
 }

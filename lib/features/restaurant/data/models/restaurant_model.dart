@@ -74,6 +74,7 @@ class RestaurantModel {
   final bool isApproved;
   final bool status;
   final List<MenuModel> menus;
+  final double averageRating;
 
   RestaurantModel({
     required this.id,
@@ -93,6 +94,7 @@ class RestaurantModel {
     required this.isApproved,
     required this.status,
     required this.menus,
+    required this.averageRating,
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) =>
@@ -127,5 +129,11 @@ class RestaurantModel {
         menus: (json['menus'] as List)
             .map((menu) => MenuModel.fromJson(menu))
             .toList(),
+        averageRating: (json['average_rating'] is int)
+            ? (json['average_rating'] as int).toDouble()
+            : (json['average_rating'] is double)
+                ? json['average_rating']
+                : double.tryParse(json['average_rating']?.toString() ?? '0') ??
+                    0.0,
       );
 }

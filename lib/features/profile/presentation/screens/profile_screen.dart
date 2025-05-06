@@ -5,7 +5,6 @@ import '../../../../core/providers/theme_provider.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../order/presentation/screens/order_history_screen.dart';
 import '../../../reservation/presentation/screens/my_reservations_screen.dart';
-import '../../../restaurant/presentation/screens/favorite_restaurants_screen.dart';
 import '../../../payment/presentation/screens/payment_methods_screen.dart';
 import 'notification_preferences_screen.dart';
 import 'saved_addresses_screen.dart';
@@ -16,6 +15,7 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart';
 import 'package:dio/dio.dart';
+import 'favorite_tab_screen.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -482,13 +482,13 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         ),
         _ProfileOption(
           icon: Icons.favorite,
-          title: 'Favorite Restaurants',
-          subtitle: 'Your saved restaurants',
+          title: 'Favorites',
+          subtitle: 'Your favorite dishes and restaurants',
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const FavoriteRestaurantsScreen(),
+                builder: (context) => const FavoriteTabScreen(),
               ),
             );
           },

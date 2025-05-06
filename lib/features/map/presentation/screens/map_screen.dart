@@ -125,6 +125,7 @@ class _MapScreenState extends State<MapScreen> {
                       isApproved: true,
                       status: true,
                       menus: [],
+                      averageRating: restaurant['rating'] ?? 0,
                     ),
                   ),
                 ),
