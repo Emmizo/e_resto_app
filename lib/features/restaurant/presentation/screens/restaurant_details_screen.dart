@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import '../../../../core/providers/cart_provider.dart';
 import '../../../cart/presentation/screens/cart_screen.dart';
 import '../../../reservation/presentation/screens/reservation_screen.dart';
@@ -220,14 +218,18 @@ class RestaurantDetailsScreen extends StatelessWidget {
         restaurantId: restaurant.id.toString(),
         restaurantName: restaurant.name,
       ));
+
+      // Capture the parent context
+      final parentContext = context;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Added ${item.name} to cart'),
+          content: Text('Added \\${item.name} to cart'),
           action: SnackBarAction(
             label: 'View Cart',
             onPressed: () {
               Navigator.push(
-                context,
+                parentContext,
                 MaterialPageRoute(builder: (context) => const CartScreen()),
               );
             },
@@ -237,7 +239,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text('Error: \\${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );

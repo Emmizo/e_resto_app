@@ -90,7 +90,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = 'Sign up failed ${user}';
+        _error = 'Sign up failed $user';
       }
     } catch (e) {
       if (e is DioException) {

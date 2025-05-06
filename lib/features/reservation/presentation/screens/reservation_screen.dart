@@ -4,7 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:e_resta_app/core/constants/api_endpoints.dart';
 
 class Reservation {
   final String id;
@@ -100,10 +102,12 @@ class ReservationProvider extends ChangeNotifier {
 
 class ReservationScreen extends StatefulWidget {
   final String? restaurantName;
+  final int? restaurantId;
 
   const ReservationScreen({
     super.key,
     this.restaurantName = 'Restaurant Name',
+    this.restaurantId,
   });
 
   @override
@@ -118,6 +122,19 @@ class _ReservationScreenState extends State<ReservationScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-fill from logged-in user
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user != null) {
+      _nameController.text = '${user.firstName} ${user.lastName}';
+      _phoneController.text = user.email; // Using email as contact for now
+    }
+  }
 
   @override
   void dispose() {
@@ -154,30 +171,67 @@ class _ReservationScreenState extends State<ReservationScreen> {
   }
 
   Future<void> _submitReservation() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be logged in to make a reservation.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Navigator.of(context).pushReplacementNamed('/login');
+      });
+      return;
+    }
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSubmitting = true;
+      });
       try {
-        final reservationProvider = context.read<ReservationProvider>();
-        final reservation = Reservation(
-          id: const Uuid().v4(),
-          date: _selectedDate,
-          time: _selectedTime,
-          guests: _selectedGuests,
-          name: _nameController.text,
-          phone: _phoneController.text,
-          notes: _notesController.text,
-          restaurantName: widget.restaurantName!,
+        final int restaurantId = widget.restaurantId ?? 1;
+        final reservationTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
         );
-
-        await reservationProvider.addReservation(reservation);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Reservation confirmed!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context);
+        final data = {
+          'restaurant_id': restaurantId,
+          'reservation_time': reservationTime
+              .toIso8601String()
+              .replaceFirst('T', ' ')
+              .substring(0, 19),
+          'number_of_guests': _selectedGuests,
+          'phone_number': _phoneController.text,
+          'special_requests': _notesController.text,
+        };
+        final dio = Dio();
+        final response = await dio.post(
+          '${ApiConfig.baseUrl}/reservations',
+          data: data,
+          options: Options(
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ),
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Reservation confirmed!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        } else {
+          throw Exception(
+              'Failed to make reservation: ${response.statusMessage}');
         }
       } catch (e) {
         if (mounted) {
@@ -187,6 +241,12 @@ class _ReservationScreenState extends State<ReservationScreen> {
               backgroundColor: Colors.red,
             ),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
         }
       }
     }
@@ -198,178 +258,29 @@ class _ReservationScreenState extends State<ReservationScreen> {
       appBar: AppBar(
         title: const Text('Make a Reservation'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionTitle(
-                  title: 'Select Date',
-                  icon: Icons.calendar_today,
-                ).animate().fadeIn().slideX(),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () => _selectDate(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today),
-                        const SizedBox(width: 16),
-                        Text(
-                          DateFormat('EEEE, MMMM d, y').format(_selectedDate),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 200.ms).slideX(),
-                const SizedBox(height: 24),
-                _SectionTitle(
-                  title: 'Select Time',
-                  icon: Icons.access_time,
-                ).animate().fadeIn(delay: 400.ms).slideX(),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () => _selectTime(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.access_time),
-                        const SizedBox(width: 16),
-                        Text(
-                          _selectedTime.format(context),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 600.ms).slideX(),
-                const SizedBox(height: 24),
-                _SectionTitle(
-                  title: 'Number of Guests',
-                  icon: Icons.people,
-                ).animate().fadeIn(delay: 800.ms).slideX(),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () {
-                          if (_selectedGuests > 1) {
-                            setState(() => _selectedGuests--);
-                          }
-                        },
-                      ),
-                      Expanded(
-                        child: Text(
-                          '$_selectedGuests guests',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          if (_selectedGuests < 10) {
-                            setState(() => _selectedGuests++);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 1000.ms).slideX(),
-                const SizedBox(height: 24),
-                _SectionTitle(
-                  title: 'Contact Information',
-                  icon: Icons.person,
-                ).animate().fadeIn(delay: 1200.ms).slideX(),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ).animate().fadeIn(delay: 1400.ms).slideX(),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
-                    }
-                    return null;
-                  },
-                ).animate().fadeIn(delay: 1600.ms).slideX(),
-                const SizedBox(height: 24),
-                _SectionTitle(
-                  title: 'Additional Notes',
-                  icon: Icons.note,
-                ).animate().fadeIn(delay: 1800.ms).slideX(),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _notesController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Any special requests?',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 2000.ms).slideX(),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _submitReservation,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Confirm Reservation'),
-                  ),
-                ).animate().fadeIn(delay: 2200.ms).slideY(),
-              ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _ReservationForm(
+                formKey: _formKey,
+                nameController: _nameController,
+                phoneController: _phoneController,
+                notesController: _notesController,
+                selectedDate: _selectedDate,
+                selectedTime: _selectedTime,
+                selectedGuests: _selectedGuests,
+                isSubmitting: _isSubmitting,
+                onSelectDate: () => _selectDate(context),
+                onSelectTime: () => _selectTime(context),
+                onGuestsChanged: (int guests) =>
+                    setState(() => _selectedGuests = guests),
+                onSubmit: _isSubmitting ? null : _submitReservation,
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -397,6 +308,215 @@ class _SectionTitle extends StatelessWidget {
               ),
         ),
       ],
+    );
+  }
+}
+
+class _ReservationForm extends StatelessWidget {
+  final GlobalKey<FormState> formKey;
+  final TextEditingController nameController;
+  final TextEditingController phoneController;
+  final TextEditingController notesController;
+  final DateTime selectedDate;
+  final TimeOfDay selectedTime;
+  final int selectedGuests;
+  final bool isSubmitting;
+  final VoidCallback onSelectDate;
+  final VoidCallback onSelectTime;
+  final ValueChanged<int> onGuestsChanged;
+  final VoidCallback? onSubmit;
+
+  const _ReservationForm({
+    required this.formKey,
+    required this.nameController,
+    required this.phoneController,
+    required this.notesController,
+    required this.selectedDate,
+    required this.selectedTime,
+    required this.selectedGuests,
+    required this.isSubmitting,
+    required this.onSelectDate,
+    required this.onSelectTime,
+    required this.onGuestsChanged,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(
+            title: 'Select Date',
+            icon: Icons.calendar_today,
+          ).animate().fadeIn().slideX(),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: onSelectDate,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today),
+                  const SizedBox(width: 16),
+                  Text(
+                    DateFormat('EEEE, MMMM d, y').format(selectedDate),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: 200.ms).slideX(),
+          const SizedBox(height: 24),
+          _SectionTitle(
+            title: 'Select Time',
+            icon: Icons.access_time,
+          ).animate().fadeIn(delay: 400.ms).slideX(),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: onSelectTime,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.access_time),
+                  const SizedBox(width: 16),
+                  Text(
+                    selectedTime.format(context),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: 600.ms).slideX(),
+          const SizedBox(height: 24),
+          _SectionTitle(
+            title: 'Number of Guests',
+            icon: Icons.people,
+          ).animate().fadeIn(delay: 800.ms).slideX(),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: () {
+                    if (selectedGuests > 1) {
+                      onGuestsChanged(selectedGuests - 1);
+                    }
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    '$selectedGuests guests',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    if (selectedGuests < 10) {
+                      onGuestsChanged(selectedGuests + 1);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 1000.ms).slideX(),
+          const SizedBox(height: 24),
+          _SectionTitle(
+            title: 'Contact Information',
+            icon: Icons.person,
+          ).animate().fadeIn(delay: 1200.ms).slideX(),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: nameController,
+            decoration: InputDecoration(
+              labelText: 'Full Name',
+              prefixIcon: const Icon(Icons.person_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your name';
+              }
+              return null;
+            },
+          ).animate().fadeIn(delay: 1400.ms).slideX(),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: phoneController,
+            decoration: InputDecoration(
+              labelText: 'Phone Number',
+              prefixIcon: const Icon(Icons.phone_outlined),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your phone number';
+              }
+              return null;
+            },
+          ).animate().fadeIn(delay: 1600.ms).slideX(),
+          const SizedBox(height: 24),
+          _SectionTitle(
+            title: 'Additional Notes',
+            icon: Icons.note,
+          ).animate().fadeIn(delay: 1800.ms).slideX(),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: notesController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Any special requests?',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ).animate().fadeIn(delay: 2000.ms).slideX(),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onSubmit,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Confirm Reservation'),
+            ),
+          ).animate().fadeIn(delay: 2200.ms).slideY(),
+        ],
+      ),
     );
   }
 }

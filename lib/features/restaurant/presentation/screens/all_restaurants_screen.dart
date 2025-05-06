@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'restaurant_details_screen.dart';
 import 'package:dio/dio.dart';
-import '../../data/restaurant_remote_datasource.dart';
 import '../../data/models/restaurant_model.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:provider/provider.dart';
@@ -114,12 +113,10 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       _error = null;
     });
     try {
-      print('Starting _fetchRestaurants...');
       final dio = Dio();
-      final datasource = RestaurantRemoteDatasource(dio);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
-      print('Fetching restaurants with token: ' + (token ?? 'NO TOKEN'));
+
       final response = await dio.get(
         ApiEndpoints.restaurants,
         options: Options(
@@ -128,15 +125,14 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
           },
         ),
       );
-      print('Raw restaurant API response: ${response.data}');
+
       final data = response.data['data'] as List;
-      print('Raw data list: ' + data.toString());
+
       List<RestaurantModel> restaurants = [];
       try {
         restaurants =
             data.map((json) => RestaurantModel.fromJson(json)).toList();
       } catch (e) {
-        print('Error mapping RestaurantModel: $e');
         rethrow;
       }
       setState(() {
@@ -146,7 +142,6 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       });
       _applyFiltersAndSort();
     } catch (e) {
-      print('Error in _fetchRestaurants: $e');
       setState(() {
         _isLoading = false;
         _error = e.toString();

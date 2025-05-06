@@ -294,7 +294,7 @@ class _CartSummary extends StatelessWidget {
       'order_type': orderType,
       'items': items,
     };
-    print('Order data being sent: ' + data.toString());
+    print('Order data being sent: $data');
     try {
       final dio = Dio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);

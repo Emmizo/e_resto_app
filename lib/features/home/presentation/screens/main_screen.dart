@@ -90,7 +90,7 @@ class _MainScreenState extends State<MainScreen> {
               builder: (context, authProvider, _) {
                 final user = authProvider.user;
                 final name = user != null
-                    ? (user.firstName + ' ' + user.lastName)
+                    ? ('${user.firstName} ${user.lastName}')
                     : 'Guest';
                 final email = user?.email ?? '';
                 final profilePic = user?.profilePicture;
