@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart';
 import 'package:dio/dio.dart';
 import 'favorite_tab_screen.dart';
+import 'package:e_resta_app/core/constants/api_endpoints.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -36,11 +37,14 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
   File? _profileImage;
   static const _profileImageKey = 'profile_image_path';
   bool _isUploading = false;
+  List<Map<String, dynamic>>? _stats;
+  bool _isLoadingStats = true;
 
   @override
   void initState() {
     super.initState();
     _loadProfileImage();
+    _fetchStats();
   }
 
   Future<void> _loadProfileImage() async {
@@ -49,6 +53,35 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     if (path != null && path.isNotEmpty) {
       setState(() {
         _profileImage = File(path);
+      });
+    }
+  }
+
+  Future<void> _fetchStats() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        ApiEndpoints.finalStats, // Define this as '/final-stats'
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      final data = response.data['data'] as List;
+      setState(() {
+        _stats = data
+            .map((e) => {
+                  'label': e['label'],
+                  'value': e['value'],
+                })
+            .toList();
+        _isLoadingStats = false;
+      });
+    } catch (e) {
+      setState(() {
+        _stats = [];
+        _isLoadingStats = false;
       });
     }
   }
@@ -147,12 +180,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         user != null ? ('${user.firstName} ${user.lastName}') : 'Guest';
     final email = user?.email ?? '';
     final profilePic = user?.profilePicture;
-    // User stats mock (replace with real data if available)
-    final stats = [
-      {'label': 'Orders', 'value': '24'},
-      {'label': 'Favorites', 'value': '8'},
-      {'label': 'Reservations', 'value': '5'},
-    ];
     return Scaffold(
       body: Stack(
         children: [
@@ -341,19 +368,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                         ),
                                         const SizedBox(height: 14),
                                         // User stats row
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            _ProfileStat(
-                                                value: '24', label: 'Orders'),
-                                            _ProfileStat(
-                                                value: '8', label: 'Favorites'),
-                                            _ProfileStat(
-                                                value: '5',
-                                                label: 'Reservations'),
-                                          ],
-                                        ),
+                                        _buildStats(),
                                       ],
                                     ),
                                   ),
@@ -629,6 +644,68 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
       ),
     );
   }
+
+  Widget _buildStats() {
+    if (_isLoadingStats) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final stats = _stats ?? [];
+    final icons = {
+      'Orders': Icons.shopping_bag,
+      'Favorites': Icons.favorite,
+      'Reservations': Icons.calendar_today,
+    };
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: stats.map((stat) {
+          final icon = icons[stat['label']] ?? Icons.info;
+          return Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Color(0xFF184C55), size: 24),
+                const SizedBox(height: 4),
+                Text(
+                  stat['value'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFF184C55),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  stat['label'],
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
 
 class _ProfileOption extends StatelessWidget {
@@ -808,42 +885,6 @@ class _EditProfileFormState extends State<_EditProfileForm> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ProfileStat extends StatelessWidget {
-  final String value;
-  final String label;
-
-  const _ProfileStat({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF184C55),
-                ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[700],
-                  fontSize: 13,
-                ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ],
       ),
     );
   }

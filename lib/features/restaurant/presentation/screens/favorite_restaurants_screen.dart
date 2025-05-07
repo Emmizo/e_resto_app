@@ -9,6 +9,7 @@ import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
+import 'package:e_resta_app/features/map/presentation/screens/map_screen.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -92,52 +93,34 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favorite Restaurants'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              context.watch<ThemeProvider>().themeMode == ThemeMode.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
-            ),
-            onPressed: () {
-              final themeProvider = context.read<ThemeProvider>();
-              themeProvider.toggleTheme();
-            },
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? ErrorStateWidget(
-                  message: _errorMessage,
-                  code: _errorCode,
-                  onRetry: _fetchFavorites,
-                )
-              : _restaurants.isEmpty
-                  ? _buildEmptyState(context)
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _restaurants.length,
-                      itemBuilder: (context, index) {
-                        final item = _restaurants[index];
-                        final restaurant = item['restaurant'] ??
-                            item; // fallback if API returns just restaurant
-                        return _RestaurantCard(
-                          restaurant: restaurant,
-                          onRemove: () => _unfavoriteRestaurant(
-                              restaurant['id'] is int
-                                  ? restaurant['id']
-                                  : int.tryParse(restaurant['id'].toString()) ??
-                                      0,
-                              index),
-                        ).animate(delay: (100 * index).ms).fadeIn().slideX();
-                      },
-                    ),
-    );
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (_error != null) {
+      return ErrorStateWidget(
+        message: _errorMessage,
+        code: _errorCode,
+        onRetry: _fetchFavorites,
+      );
+    } else if (_restaurants.isEmpty) {
+      return _buildEmptyState(context);
+    } else {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _restaurants.length,
+        itemBuilder: (context, index) {
+          final item = _restaurants[index];
+          final restaurant = item['restaurant'] ?? item;
+          return _RestaurantCard(
+            restaurant: restaurant,
+            onRemove: () => _unfavoriteRestaurant(
+                restaurant['id'] is int
+                    ? restaurant['id']
+                    : int.tryParse(restaurant['id'].toString()) ?? 0,
+                index),
+          ).animate(delay: (100 * index).ms).fadeIn().slideX();
+        },
+      );
+    }
   }
 
   Widget _buildEmptyState(BuildContext context) {

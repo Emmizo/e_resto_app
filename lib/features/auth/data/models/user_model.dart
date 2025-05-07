@@ -4,6 +4,7 @@ class UserModel {
   final String lastName;
   final String? profilePicture;
   final String email;
+  final String phoneNumber;
   final bool has2faEnabled;
   final int status;
   final String? fcmToken;
@@ -15,6 +16,7 @@ class UserModel {
     required this.lastName,
     this.profilePicture,
     required this.email,
+    required this.phoneNumber,
     required this.has2faEnabled,
     required this.status,
     this.fcmToken,
@@ -28,6 +30,7 @@ class UserModel {
       lastName: json['last_name'],
       profilePicture: json['profile_picture'],
       email: json['email'],
+      phoneNumber: json['phone_number'],
       has2faEnabled: json['has_2fa_enabled'] is bool
           ? json['has_2fa_enabled']
           : json['has_2fa_enabled'] == 1,
@@ -43,6 +46,7 @@ class UserModel {
         'last_name': lastName,
         'profile_picture': profilePicture,
         'email': email,
+        'phone_number': phoneNumber,
         'has_2fa_enabled': has2faEnabled,
         'status': status,
         'fcm_token': fcmToken,

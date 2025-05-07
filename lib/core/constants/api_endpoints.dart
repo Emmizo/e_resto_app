@@ -22,5 +22,7 @@ class ApiEndpoints {
       '${ApiConfig.baseUrl}/restaurants/unfavorite';
   static const String restaurantFavorites =
       '${ApiConfig.baseUrl}/restaurants/favorites';
+  static const String reservations = '${ApiConfig.baseUrl}/reservations';
+  static const String finalStats = '${ApiConfig.baseUrl}/final-stats';
   // Add more endpoints as needed
 }

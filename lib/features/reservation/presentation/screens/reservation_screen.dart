@@ -43,10 +43,10 @@ class Reservation {
   }
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
-    final timeParts = (json['time'] as String).split(':');
+    final timeParts = (json['reservation_time'] as String).split(':');
     return Reservation(
-      id: json['id'],
-      date: DateTime.parse(json['date']),
+      id: json['id'].toString(),
+      date: DateTime.parse(json['reservation_time']),
       time: TimeOfDay(
         hour: int.parse(timeParts[0]),
         minute: int.parse(timeParts[1]),
@@ -132,7 +132,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
     final user = authProvider.user;
     if (user != null) {
       _nameController.text = '${user.firstName} ${user.lastName}';
-      _phoneController.text = user.email; // Using email as contact for now
+      _phoneController.text =
+          user.phoneNumber; // Using email as contact for now
     }
   }
 
@@ -237,7 +238,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${e.toString()}'),
+              content: Center(child: Text('Fail to send reservation')),
               backgroundColor: Colors.red,
             ),
           );

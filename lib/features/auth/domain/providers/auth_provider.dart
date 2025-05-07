@@ -125,6 +125,7 @@ class AuthProvider extends ChangeNotifier {
         lastName: _user!.lastName,
         profilePicture: url,
         email: _user!.email,
+        phoneNumber: _user!.phoneNumber,
         has2faEnabled: _user!.has2faEnabled,
         status: _user!.status,
         fcmToken: _user!.fcmToken,

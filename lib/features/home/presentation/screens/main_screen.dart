@@ -21,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final List<Widget> _screens = [
     const HomeScreen(),
-    const MapScreen(),
+    MapScreen(restaurants: const []),
     const ProfileScreen(),
   ];
 
