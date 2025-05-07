@@ -103,44 +103,21 @@ class _MainScreenState extends State<MainScreen> {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  currentAccountPicture: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: Colors.white,
-                        backgroundImage:
-                            profilePic != null && profilePic.isNotEmpty
-                                ? NetworkImage(profilePic) as ImageProvider
-                                : null,
-                        child: (profilePic == null || profilePic.isEmpty)
-                            ? Text(
-                                name.isNotEmpty ? name[0] : 'G',
-                                style: const TextStyle(
-                                    fontSize: 36,
-                                    color: Color(0xFF184C55),
-                                    fontWeight: FontWeight.bold),
-                              )
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Icon(Icons.edit,
-                              size: 20, color: Color(0xFF184C55)),
-                        ),
-                      ),
-                    ],
+                  currentAccountPicture: CircleAvatar(
+                    radius: 36,
+                    backgroundColor: Colors.white,
+                    backgroundImage: profilePic != null && profilePic.isNotEmpty
+                        ? NetworkImage(profilePic) as ImageProvider
+                        : null,
+                    child: (profilePic == null || profilePic.isEmpty)
+                        ? Text(
+                            name.isNotEmpty ? name[0] : 'G',
+                            style: const TextStyle(
+                                fontSize: 36,
+                                color: Color(0xFF184C55),
+                                fontWeight: FontWeight.bold),
+                          )
+                        : null,
                   ),
                   accountName: Text(name,
                       style: const TextStyle(
