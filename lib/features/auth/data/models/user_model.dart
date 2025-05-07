@@ -9,6 +9,7 @@ class UserModel {
   final int status;
   final String? fcmToken;
   final String? google2faSecret;
+  final String? address;
 
   UserModel({
     required this.id,
@@ -21,6 +22,7 @@ class UserModel {
     required this.status,
     this.fcmToken,
     this.google2faSecret,
+    this.address,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class UserModel {
       status: json['status'],
       fcmToken: json['fcm_token'],
       google2faSecret: json['google2fa_secret'],
+      address: json['address'],
     );
   }
 
@@ -51,5 +54,6 @@ class UserModel {
         'status': status,
         'fcm_token': fcmToken,
         'google2fa_secret': google2faSecret,
+        'address': address,
       };
 }

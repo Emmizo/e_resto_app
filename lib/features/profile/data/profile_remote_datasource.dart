@@ -25,4 +25,20 @@ class ProfileRemoteDatasource {
     );
     return response;
   }
+
+  Future<Response> updateProfile({
+    required String token,
+    required Map<String, dynamic> data,
+  }) async {
+    return await dio.put(
+      '${ApiConfig.baseUrl}/user/profile',
+      data: data,
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+  }
 }

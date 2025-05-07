@@ -111,10 +111,7 @@ class _HomeScreenState extends State<HomeScreen>
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
     final restaurants = await datasource.fetchRestaurants(token: token);
-    debugPrint('Fetched restaurants:');
-    for (var r in restaurants) {
-      debugPrint('Restaurant: \\${r.name}, cuisineId: \\${r.cuisineId}');
-    }
+    
     setState(() {
       _restaurants = restaurants;
       _filteredRestaurants = restaurants;

@@ -17,6 +17,7 @@ import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart
 import 'package:dio/dio.dart';
 import 'favorite_tab_screen.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -162,8 +163,20 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         );
       }
     } catch (e) {
+      String errorMsg = 'Upload failed. Please try a different image.';
+      if (e is DioException && e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data['message'] != null) {
+          errorMsg = data['message'];
+          if (data['errors'] != null && data['errors'] is Map) {
+            final errors =
+                (data['errors'] as Map).values.expand((v) => v).join('\n');
+            errorMsg += '\n$errors';
+          }
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Upload error: \\${e.toString()}')),
+        SnackBar(content: Text(errorMsg)),
       );
     } finally {
       setState(() {
@@ -249,23 +262,43 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                             width: 3,
                                           ),
                                         ),
-                                        child: CircleAvatar(
-                                          radius: 44,
-                                          backgroundColor: Colors.white,
-                                          backgroundImage: _profileImage != null
-                                              ? FileImage(_profileImage!)
+                                        child: ClipOval(
+                                          child: _profileImage != null
+                                              ? Image.file(
+                                                  _profileImage!,
+                                                  width: 88,
+                                                  height: 88,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error,
+                                                          stackTrace) =>
+                                                      const Icon(
+                                                    Icons.person,
+                                                    size: 44,
+                                                    color: Color(0xFF184C55),
+                                                  ),
+                                                )
                                               : (profilePic != null &&
                                                       profilePic.isNotEmpty
-                                                  ? NetworkImage(profilePic)
-                                                      as ImageProvider<Object>?
-                                                  : null),
-                                          child: _profileImage == null &&
-                                                  (profilePic == null ||
-                                                      profilePic.isEmpty)
-                                              ? const Icon(Icons.person,
-                                                  size: 44,
-                                                  color: Color(0xFF184C55))
-                                              : null,
+                                                  ? Image.network(
+                                                      profilePic,
+                                                      width: 88,
+                                                      height: 88,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                              error,
+                                                              stackTrace) =>
+                                                          const Icon(
+                                                        Icons.person,
+                                                        size: 44,
+                                                        color:
+                                                            Color(0xFF184C55),
+                                                      ),
+                                                    )
+                                                  : const Icon(
+                                                      Icons.person,
+                                                      size: 44,
+                                                      color: Color(0xFF184C55),
+                                                    )),
                                         ),
                                       ),
                                       Positioned(
@@ -806,22 +839,85 @@ class _EditProfileForm extends StatefulWidget {
 
 class _EditProfileFormState extends State<_EditProfileForm> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
   late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _addressController;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    // In a real app, fetch these from user profile provider or state
-    _nameController = TextEditingController(text: 'John Doe');
-    _emailController = TextEditingController(text: 'john.doe@example.com');
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    _firstNameController = TextEditingController(text: user?.firstName ?? '');
+    _lastNameController = TextEditingController(text: user?.lastName ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
+    _addressController = TextEditingController(text: user?.address ?? '');
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitProfileUpdate() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication error: No token found.')),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+    final data = {
+      "first_name": _firstNameController.text.trim(),
+      "last_name": _lastNameController.text.trim(),
+      "email": _emailController.text.trim(),
+      "phone_number": _phoneController.text.trim(),
+      "address": _addressController.text.trim(),
+    };
+    try {
+      final profileDatasource = ProfileRemoteDatasource(Dio());
+      final response =
+          await profileDatasource.updateProfile(token: token, data: data);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final respData = response.data;
+        if (respData['status'] == 'success') {
+          // Optionally update user in provider
+          final updated = respData['data'];
+          authProvider.setUser(UserModel.fromJson(updated));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile updated successfully!')),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(respData['message'] ?? 'Update failed')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${response.statusMessage}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -846,10 +942,18 @@ class _EditProfileFormState extends State<_EditProfileForm> {
                     ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
+              controller: _firstNameController,
+              decoration: const InputDecoration(labelText: 'First Name'),
               validator: (value) => value == null || value.isEmpty
-                  ? 'Please enter your name'
+                  ? 'Please enter your first name'
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _lastNameController,
+              decoration: const InputDecoration(labelText: 'Last Name'),
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Please enter your last name'
                   : null,
             ),
             const SizedBox(height: 16),
@@ -860,25 +964,47 @@ class _EditProfileFormState extends State<_EditProfileForm> {
                   ? 'Please enter your email'
                   : null,
             ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _phoneController,
+              decoration: const InputDecoration(labelText: 'Phone Number'),
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Please enter your phone number'
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(labelText: 'Address'),
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Please enter your address'
+                  : null,
+            ),
             const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed:
+                        _isSubmitting ? null : () => Navigator.pop(context),
                     child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // TODO: Save profile changes
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: const Text('Save'),
+                    onPressed: _isSubmitting ? null : _submitProfileUpdate,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF184C55),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Save',
+                            style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

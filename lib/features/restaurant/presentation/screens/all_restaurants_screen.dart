@@ -148,11 +148,7 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
         _filteredRestaurants = restaurants;
         _isLoading = false;
       });
-      print('Fetched restaurants count: \\${restaurants.length}');
-      if (restaurants.isNotEmpty) {
-        print(
-            'First few restaurants: \\${restaurants.take(3).map((r) => r.name).toList()}');
-      }
+
       _applyFiltersAndSort();
     } catch (e) {
       final parsed = parseDioError(e);

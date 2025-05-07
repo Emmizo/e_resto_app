@@ -138,4 +138,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void setUser(UserModel user) {
+    _user = user;
+    repository.prefs.setString(_userKey, jsonEncode(user.toJson()));
+    notifyListeners();
+  }
 }

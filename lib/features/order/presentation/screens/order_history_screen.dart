@@ -72,7 +72,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 children: [
                   _OrderTypeChip(orderType: order.orderType),
                   const SizedBox(width: 8),
-                  Text('Status: ${order.status}'),
+                  _OrderStatusChip(status: order.status),
                 ],
               ),
               Text('Total: Frw${order.totalAmount}'),
@@ -171,7 +171,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   children: [
                                     _OrderTypeChip(orderType: order.orderType),
                                     const SizedBox(width: 8),
-                                    Text('Status: ${order.status}'),
+                                    _OrderStatusChip(status: order.status),
                                   ],
                                 ),
                                 Text('Total: ₣${order.totalAmount}'),
@@ -210,6 +210,38 @@ class _OrderTypeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       label: Text(_label, style: const TextStyle(color: Colors.white)),
+      backgroundColor: _color,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _OrderStatusChip extends StatelessWidget {
+  final String status;
+  const _OrderStatusChip({required this.status});
+
+  Color get _color {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+        return Colors.blue;
+      case 'completed':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(
+        status[0].toUpperCase() + status.substring(1),
+        style: const TextStyle(color: Colors.white),
+      ),
       backgroundColor: _color,
       visualDensity: VisualDensity.compact,
     );
