@@ -8,6 +8,8 @@ import '../../../restaurant/data/models/restaurant_model.dart';
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import 'package:e_resta_app/core/widgets/error_state_widget.dart';
+import 'package:e_resta_app/core/utils/error_utils.dart';
 
 class RestaurantDetailsScreen extends StatelessWidget {
   final RestaurantModel restaurant;
@@ -303,10 +305,17 @@ class RestaurantDetailsScreen extends StatelessWidget {
         throw Exception('Failed to submit review: \\${response.statusMessage}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Error: \\${e.toString()}'),
-            backgroundColor: Colors.red),
+      final parsed = parseDioError(e);
+      showDialog(
+        context: context,
+        builder: (context) => ErrorStateWidget(
+          message: parsed.message,
+          code: parsed.code,
+          onRetry: () {
+            Navigator.pop(context);
+            _submitReview(context, rating, comment);
+          },
+        ),
       );
     }
   }

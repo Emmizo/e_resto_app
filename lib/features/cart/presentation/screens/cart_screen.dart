@@ -5,6 +5,8 @@ import '../../../../core/providers/cart_provider.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:e_resta_app/core/widgets/error_state_widget.dart';
+import 'package:e_resta_app/core/utils/error_utils.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -311,10 +313,16 @@ class _CartSummary extends StatelessWidget {
       await cartProvider.clearCart();
       _showPayLaterConfirmation(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Order failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
+      final parsed = parseDioError(e);
+      showDialog(
+        context: context,
+        builder: (context) => ErrorStateWidget(
+          message: parsed.message,
+          code: parsed.code,
+          onRetry: () {
+            Navigator.pop(context);
+            _submitPayLaterOrder(context, address, instructions, orderType);
+          },
         ),
       );
     }

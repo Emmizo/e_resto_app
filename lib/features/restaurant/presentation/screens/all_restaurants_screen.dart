@@ -6,6 +6,8 @@ import '../../data/models/restaurant_model.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:provider/provider.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:e_resta_app/core/widgets/error_state_widget.dart';
+import 'package:e_resta_app/core/utils/error_utils.dart';
 
 class Restaurant {
   final String name;
@@ -88,6 +90,8 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
   List<RestaurantModel> _filteredRestaurants = [];
   bool _isLoading = true;
   String? _error;
+  String? _errorMessage;
+  int? _errorCode;
   Map<int, String> _cuisineIdToName = {};
   Set<int> _favoriteRestaurantIds = {};
 
@@ -113,6 +117,8 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
     setState(() {
       _isLoading = true;
       _error = null;
+      _errorMessage = null;
+      _errorCode = null;
     });
     try {
       final dio = Dio();
@@ -149,9 +155,12 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       }
       _applyFiltersAndSort();
     } catch (e) {
+      final parsed = parseDioError(e);
       setState(() {
         _isLoading = false;
-        _error = e.toString();
+        _error = parsed.message;
+        _errorMessage = parsed.message;
+        _errorCode = parsed.code;
       });
     }
   }
@@ -332,7 +341,11 @@ class _AllRestaurantsScreenState extends State<AllRestaurantsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Error here: $_error'))
+              ? ErrorStateWidget(
+                  message: _errorMessage,
+                  code: _errorCode,
+                  onRetry: _fetchRestaurants,
+                )
               : Column(
                   children: [
                     // Filters and Sort Section

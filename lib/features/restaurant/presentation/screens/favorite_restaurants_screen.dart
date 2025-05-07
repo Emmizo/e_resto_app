@@ -7,6 +7,8 @@ import 'restaurant_details_screen.dart';
 import '../../data/models/restaurant_model.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:e_resta_app/core/widgets/error_state_widget.dart';
+import 'package:e_resta_app/core/utils/error_utils.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -20,6 +22,8 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
   List<dynamic> _restaurants = [];
   bool _isLoading = true;
   String? _error;
+  String? _errorMessage;
+  int? _errorCode;
 
   @override
   void initState() {
@@ -31,6 +35,8 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
     setState(() {
       _isLoading = true;
       _error = null;
+      _errorMessage = null;
+      _errorCode = null;
     });
     try {
       final dio = Dio();
@@ -47,9 +53,12 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      final parsed = parseDioError(e);
       setState(() {
         _isLoading = false;
-        _error = e.toString();
+        _error = parsed.message;
+        _errorMessage = parsed.message;
+        _errorCode = parsed.code;
       });
     }
   }
@@ -103,7 +112,11 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Error: $_error'))
+              ? ErrorStateWidget(
+                  message: _errorMessage,
+                  code: _errorCode,
+                  onRetry: _fetchFavorites,
+                )
               : _restaurants.isEmpty
                   ? _buildEmptyState(context)
                   : ListView.builder(
