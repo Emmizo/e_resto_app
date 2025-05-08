@@ -109,13 +109,12 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
         itemCount: _restaurants.length,
         itemBuilder: (context, index) {
           final item = _restaurants[index];
-          final restaurant = item['restaurant'] ?? item;
           return _RestaurantCard(
-            restaurant: restaurant,
+            item: item,
             onRemove: () => _unfavoriteRestaurant(
-                restaurant['id'] is int
-                    ? restaurant['id']
-                    : int.tryParse(restaurant['id'].toString()) ?? 0,
+                item['id'] is int
+                    ? item['id']
+                    : int.tryParse(item['id'].toString()) ?? 0,
                 index),
           ).animate(delay: (100 * index).ms).fadeIn().slideX();
         },
@@ -162,180 +161,106 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
 }
 
 class _RestaurantCard extends StatelessWidget {
-  final dynamic restaurant;
+  final dynamic item;
   final VoidCallback onRemove;
 
   const _RestaurantCard({
-    required this.restaurant,
+    required this.item,
     required this.onRemove,
   });
 
   @override
   Widget build(BuildContext context) {
+    final restaurant = item['restaurant'] ?? item;
+    final averageRating = item['average_rating'] ?? 0;
+    final reviewsCount = item['reviews_count'] ?? 0;
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RestaurantDetailsScreen(
-                restaurant: RestaurantModel(
-                  id: restaurant['id'] is int
-                      ? restaurant['id']
-                      : int.tryParse(restaurant['id'].toString()) ?? 0,
-                  name: restaurant['name'] ?? '',
-                  description: restaurant['description'] ?? '',
-                  address: restaurant['address'] ?? '',
-                  longitude: restaurant['longitude']?.toString() ?? '',
-                  latitude: restaurant['latitude']?.toString() ?? '',
-                  phoneNumber: restaurant['phone_number'] ?? '',
-                  email: restaurant['email'] ?? '',
-                  website: restaurant['website'],
-                  openingHours: restaurant['opening_hours'] ?? '',
-                  cuisineId: restaurant['cuisine_id'] is int
-                      ? restaurant['cuisine_id']
-                      : int.tryParse(
-                          restaurant['cuisine_id']?.toString() ?? ''),
-                  priceRange: restaurant['price_range'] ?? '',
-                  image: restaurant['image'],
-                  ownerId: restaurant['owner_id'] is int
-                      ? restaurant['owner_id']
-                      : int.tryParse(
-                              restaurant['owner_id']?.toString() ?? '') ??
-                          0,
-                  isApproved: restaurant['is_approved'] is bool
-                      ? restaurant['is_approved']
-                      : restaurant['is_approved'] == 1,
-                  status: restaurant['status'] is bool
-                      ? restaurant['status']
-                      : restaurant['status'] == 1,
-                  menus: [],
-                  averageRating: (restaurant['average_rating'] is int)
-                      ? (restaurant['average_rating'] as int).toDouble()
-                      : (restaurant['average_rating'] is double)
-                          ? restaurant['average_rating']
-                          : double.tryParse(
-                                  restaurant['average_rating']?.toString() ??
-                                      '0') ??
-                              0.0,
-                ),
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Restaurant Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: restaurant['image'] != null &&
+                      restaurant['image'].toString().isNotEmpty
+                  ? Image.network(
+                      restaurant['image'],
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 80,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.restaurant, color: Colors.grey),
+                      ),
+                    )
+                  : Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.restaurant, color: Colors.grey),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    restaurant['name'] ?? '',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    restaurant['address'] ?? '',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 3),
+                      Text(
+                        averageRating.toStringAsFixed(1),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '($reviewsCount reviews)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.favorite, color: Colors.red, size: 20),
+                      // Optionally, add a remove button here
+                    ],
+                  ),
+                ],
               ),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: restaurant['image'] != null &&
-                        restaurant['image'].toString().isNotEmpty
-                    ? Image.network(
-                        restaurant['image'],
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.asset(
-                        'assets/images/tea.jpg',
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      restaurant['name'] ?? '',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${restaurant['cuisine'] ?? ''}${restaurant['distance'] != null ? ' • ${restaurant['distance'].toStringAsFixed(1)} km away' : ''}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star,
-                          size: 16,
-                          color: Colors.amber,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          (restaurant['average_rating'] ??
-                                  restaurant['rating'] ??
-                                  0)
-                              .toString(),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '(${restaurant['reviews'] ?? 0} reviews)',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          restaurant['delivery_time'] ?? '',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.delivery_dining,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          restaurant['delivery_fee'] != null
-                              ? '\$${restaurant['delivery_fee']}'
-                              : '',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.favorite, color: Colors.red),
-                onPressed: onRemove,
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

@@ -75,6 +75,7 @@ class RestaurantModel {
   final bool status;
   final List<MenuModel> menus;
   final double averageRating;
+  final bool isFavorite;
 
   RestaurantModel({
     required this.id,
@@ -95,6 +96,7 @@ class RestaurantModel {
     required this.status,
     required this.menus,
     required this.averageRating,
+    required this.isFavorite,
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) =>
@@ -135,5 +137,32 @@ class RestaurantModel {
                 ? json['average_rating']
                 : double.tryParse(json['average_rating']?.toString() ?? '0') ??
                     0.0,
+        isFavorite: json['is_favorite'] == true || json['is_favorite'] == 1,
       );
+
+  RestaurantModel copyWith({
+    bool? isFavorite,
+  }) {
+    return RestaurantModel(
+      id: id,
+      name: name,
+      description: description,
+      address: address,
+      longitude: longitude,
+      latitude: latitude,
+      phoneNumber: phoneNumber,
+      email: email,
+      website: website,
+      openingHours: openingHours,
+      cuisineId: cuisineId,
+      priceRange: priceRange,
+      image: image,
+      ownerId: ownerId,
+      isApproved: isApproved,
+      status: status,
+      menus: menus,
+      averageRating: averageRating,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 }

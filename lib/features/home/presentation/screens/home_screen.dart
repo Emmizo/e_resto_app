@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<CuisineCategory> _categories = [CuisineCategory(id: null, name: 'All')];
   bool _isCategoriesLoading = true;
   String? _categoriesError;
+  final Set<int> _favoriteLoading = {};
 
   @override
   void initState() {
@@ -105,26 +106,26 @@ class _HomeScreenState extends State<HomeScreen>
       _isRestaurantLoading = true;
       _restaurantError = null;
     });
-    // try {
-    final dio = Dio();
-    final datasource = RestaurantRemoteDatasource(dio);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final token = authProvider.token;
-    final restaurants = await datasource.fetchRestaurants(token: token);
-    
-    setState(() {
-      _restaurants = restaurants;
-      _filteredRestaurants = restaurants;
-      _isRestaurantLoading = false;
-    });
-    _applyFiltersAndSearch();
-    /*  } catch (e) {
+    try {
+      final dio = Dio();
+      final datasource = RestaurantRemoteDatasource(dio);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      final restaurants = await datasource.fetchRestaurants(token: token);
+
+      setState(() {
+        _restaurants = restaurants;
+        _filteredRestaurants = restaurants;
+        _isRestaurantLoading = false;
+      });
+      _applyFiltersAndSearch();
+    } catch (e) {
       debugPrint('Error fetching restaurants: \\${e.toString()}');
       setState(() {
         _isRestaurantLoading = false;
         _restaurantError = e.toString();
       });
-    } */
+    }
   }
 
   void _onSearchChanged() {
@@ -234,6 +235,61 @@ class _HomeScreenState extends State<HomeScreen>
           _hasLocationPermission = false;
         });
       }
+    }
+  }
+
+  Future<void> _toggleFavorite(RestaurantModel restaurant) async {
+    final dio = Dio();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    final isCurrentlyFavorite = restaurant.isFavorite;
+    setState(() {
+      _favoriteLoading.add(restaurant.id);
+    });
+    try {
+      final endpoint = isCurrentlyFavorite
+          ? ApiEndpoints.restaurantUnfavorite
+          : ApiEndpoints.restaurantFavorite;
+      await dio.post(
+        endpoint,
+        data: {'restaurant_id': restaurant.id},
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      setState(() {
+        // Update the favorite status in both lists
+        _restaurants = _restaurants.map((r) {
+          if (r.id == restaurant.id) {
+            return r.copyWith(isFavorite: !isCurrentlyFavorite);
+          }
+          return r;
+        }).toList();
+        _filteredRestaurants = _filteredRestaurants.map((r) {
+          if (r.id == restaurant.id) {
+            return r.copyWith(isFavorite: !isCurrentlyFavorite);
+          }
+          return r;
+        }).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isCurrentlyFavorite
+              ? 'Removed from favorites'
+              : 'Added to favorites'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _favoriteLoading.remove(restaurant.id);
+      });
     }
   }
 
@@ -474,12 +530,12 @@ class _HomeScreenState extends State<HomeScreen>
                 duration: const Duration(milliseconds: 300),
                 height: _isMapExpanded
                     ? MediaQuery.of(context).size.height * 0.4
-                    : MediaQuery.of(context).size.height * 0.7,
+                    : MediaQuery.of(context).size.height * 0.97,
                 transform: Matrix4.translationValues(
                   0,
                   _isMapExpanded
                       ? 0
-                      : -MediaQuery.of(context).size.height * 0.3,
+                      : -MediaQuery.of(context).size.height * 0.03,
                   0,
                 ),
                 decoration: BoxDecoration(
@@ -504,7 +560,7 @@ class _HomeScreenState extends State<HomeScreen>
                         setState(() => _isMapExpanded = !_isMapExpanded);
                       },
                       child: Container(
-                        width: 40,
+                        width: 32,
                         height: 4,
                         margin: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
@@ -536,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen>
                               'Failed to load categories: $_categoriesError')),
                     if (_tabController != null)
                       Container(
-                        height: 48,
+                        height: 58,
                         alignment: Alignment.centerLeft,
                         child: TabBar(
                           controller: _tabController!,
@@ -649,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         gridDelegate:
                                             const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 2,
-                                          childAspectRatio: 0.75,
+                                          childAspectRatio: 0.65,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
                                         ),
@@ -660,6 +716,10 @@ class _HomeScreenState extends State<HomeScreen>
                                           return _ApiRestaurantCard(
                                             restaurant: restaurant,
                                             categories: _categories,
+                                            onFavoriteToggle: () =>
+                                                _toggleFavorite(restaurant),
+                                            isLoading: _favoriteLoading
+                                                .contains(restaurant.id),
                                           )
                                               .animate(delay: (50 * index).ms)
                                               .fadeIn()
@@ -682,17 +742,25 @@ class _HomeScreenState extends State<HomeScreen>
 class _ApiRestaurantCard extends StatelessWidget {
   final RestaurantModel restaurant;
   final List<CuisineCategory> categories;
-  const _ApiRestaurantCard(
-      {required this.restaurant, required this.categories});
+  final VoidCallback? onFavoriteToggle;
+  final bool isLoading;
+  const _ApiRestaurantCard({
+    required this.restaurant,
+    required this.categories,
+    this.onFavoriteToggle,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      elevation: 4,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           Navigator.push(
             context,
@@ -703,58 +771,63 @@ class _ApiRestaurantCard extends StatelessWidget {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 child: restaurant.image != null && restaurant.image!.isNotEmpty
                     ? Image.network(
                         restaurant.image!,
                         width: double.infinity,
-                        height: 100,
+                        height: 130,
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[200],
+                            height: 130,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        (loadingProgress.expectedTotalBytes ??
+                                            1)
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) => Container(
-                          width: double.infinity,
-                          height: 100,
                           color: Colors.grey[200],
-                          child:
-                              const Icon(Icons.restaurant, color: Colors.grey),
+                          height: 130,
+                          child: const Icon(Icons.restaurant,
+                              color: Colors.grey, size: 40),
                         ),
                       )
                     : Container(
-                        width: double.infinity,
-                        height: 100,
                         color: Colors.grey[200],
-                        child: Center(
-                          child: CircleAvatar(
-                            radius: 32,
-                            backgroundColor: Colors.grey[300],
-                            child: Text(
-                              restaurant.id.toString(),
-                              style: const TextStyle(
-                                color: Colors.black54,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
-                              ),
-                            ),
-                          ),
-                        ),
+                        height: 130,
+                        child: const Icon(Icons.restaurant,
+                            color: Colors.grey, size: 40),
                       ),
               ),
+              const SizedBox(height: 8),
+              Divider(height: 1, color: Colors.grey[300]),
               const SizedBox(height: 8),
               Text(
                 restaurant.name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 categories
                     .firstWhere(
@@ -764,38 +837,61 @@ class _ApiRestaurantCard extends StatelessWidget {
                     .name,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 restaurant.address,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
+                      color: Colors.grey[500],
+                      fontSize: 11,
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              if (!restaurant.status)
-                Container(
-                  width: 60,
-                  height: 24,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(4),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 3),
+                      Text(
+                        restaurant.averageRating.toStringAsFixed(1),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'CLOSED',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                  isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : IconButton(
+                          icon: Icon(
+                            restaurant.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          onPressed: onFavoriteToggle,
+                          tooltip:
+                              restaurant.isFavorite ? 'Unfavorite' : 'Favorite',
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                        ),
+                ],
+              ),
             ],
           ),
         ),
