@@ -19,11 +19,20 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    MapScreen(restaurants: const []),
-    const ProfileScreen(),
-  ];
+  final GlobalKey<HomeScreenState> _homeScreenKey =
+      GlobalKey<HomeScreenState>();
+
+  List<Widget> get _screens => [
+        HomeScreen(key: _homeScreenKey),
+        Builder(
+          builder: (context) {
+            final homeState = _homeScreenKey.currentState;
+            final restaurants = homeState?.nearestRestaurantsForMap ?? [];
+            return MapScreen(restaurants: restaurants);
+          },
+        ),
+        const ProfileScreen(),
+      ];
 
   void _openCart() {
     Navigator.push(

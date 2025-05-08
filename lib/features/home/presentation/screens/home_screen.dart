@@ -11,6 +11,7 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
 import '../../../restaurant/data/restaurant_remote_datasource.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
+import 'dart:async';
 
 class CuisineCategory {
   final int? id; // null for 'All'
@@ -22,10 +23,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final Set<Marker> _markers = {};
   bool _isMapExpanded = true;
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _selectedCategoryIndex = 0;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  List<RestaurantModel> _restaurants = [];
+  List<RestaurantModel> restaurants = [];
   List<RestaurantModel> _filteredRestaurants = [];
   bool _isRestaurantLoading = true;
   String? _restaurantError;
@@ -46,6 +47,9 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isCategoriesLoading = true;
   String? _categoriesError;
   final Set<int> _favoriteLoading = {};
+  double? _userLat;
+  double? _userLng;
+  Timer? _locationRefreshTimer;
 
   @override
   void initState() {
@@ -54,6 +58,15 @@ class _HomeScreenState extends State<HomeScreen>
     _initializeMap();
     _fetchRestaurants();
     _searchController.addListener(_onSearchChanged);
+    _getUserLocationAndSort();
+    _startLocationAutoRefresh();
+  }
+
+  void _startLocationAutoRefresh() {
+    _locationRefreshTimer?.cancel();
+    _locationRefreshTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
+      _getUserLocationAndSort();
+    });
   }
 
   Future<void> _fetchCategories() async {
@@ -95,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _locationRefreshTimer?.cancel();
     _mapController?.dispose();
     _tabController?.dispose();
     _searchController.dispose();
@@ -114,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen>
       final restaurants = await datasource.fetchRestaurants(token: token);
 
       setState(() {
-        _restaurants = restaurants;
+        this.restaurants = restaurants;
         _filteredRestaurants = restaurants;
         _isRestaurantLoading = false;
       });
@@ -135,8 +149,8 @@ class _HomeScreenState extends State<HomeScreen>
   void _applyFiltersAndSearch() {
     setState(() {
       _filteredRestaurants = _searchQuery.isEmpty
-          ? List.from(_restaurants)
-          : _restaurants.where((restaurant) {
+          ? List.from(restaurants)
+          : restaurants.where((restaurant) {
               final cuisineName = _categories
                   .firstWhere(
                     (cat) => cat.id == restaurant.cuisineId,
@@ -151,13 +165,24 @@ class _HomeScreenState extends State<HomeScreen>
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase()));
             }).toList();
-
+      // Always sort filtered list by distance
+      _filteredRestaurants.sort((a, b) {
+        double aDist = _distanceTo(a) ?? double.infinity;
+        double bDist = _distanceTo(b) ?? double.infinity;
+        return aDist.compareTo(bDist);
+      });
       // Apply category filter if not "All"
       if (_selectedCategoryIndex > 0) {
         final selectedCategory = _categories[_selectedCategoryIndex];
         _filteredRestaurants = _filteredRestaurants
             .where((r) => r.cuisineId == selectedCategory.id)
             .toList();
+        // Sort again after category filter
+        _filteredRestaurants.sort((a, b) {
+          double aDist = _distanceTo(a) ?? double.infinity;
+          double bDist = _distanceTo(b) ?? double.infinity;
+          return aDist.compareTo(bDist);
+        });
       }
     });
   }
@@ -238,6 +263,54 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  Future<void> _getUserLocationAndSort() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _userLat = position.latitude;
+        _userLng = position.longitude;
+      });
+      _sortRestaurantsByDistance();
+    } catch (e) {
+      // If location fails, just use the original order
+      debugPrint('Failed to get user location: $e');
+    }
+  }
+
+  void _sortRestaurantsByDistance() {
+    if (_userLat == null || _userLng == null) return;
+    restaurants.sort((a, b) {
+      double aDist = Geolocator.distanceBetween(
+          _userLat!,
+          _userLng!,
+          double.tryParse(a.latitude) ?? 0.0,
+          double.tryParse(a.longitude) ?? 0.0);
+      double bDist = Geolocator.distanceBetween(
+          _userLat!,
+          _userLng!,
+          double.tryParse(b.latitude) ?? 0.0,
+          double.tryParse(b.longitude) ?? 0.0);
+      return aDist.compareTo(bDist);
+    });
+    setState(() {});
+  }
+
+  List<RestaurantModel> get nearestRestaurantsForMap {
+    if (_userLat == null || _userLng == null)
+      return restaurants.take(5).toList();
+    return restaurants.take(5).toList(); // Already sorted by distance
+  }
+
+  double? _distanceTo(RestaurantModel restaurant) {
+    if (_userLat == null || _userLng == null) return null;
+    return Geolocator.distanceBetween(
+        _userLat!,
+        _userLng!,
+        double.tryParse(restaurant.latitude) ?? 0.0,
+        double.tryParse(restaurant.longitude) ?? 0.0);
+  }
+
   Future<void> _toggleFavorite(RestaurantModel restaurant) async {
     final dio = Dio();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -259,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen>
       );
       setState(() {
         // Update the favorite status in both lists
-        _restaurants = _restaurants.map((r) {
+        restaurants = restaurants.map((r) {
           if (r.id == restaurant.id) {
             return r.copyWith(isFavorite: !isCurrentlyFavorite);
           }
@@ -705,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         gridDelegate:
                                             const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 2,
-                                          childAspectRatio: 0.65,
+                                          childAspectRatio: 0.60,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
                                         ),
@@ -713,6 +786,8 @@ class _HomeScreenState extends State<HomeScreen>
                                         itemBuilder: (context, index) {
                                           final restaurant =
                                               _filteredRestaurants[index];
+                                          final distance =
+                                              _distanceTo(restaurant);
                                           return _ApiRestaurantCard(
                                             restaurant: restaurant,
                                             categories: _categories,
@@ -720,6 +795,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 _toggleFavorite(restaurant),
                                             isLoading: _favoriteLoading
                                                 .contains(restaurant.id),
+                                            distance: distance,
                                           )
                                               .animate(delay: (50 * index).ms)
                                               .fadeIn()
@@ -744,11 +820,13 @@ class _ApiRestaurantCard extends StatelessWidget {
   final List<CuisineCategory> categories;
   final VoidCallback? onFavoriteToggle;
   final bool isLoading;
+  final double? distance;
   const _ApiRestaurantCard({
     required this.restaurant,
     required this.categories,
     this.onFavoriteToggle,
     this.isLoading = false,
+    this.distance,
   });
 
   @override
@@ -853,6 +931,17 @@ class _ApiRestaurantCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (distance != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 2),
+                  child: Text(
+                    '${(distance! / 1000).toStringAsFixed(2)} km away',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.blueGrey,
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
               const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
