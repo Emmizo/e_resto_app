@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/services/notification_service.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -19,6 +20,8 @@ class _NotificationPreferencesScreenState
   bool _restaurantNews = false;
   bool _emailNotifications = true;
   bool _smsNotifications = false;
+  bool _nearbyRestaurantAlerts = true;
+  bool _nearbyLikedMenuAlerts = true;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +99,40 @@ class _NotificationPreferencesScreenState
                   setState(() {
                     _restaurantNews = value;
                   });
+                },
+              ),
+              _buildNotificationOption(
+                'Nearby Restaurant Alerts',
+                'Get notified when you are near a restaurant',
+                _nearbyRestaurantAlerts,
+                (value) async {
+                  setState(() {
+                    _nearbyRestaurantAlerts = value;
+                  });
+                  await NotificationService.updatePreferences(
+                    nearbyRestaurantAlerts: _nearbyRestaurantAlerts,
+                    nearbyLikedMenuAlerts: _nearbyLikedMenuAlerts,
+                  );
+                  if (_nearbyRestaurantAlerts || _nearbyLikedMenuAlerts) {
+                    NotificationService.startProximityMonitoring();
+                  }
+                },
+              ),
+              _buildNotificationOption(
+                'Nearby Liked Menu Alerts',
+                'Get notified when you are near a restaurant with a menu item you like',
+                _nearbyLikedMenuAlerts,
+                (value) async {
+                  setState(() {
+                    _nearbyLikedMenuAlerts = value;
+                  });
+                  await NotificationService.updatePreferences(
+                    nearbyRestaurantAlerts: _nearbyRestaurantAlerts,
+                    nearbyLikedMenuAlerts: _nearbyLikedMenuAlerts,
+                  );
+                  if (_nearbyRestaurantAlerts || _nearbyLikedMenuAlerts) {
+                    NotificationService.startProximityMonitoring();
+                  }
                 },
               ),
             ],

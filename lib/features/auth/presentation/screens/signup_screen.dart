@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/providers/auth_provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -30,6 +31,12 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      fcmToken = null;
+    }
     final success = await authProvider.signup(
       firstName: _nameController.text.trim(),
       lastName: _nameController.text.trim(),
@@ -37,6 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       address: _addressController.text.trim(),
+      fcmToken: fcmToken,
     );
     if (success) {
       Navigator.pop(context); // or navigate to home

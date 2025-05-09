@@ -44,10 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await FirebaseMessaging.instance.requestPermission();
     String? fcmToken;
     try {
       fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token (login): $fcmToken');
     } catch (e) {
+      print('Error fetching FCM token: $e');
       fcmToken = null;
     }
     if (_isLoginMode) {

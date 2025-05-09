@@ -174,11 +174,15 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-class _CartSummary extends StatelessWidget {
+class _CartSummary extends StatefulWidget {
   final double total;
-
   const _CartSummary({required this.total});
 
+  @override
+  State<_CartSummary> createState() => _CartSummaryState();
+}
+
+class _CartSummaryState extends State<_CartSummary> {
   void _showPaymentOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -314,6 +318,7 @@ class _CartSummary extends StatelessWidget {
       _showPayLaterConfirmation(context);
     } catch (e) {
       final parsed = parseDioError(e);
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => ErrorStateWidget(
@@ -377,7 +382,7 @@ class _CartSummary extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  '\$${total.toStringAsFixed(2)}',
+                  '\$${widget.total.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,

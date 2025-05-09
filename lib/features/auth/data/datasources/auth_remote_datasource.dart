@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthRemoteDatasource {
   final Dio dio;
@@ -7,10 +8,18 @@ class AuthRemoteDatasource {
 
   Future<Map<String, dynamic>> login(String email, String password,
       {String? fcmToken}) async {
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token (login): $fcmToken');
+    } catch (e) {
+      print('Error fetching FCM token: $e');
+      fcmToken = null;
+    }
     final data = {'email': email, 'password': password};
     if (fcmToken != null) {
       data['fcm_token'] = fcmToken;
     }
+    print('Login data being sent: ' + data.toString());
     final response = await dio.post(
       ApiEndpoints.login,
       data: data,
