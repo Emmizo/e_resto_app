@@ -28,7 +28,6 @@ import 'core/services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await NotificationService().initialize();
   final prefs = await SharedPreferences.getInstance();
   final dio = Dio();
   final authRepo = AuthRepository(AuthRemoteDatasource(dio), prefs);
@@ -103,6 +102,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _navigateToHome() async {
     try {
+      // Start NotificationService initialization in the background
+      NotificationService().initialize();
       await Future.delayed(const Duration(seconds: 2));
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final isLoggedIn =
