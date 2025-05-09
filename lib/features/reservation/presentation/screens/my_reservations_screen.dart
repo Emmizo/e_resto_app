@@ -1,8 +1,8 @@
+import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import 'reservation_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
@@ -131,7 +131,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
                           const SizedBox(height: 24),
                           ElevatedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HomeScreen(),
+                                ),
+                              );
                             },
                             icon: const Icon(Icons.restaurant),
                             label: const Text('Discover Restaurants'),

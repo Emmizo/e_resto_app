@@ -302,8 +302,8 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                         ),
                                       ),
                                       Positioned(
-                                        bottom: 0,
-                                        right: 0,
+                                        bottom: 4,
+                                        right: 4,
                                         child: GestureDetector(
                                           onTap: () async {
                                             showModalBottomSheet(
@@ -316,7 +316,9 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                                             24)),
                                               ),
                                               builder: (context) => SafeArea(
-                                                child: Wrap(
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
                                                     ListTile(
                                                       leading: const Icon(
@@ -357,9 +359,9 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                                 ),
                                               ],
                                             ),
-                                            padding: const EdgeInsets.all(6),
+                                            padding: const EdgeInsets.all(3),
                                             child: const Icon(Icons.camera_alt,
-                                                size: 20,
+                                                size: 16,
                                                 color: Color(0xFF184C55)),
                                           ),
                                         ),
@@ -688,17 +690,22 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
       'Favorites': Icons.favorite,
       'Reservations': Icons.calendar_today,
     };
+    final shortLabels = {
+      'Orders': 'Orders',
+      'Favorites': 'Favs',
+      'Reservations': 'Resvs',
+    };
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -706,6 +713,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: stats.map((stat) {
           final icon = icons[stat['label']] ?? Icons.info;
+          final label = shortLabels[stat['label']] ?? stat['label'];
           return Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -723,7 +731,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  stat['label'],
+                  label,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[700],
@@ -731,13 +739,14 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                     letterSpacing: 0.2,
                   ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),
           );
         }).toList(),
       ),
-    );
+    ).animate().fadeIn().slideY(begin: 0.1);
   }
 }
 

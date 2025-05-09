@@ -18,16 +18,11 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    print('Number of restaurants: [32m${widget.restaurants.length}[0m');
+
     _setRestaurantMarkers(widget.restaurants);
   }
 
   void _setRestaurantMarkers(List<RestaurantModel> restaurants) {
-    // Only the 5 nearest restaurants are passed from HomeScreen
-    for (var r in restaurants) {
-      print(
-          'Restaurant: [34m${r.name}[0m, lat: [33m${r.latitude} [0m, lng: [33m${r.longitude}[0m');
-    }
     _restaurantMarkers = restaurants
         .where((r) => r.latitude.isNotEmpty && r.longitude.isNotEmpty)
         .map((restaurant) => Marker(

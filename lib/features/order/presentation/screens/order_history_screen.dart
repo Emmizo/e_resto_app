@@ -5,6 +5,7 @@ import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../order/data/models/order_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/core/providers/cart_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -140,7 +141,55 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           : _error != null
               ? Center(child: Text('Error: $_error'))
               : _orders.isEmpty
-                  ? Center(child: Text('No orders found.'))
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.receipt_long,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No Orders Yet',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "You haven't placed any orders yet.\nStart exploring and order your favorite meal!",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/');
+                            },
+                            icon: const Icon(Icons.restaurant_menu),
+                            label: const Text('Browse Restaurants'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn()
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _orders.length,

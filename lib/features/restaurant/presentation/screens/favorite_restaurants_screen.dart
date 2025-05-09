@@ -1,3 +1,4 @@
+import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -149,7 +150,12 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HomeScreen(),
+                ),
+              );
             },
             icon: const Icon(Icons.restaurant),
             label: const Text('Discover Restaurants'),

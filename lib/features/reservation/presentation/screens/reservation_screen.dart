@@ -210,6 +210,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
           'special_requests': _notesController.text,
         };
         final dio = Dio();
+       
         final response = await dio.post(
           '${ApiConfig.baseUrl}/reservations',
           data: data,
@@ -220,6 +221,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
             },
           ),
         );
+       
         if (response.statusCode == 200 || response.statusCode == 201) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

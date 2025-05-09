@@ -21,6 +21,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => ReservationScreen(
           restaurantName: restaurant.name,
+          restaurantId: restaurant.id,
         ),
       ),
     );
@@ -137,7 +138,56 @@ class RestaurantDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (restaurant.menus.isEmpty) Text('No menu available.'),
+                    if (restaurant.menus.isEmpty)
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.menu_book_outlined,
+                              size: 54,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'No Menu Available',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'This restaurant has not published a menu yet.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 18),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Back'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(),
                     for (final menu in restaurant.menus)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,31 +375,68 @@ class RestaurantDetailsScreen extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // App Bar with Restaurant Image
+          // Enhanced AppBar with Hero image, gradient overlay, and circular icons
           SliverAppBar(
-            expandedHeight: 200,
+            automaticallyImplyLeading: false,
+            expandedHeight: 220,
             pinned: true,
+            backgroundColor: Colors.transparent,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  restaurant.image != null && restaurant.image!.isNotEmpty
-                      ? Image.network(
-                          restaurant.image!,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset(
-                          'assets/images/tea.jpg',
-                          fit: BoxFit.cover,
+                  Hero(
+                    tag: 'restaurant_image_${restaurant.id}',
+                    child:
+                        restaurant.image != null && restaurant.image!.isNotEmpty
+                            ? Image.network(
+                                restaurant.image!,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset('assets/images/tea.jpg',
+                                fit: BoxFit.cover),
+                  ),
+                  // Gradient overlay for text contrast
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      height: 90,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7)
+                          ],
                         ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                  // Back and favorite icons
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Colors.black.withOpacity(0.4),
+                            child: IconButton(
+                              icon: const Icon(Icons.arrow_back,
+                                  color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.black.withOpacity(0.4),
+                            child: IconButton(
+                              icon: const Icon(Icons.favorite_border,
+                                  color: Colors.white),
+                              onPressed: () => _showReviewDialog(context),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -358,70 +445,95 @@ class RestaurantDetailsScreen extends StatelessWidget {
               ),
               title: Text(
                 restaurant.name,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black87,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
+                  ],
+                ),
               ),
+              centerTitle: true,
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.favorite_border),
-                tooltip: 'Favorite/Review',
-                onPressed: () => _showReviewDialog(context),
-              ),
-            ],
           ),
 
-          // Restaurant Info
+          // Restaurant Info Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
                     children: [
-                      const Icon(Icons.location_on, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        restaurant.address,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, color: Colors.teal, size: 20),
+                          const SizedBox(width: 6),
+                          Expanded(child: Text(restaurant.address)),
+                        ],
+                      ),
+                      const Divider(),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time,
+                              color: Colors.amber, size: 20),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: Text(
+                                  'Open • Closes at ${restaurant.openingHours}')),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleReservation(context),
+                              icon: const Icon(Icons.calendar_today),
+                              label: const Text(
+                                'Reserve Table',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleOrder(context),
+                              icon: const Icon(Icons.shopping_cart),
+                              label: const Text(
+                                'Order Now',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Open • Closes at ${restaurant.openingHours}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _handleReservation(context),
-                          icon: const Icon(Icons.calendar_today),
-                          label: const Text('Reserve Table'),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _handleOrder(context),
-                          icon: const Icon(Icons.shopping_cart),
-                          label: const Text('Order Now'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -440,7 +552,45 @@ class RestaurantDetailsScreen extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 16),
-                  if (restaurant.menus.isEmpty) Text('No menu available.'),
+                  if (restaurant.menus.isEmpty)
+                    Card(
+                      elevation: 0,
+                      color: Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 32, horizontal: 12),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.menu_book,
+                                size: 54, color: Colors.grey[400]),
+                            const SizedBox(height: 14),
+                            Text(
+                              'No Menu Available',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'This restaurant has not published a menu yet.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   for (final menu in restaurant.menus)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

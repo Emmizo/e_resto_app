@@ -1,5 +1,7 @@
+import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
@@ -57,7 +59,45 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
     } else if (_error != null) {
       return Center(child: Text('Error:  $_error'));
     } else if (_favoriteMenuItems.isEmpty) {
-      return const Center(child: Text('No favorite menu items found.'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.favorite_border,
+              size: 80,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Favorites Yet',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add menu items to your favorites',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HomeScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.restaurant),
+              label: const Text('Discover Restaurants'),
+            ),
+          ],
+        ),
+      ).animate().fadeIn();
     } else {
       return ListView.builder(
         itemCount: _favoriteMenuItems.length,
