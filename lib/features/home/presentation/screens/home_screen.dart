@@ -497,143 +497,318 @@ class HomeScreenState extends State<HomeScreen>
                 height: 140,
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (_promoBanners.isNotEmpty)
-              CarouselSlider(
-                options: CarouselOptions(
-                  height: 140,
-                  autoPlay: true,
-                  enlargeCenterPage: true,
-                  viewportFraction: 1.0,
-                ),
-                items: _promoBanners.map((banner) {
-                  return Builder(
-                    builder: (context) => Container(
-                      height: 140,
-                      width: MediaQuery.of(context).size.width - 32,
-                      margin: EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        image: DecorationImage(
-                          image: NetworkImage(banner.imagePath),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.black.withOpacity(0.4),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0, vertical: 4.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                banner.title,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                              ),
-                              const SizedBox(height: 1),
-                              Text(
-                                banner.description,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                    ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                banner.restaurantName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                              ),
-                              const SizedBox(height: 2),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(80, 32),
-                                  backgroundColor: const Color(0xFFFF7F3F),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  // Find the restaurant by id
-                                  final promoRestaurant =
-                                      restaurants.firstWhere(
-                                    (r) => r.id == banner.restaurantId,
-                                    orElse: () => RestaurantModel(
-                                      id: -1,
-                                      name: '',
-                                      description: '',
-                                      address: '',
-                                      longitude: '',
-                                      latitude: '',
-                                      phoneNumber: '',
-                                      email: '',
-                                      website: null,
-                                      openingHours: '',
-                                      cuisineId: null,
-                                      priceRange: '',
-                                      image: null,
-                                      ownerId: -1,
-                                      isApproved: false,
-                                      status: false,
-                                      menus: [],
-                                      averageRating: 0.0,
-                                      isFavorite: false,
-                                    ),
-                                  );
-                                  if (promoRestaurant.id ==
-                                      banner.restaurantId) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            RestaurantDetailsScreen(
-                                          restaurant: promoRestaurant,
-                                          cuisines: _categories,
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content:
-                                              Text('Restaurant not found.')),
-                                    );
-                                  }
-                                },
-                                child: const Text('Order now',
-                                    style: TextStyle(fontSize: 13)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+            else
+              (() {
+                // Filter banners for restaurants within 5km
+                if (_userLat == null || _userLng == null) {
+                  return SizedBox(height: 140); // Or show a message if you want
+                }
+                final List<PromoBanner> nearBanners =
+                    _promoBanners.where((banner) {
+                  final restaurant = restaurants.firstWhere(
+                    (r) => r.id == banner.restaurantId,
+                    orElse: () => RestaurantModel(
+                      id: -1,
+                      name: '',
+                      description: '',
+                      address: '',
+                      longitude: '',
+                      latitude: '',
+                      phoneNumber: '',
+                      email: '',
+                      website: null,
+                      openingHours: '',
+                      cuisineId: null,
+                      priceRange: '',
+                      image: null,
+                      ownerId: -1,
+                      isApproved: false,
+                      status: false,
+                      menus: [],
+                      averageRating: 0.0,
+                      isFavorite: false,
                     ),
                   );
-                }).toList(),
-              )
-            else
-              SizedBox(height: 140),
+                  if (restaurant.id == -1) return false;
+                  final dist = Geolocator.distanceBetween(
+                    _userLat!,
+                    _userLng!,
+                    double.tryParse(restaurant.latitude) ?? 0.0,
+                    double.tryParse(restaurant.longitude) ?? 0.0,
+                  );
+                  return dist < 5000;
+                }).toList();
+                if (nearBanners.isNotEmpty) {
+                  return CarouselSlider(
+                    options: CarouselOptions(
+                      height: 140,
+                      autoPlay: true,
+                      enlargeCenterPage: true,
+                      viewportFraction: 1.0,
+                    ),
+                    items: nearBanners.map((banner) {
+                      return Builder(
+                        builder: (context) => Container(
+                          height: 140,
+                          width: MediaQuery.of(context).size.width - 32,
+                          margin: EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            image: DecorationImage(
+                              image: NetworkImage(banner.imagePath),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.black.withOpacity(0.4),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0, vertical: 4.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    banner.title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    banner.description,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    banner.restaurantName,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      minimumSize: const Size(80, 32),
+                                      backgroundColor: const Color(0xFFFF7F3F),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      final promoRestaurant =
+                                          restaurants.firstWhere(
+                                        (r) => r.id == banner.restaurantId,
+                                        orElse: () => RestaurantModel(
+                                          id: -1,
+                                          name: '',
+                                          description: '',
+                                          address: '',
+                                          longitude: '',
+                                          latitude: '',
+                                          phoneNumber: '',
+                                          email: '',
+                                          website: null,
+                                          openingHours: '',
+                                          cuisineId: null,
+                                          priceRange: '',
+                                          image: null,
+                                          ownerId: -1,
+                                          isApproved: false,
+                                          status: false,
+                                          menus: [],
+                                          averageRating: 0.0,
+                                          isFavorite: false,
+                                        ),
+                                      );
+                                      if (promoRestaurant.id ==
+                                          banner.restaurantId) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                RestaurantDetailsScreen(
+                                              restaurant: promoRestaurant,
+                                              cuisines: _categories,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Restaurant not found.')),
+                                        );
+                                      }
+                                    },
+                                    child: const Text('Order now',
+                                        style: TextStyle(fontSize: 13)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }
+                // If no banners, show restaurants within 1km as a slider in the same design
+                final List<RestaurantModel> nearRestaurants =
+                    restaurants.where((r) {
+                  final dist = Geolocator.distanceBetween(
+                    _userLat!,
+                    _userLng!,
+                    double.tryParse(r.latitude) ?? 0.0,
+                    double.tryParse(r.longitude) ?? 0.0,
+                  );
+                  return dist <= 1000;
+                }).toList();
+                if (nearRestaurants.isNotEmpty) {
+                  return CarouselSlider(
+                    options: CarouselOptions(
+                      height: 140,
+                      autoPlay: true,
+                      enlargeCenterPage: true,
+                      viewportFraction: 1.0,
+                    ),
+                    items: nearRestaurants.map((restaurant) {
+                      return Builder(
+                        builder: (context) => Container(
+                          height: 140,
+                          width: MediaQuery.of(context).size.width - 32,
+                          margin: EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            image: DecorationImage(
+                              image: restaurant.image != null &&
+                                      restaurant.image!.isNotEmpty
+                                  ? NetworkImage(restaurant.image!)
+                                  : const AssetImage(
+                                          'assets/images/placeholder.png')
+                                      as ImageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.black.withOpacity(0.4),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0, vertical: 4.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    restaurant.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    restaurant.address,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _categories
+                                        .firstWhere(
+                                          (cat) =>
+                                              cat.id == restaurant.cuisineId,
+                                          orElse: () => CuisineCategory(
+                                              id: null, name: 'Unknown'),
+                                        )
+                                        .name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      minimumSize: const Size(80, 32),
+                                      backgroundColor: const Color(0xFFFF7F3F),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              RestaurantDetailsScreen(
+                                            restaurant: restaurant,
+                                            cuisines: _categories,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Order now',
+                                        style: TextStyle(fontSize: 13)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }
+                // If no restaurants within 1km, show placeholder
+                return SizedBox(
+                  height: 140,
+                  child: Center(
+                    child: Text(
+                      'No nearby banners or restaurants found.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                );
+              })(),
             const SizedBox(height: 24),
             // Category Selector
             Padding(
