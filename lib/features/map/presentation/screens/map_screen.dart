@@ -125,30 +125,89 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Restaurants Map')),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: widget.restaurants.isNotEmpty
-              ? LatLng(
-                  double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
-                  double.tryParse(widget.restaurants.first.longitude) ?? 0.0,
-                )
-              : const LatLng(0, 0),
-          zoom: 13,
-        ),
-        markers: _restaurantMarkers,
-        onMapCreated: (controller) {
-          _mapController = controller;
-          // Fit camera after map is created and markers are set
-          if (_restaurantMarkers.isNotEmpty) {
-            final bounds = _createLatLngBounds(
-                _restaurantMarkers.map((m) => m.position).toList());
-            _mapController!
-                .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-          }
-        },
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: widget.restaurants.isNotEmpty
+                  ? LatLng(
+                      double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
+                      double.tryParse(widget.restaurants.first.longitude) ??
+                          0.0,
+                    )
+                  : const LatLng(0, 0),
+              zoom: 13,
+            ),
+            markers: _restaurantMarkers,
+            onMapCreated: (controller) {
+              _mapController = controller;
+              // Fit camera after map is created and markers are set
+              if (_restaurantMarkers.isNotEmpty) {
+                final bounds = _createLatLngBounds(
+                    _restaurantMarkers.map((m) => m.position).toList());
+                _mapController!
+                    .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+              }
+            },
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+          ),
+          // Top search bar overlay
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search here...',
+                        prefixIcon:
+                            Icon(Icons.search, color: Color(0xFF184C55)),
+                        border: InputBorder.none,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.tune, color: Color(0xFF184C55)),
+                    onPressed: () {
+                      // TODO: Implement filter action
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,10 +10,21 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
+import '../../../home/presentation/screens/home_screen.dart';
 
 class RestaurantDetailsScreen extends StatelessWidget {
   final RestaurantModel restaurant;
-  const RestaurantDetailsScreen({super.key, required this.restaurant});
+  final List<CuisineCategory> cuisines;
+  const RestaurantDetailsScreen(
+      {super.key, required this.restaurant, required this.cuisines});
+
+  String getCuisineName(int? id) {
+    final CuisineCategory cuisine = cuisines.firstWhere(
+      (c) => c.id == id,
+      orElse: () => CuisineCategory(id: null, name: 'Unknown'),
+    );
+    return cuisine.name;
+  }
 
   void _handleReservation(BuildContext context) {
     Navigator.push(
@@ -59,7 +70,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 8),
-            _DeliveryMethodOption(
+            _DeliveryMethodDialog(
               icon: Icons.delivery_dining,
               title: 'Delivery',
               subtitle: 'Get it delivered to you',
@@ -372,250 +383,239 @@ class RestaurantDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // For demo: static time and distance (replace with real logic if needed)
+    const String time = '26 min';
+    const String distance = '0.6 mi';
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Enhanced AppBar with Hero image, gradient overlay, and circular icons
-          SliverAppBar(
-            automaticallyImplyLeading: false,
-            expandedHeight: 220,
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Hero(
-                    tag: 'restaurant_image_${restaurant.id}',
-                    child:
-                        restaurant.image != null && restaurant.image!.isNotEmpty
-                            ? Image.network(
-                                restaurant.image!,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.asset('assets/images/tea.jpg',
-                                fit: BoxFit.cover),
-                  ),
-                  // Gradient overlay for text contrast
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      height: 90,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7)
-                          ],
-                        ),
+      body: ListView(
+        children: [
+          // Large image
+          Stack(
+            children: [
+              Hero(
+                tag: 'restaurant_image_${restaurant.id}',
+                child: restaurant.image != null && restaurant.image!.isNotEmpty
+                    ? Image.network(
+                        restaurant.image!,
+                        height: 280,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        height: 280,
+                        width: double.infinity,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.restaurant,
+                            size: 80, color: Colors.grey),
                       ),
-                    ),
+              ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 12,
+                left: 12,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withOpacity(0.4),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  // Back and favorite icons
-                  SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                ),
+              ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 12,
+                right: 12,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withOpacity(0.4),
+                  child: IconButton(
+                    icon:
+                        const Icon(Icons.favorite_border, color: Colors.white),
+                    onPressed: () => _showReviewDialog(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Info Card
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      restaurant.name,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.black.withOpacity(0.4),
-                            child: IconButton(
-                              icon: const Icon(Icons.arrow_back,
-                                  color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                          CircleAvatar(
-                            backgroundColor: Colors.black.withOpacity(0.4),
-                            child: IconButton(
-                              icon: const Icon(Icons.favorite_border,
-                                  color: Colors.white),
-                              onPressed: () => _showReviewDialog(context),
-                            ),
-                          ),
+                          Icon(Icons.local_dining,
+                              color: Colors.orange, size: 20),
+                          const SizedBox(width: 6),
+                          Text(getCuisineName(restaurant.cuisineId),
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          const SizedBox(width: 16),
+                          Icon(Icons.star, color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(restaurant.averageRating.toStringAsFixed(1)),
+                          const SizedBox(width: 16),
+                          Icon(Icons.timer, color: Colors.grey, size: 20),
+                          const SizedBox(width: 4),
+                          Text(time),
+                          const SizedBox(width: 16),
+                          Icon(Icons.location_on, color: Colors.grey, size: 20),
+                          const SizedBox(width: 4),
+                          Text(distance),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-              title: Text(
-                restaurant.name,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black87,
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Description',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      restaurant.description,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.grey[700]),
                     ),
                   ],
                 ),
               ),
-              centerTitle: true,
             ),
           ),
-
-          // Restaurant Info Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.location_on, color: Colors.teal, size: 20),
-                          const SizedBox(width: 6),
-                          Expanded(child: Text(restaurant.address)),
-                        ],
+          // Reservation and Order Buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF227C9D),
+                      minimumSize: const Size.fromHeight(54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      const Divider(),
-                      Row(
-                        children: [
-                          Icon(Icons.access_time,
-                              color: Colors.amber, size: 20),
-                          const SizedBox(width: 6),
-                          Expanded(
-                              child: Text(
-                                  'Open • Closes at ${restaurant.openingHours}')),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleReservation(context),
-                              icon: const Icon(Icons.calendar_today),
-                              label: const Text(
-                                'Reserve Table',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleOrder(context),
-                              icon: const Icon(Icons.shopping_cart),
-                              label: const Text(
-                                'Order Now',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
+                    onPressed: () => _handleReservation(context),
+                    child: const Text('Reserve Table',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
-              ),
-            ),
-          ),
-
-          // Menu Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Menu',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (restaurant.menus.isEmpty)
-                    Card(
-                      elevation: 0,
-                      color: Colors.grey[100],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF7F3F),
+                      minimumSize: const Size.fromHeight(54),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 32, horizontal: 12),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.menu_book,
-                                size: 54, color: Colors.grey[400]),
-                            const SizedBox(height: 14),
-                            Text(
-                              'No Menu Available',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'This restaurant has not published a menu yet.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                  for (final menu in restaurant.menus)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          menu.name,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        for (final item in menu.menuItems)
-                          _MenuItemCard(
-                            item: item,
-                            restaurantId: restaurant.id,
-                            restaurantName: restaurant.name,
-                          ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                ],
-              ),
+                    onPressed: () => _showDeliveryMethodDialog(context),
+                    child: const Text('Order Now',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 24),
+          // Menu Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Menu',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                if (restaurant.menus.isEmpty)
+                  Card(
+                    elevation: 0,
+                    color: Colors.grey[100],
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 32, horizontal: 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.menu_book,
+                              size: 54, color: Colors.grey[400]),
+                          const SizedBox(height: 14),
+                          Text(
+                            'No Menu Available',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'This restaurant has not published a menu yet.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                for (final menu in restaurant.menus)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        menu.name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      for (final item in menu.menuItems)
+                        _MenuItemCard(
+                          item: item,
+                          restaurantId: restaurant.id,
+                          restaurantName: restaurant.name,
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -765,6 +765,68 @@ class _DeliveryMethodOption extends StatelessWidget {
   final VoidCallback onTap;
 
   const _DeliveryMethodOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 32,
+                color: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeliveryMethodDialog extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _DeliveryMethodDialog({
     required this.icon,
     required this.title,
     required this.subtitle,
