@@ -1,11 +1,15 @@
+import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
+import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 
 class MapScreen extends StatefulWidget {
   final List<RestaurantModel> restaurants;
-  const MapScreen({Key? key, required this.restaurants}) : super(key: key);
+  final List<CuisineCategory> cuisines;
+  const MapScreen({Key? key, required this.restaurants, required this.cuisines})
+      : super(key: key);
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -91,22 +95,111 @@ class _MapScreenState extends State<MapScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                restaurant.name,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+              Center(
+                child: Container(
+                  width: 48,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              if (restaurant.image != null && restaurant.image!.isNotEmpty)
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      restaurant.image!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Center(
+                child: Text(
+                  restaurant.name,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  restaurant.address,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[700],
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Divider(),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.place, color: Colors.teal, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Distance: ${distanceKm.toStringAsFixed(2)} km (${distanceMeters.toStringAsFixed(0)} m)',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
-              Text(restaurant.address,
-                  style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 16),
-              Text(
-                  'Distance: ${distanceKm.toStringAsFixed(2)} km (${distanceMeters.toStringAsFixed(0)} m)'),
-              const SizedBox(height: 8),
-              Text('Estimated walking time: $walkingMinutes min'),
-              Text('Estimated driving time: $drivingMinutes min'),
+              Row(
+                children: [
+                  Icon(Icons.directions_walk, color: Colors.orange, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Estimated walking: $walkingMinutes min',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.directions_car, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Estimated driving: $drivingMinutes min',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF227C9D),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RestaurantDetailsScreen(
+                          restaurant: restaurant,
+                          cuisines: widget.cuisines,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('View Details',
+                      style: TextStyle(fontSize: 16)),
+                ),
+              ),
             ],
           ),
         ),

@@ -67,7 +67,7 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final Set<Marker> _markers = {};
-  bool _isMapExpanded = true;
+
   GoogleMapController? _mapController;
   bool _isMapReady = false;
   LatLng _initialPosition = const LatLng(0, 0);
@@ -91,19 +91,36 @@ class HomeScreenState extends State<HomeScreen>
   StreamSubscription<Position>? _positionStreamSubscription;
   List<PromoBanner> _promoBanners = [];
   bool _isPromoLoading = true;
+  Timer? _debounce;
+
+  List<CuisineCategory> get categories => _categories;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
-    _initializeMap();
     _fetchRestaurants();
     _searchController.addListener(_onSearchChanged);
+    _checkAndStartLocationUpdates();
+    _fetchPromoBanners();
+  }
+
+  Future<void> _checkAndStartLocationUpdates() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showLocationDeniedDialog();
+        return;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      _showLocationDeniedDialog(permanently: true);
+      return;
+    }
+    // Permission granted, start location updates
     _getUserLocationAndSort();
     _startLocationAutoRefresh();
-    _fetchPromoBanners();
-
-    // Start real-time location updates
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
@@ -115,6 +132,9 @@ class HomeScreenState extends State<HomeScreen>
         _userLng = position.longitude;
       });
       _sortRestaurantsByDistance();
+    }, onError: (e) {
+      // Optionally handle stream errors gracefully
+      debugPrint('Location stream error: \\${e.toString()}');
     });
   }
 
@@ -164,6 +184,7 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _positionStreamSubscription?.cancel();
     _locationRefreshTimer?.cancel();
     _mapController?.dispose();
@@ -281,42 +302,6 @@ class HomeScreenState extends State<HomeScreen>
           ),
         );
       });
-    }
-  }
-
-  Future<void> _initializeMap() async {
-    try {
-      // Check location permission
-      final status = await Permission.location.request();
-      if (status.isGranted) {
-        // Get current position
-        final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-
-        if (mounted) {
-          setState(() {
-            _initialPosition = LatLng(position.latitude, position.longitude);
-            _isLoading = false;
-            _hasLocationPermission = true;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _hasLocationPermission = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('Error initializing map: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasLocationPermission = false;
-        });
-      }
     }
   }
 
@@ -438,6 +423,32 @@ class HomeScreenState extends State<HomeScreen>
     }
   }
 
+  void _showLocationDeniedDialog({bool permanently = false}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Location Permission'),
+        content: Text(permanently
+            ? 'Location permission is permanently denied. Please enable it in Settings to use location features.'
+            : 'Location permission is required to show nearby restaurants.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+          if (permanently)
+            TextButton(
+              onPressed: () {
+                Geolocator.openAppSettings();
+                Navigator.pop(context);
+              },
+              child: Text('Open Settings'),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.watch<ThemeProvider>().isDarkMode;
@@ -449,29 +460,35 @@ class HomeScreenState extends State<HomeScreen>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
           children: [
             // Top Bar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Color(0xFF184C55)),
-                    const SizedBox(width: 4),
-                    Text(
-                      '19687 Sun Cir',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search restaurant or cuisine...',
+                  prefixIcon: Icon(Icons.search, color: Color(0xFF184C55)),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-                CircleAvatar(
-                  backgroundColor: Colors.grey[200],
-                  child: Icon(Icons.person, color: Color(0xFF184C55)),
-                ),
-              ],
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 300), () {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                    _applyFiltersAndSearch();
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 20),
             // Promo Banner
@@ -486,13 +503,14 @@ class HomeScreenState extends State<HomeScreen>
                   height: 140,
                   autoPlay: true,
                   enlargeCenterPage: true,
-                  viewportFraction: 0.95,
+                  viewportFraction: 1.0,
                 ),
                 items: _promoBanners.map((banner) {
                   return Builder(
                     builder: (context) => Container(
                       height: 140,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: MediaQuery.of(context).size.width - 32,
+                      margin: EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         image: DecorationImage(
@@ -507,8 +525,9 @@ class HomeScreenState extends State<HomeScreen>
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 8.0),
+                              horizontal: 12.0, vertical: 4.0),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -516,34 +535,94 @@ class HomeScreenState extends State<HomeScreen>
                                 banner.title,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .titleLarge
+                                    .titleMedium
                                     ?.copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 15,
                                     ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Text(
                                 banner.description,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .bodyMedium
+                                    .bodySmall
                                     ?.copyWith(
                                       color: Colors.white,
+                                      fontSize: 11,
                                     ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
+                              Text(
+                                banner.restaurantName,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
+                                  minimumSize: const Size(80, 32),
                                   backgroundColor: const Color(0xFFFF7F3F),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
                                 onPressed: () {
-                                  // Optionally: Navigate to the restaurant
+                                  // Find the restaurant by id
+                                  final promoRestaurant =
+                                      restaurants.firstWhere(
+                                    (r) => r.id == banner.restaurantId,
+                                    orElse: () => RestaurantModel(
+                                      id: -1,
+                                      name: '',
+                                      description: '',
+                                      address: '',
+                                      longitude: '',
+                                      latitude: '',
+                                      phoneNumber: '',
+                                      email: '',
+                                      website: null,
+                                      openingHours: '',
+                                      cuisineId: null,
+                                      priceRange: '',
+                                      image: null,
+                                      ownerId: -1,
+                                      isApproved: false,
+                                      status: false,
+                                      menus: [],
+                                      averageRating: 0.0,
+                                      isFavorite: false,
+                                    ),
+                                  );
+                                  if (promoRestaurant.id ==
+                                      banner.restaurantId) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            RestaurantDetailsScreen(
+                                          restaurant: promoRestaurant,
+                                          cuisines: _categories,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content:
+                                              Text('Restaurant not found.')),
+                                    );
+                                  }
                                 },
-                                child: const Text('Order now'),
+                                child: const Text('Order now',
+                                    style: TextStyle(fontSize: 13)),
                               ),
                             ],
                           ),
@@ -557,11 +636,14 @@ class HomeScreenState extends State<HomeScreen>
               SizedBox(height: 140),
             const SizedBox(height: 24),
             // Category Selector
-            Text(
-              'Select by Category',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Select by Category',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -614,20 +696,35 @@ class HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(height: 24),
             // Fastest Near You
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Fastest Near You',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('See more'),
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Fastest Near You',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AllRestaurantsScreen(
+                            restaurants: _filteredRestaurants,
+                            categories: _categories,
+                            userLat: _userLat,
+                            userLng: _userLng,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('See more'),
+                  ),
+                ],
+              ),
             ),
             SizedBox(
               height: 240,
@@ -678,7 +775,9 @@ class HomeScreenState extends State<HomeScreen>
                             )
                           : ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              itemCount: _filteredRestaurants.length,
+                              itemCount: _filteredRestaurants.length > 5
+                                  ? 5
+                                  : _filteredRestaurants.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(width: 16),
                               itemBuilder: (context, index) {
@@ -912,6 +1011,137 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Placeholder for the 'See more' screen
+class AllRestaurantsScreen extends StatelessWidget {
+  final List<RestaurantModel> restaurants;
+  final List<CuisineCategory> categories;
+  final double? userLat;
+  final double? userLng;
+  const AllRestaurantsScreen(
+      {Key? key,
+      required this.restaurants,
+      required this.categories,
+      this.userLat,
+      this.userLng})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('All Restaurants')),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: restaurants.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final restaurant = restaurants[index];
+          final cuisine = categories.firstWhere(
+            (cat) => cat.id == restaurant.cuisineId,
+            orElse: () => CuisineCategory(id: null, name: 'Unknown'),
+          );
+          return Card(
+            elevation: 3,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RestaurantDetailsScreen(
+                      restaurant: restaurant,
+                      cuisines: categories,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: (restaurant.image != null &&
+                              restaurant.image!.isNotEmpty)
+                          ? NetworkImage(restaurant.image!)
+                          : null,
+                      child: (restaurant.image == null ||
+                              restaurant.image!.isEmpty)
+                          ? Icon(Icons.restaurant,
+                              color: Colors.grey[400], size: 32)
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            restaurant.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            cuisine.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.blueGrey),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            restaurant.address,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.grey[600]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (userLat != null && userLng != null)
+                            Builder(
+                              builder: (context) {
+                                final dist = Geolocator.distanceBetween(
+                                  userLat!,
+                                  userLng!,
+                                  double.tryParse(restaurant.latitude) ?? 0.0,
+                                  double.tryParse(restaurant.longitude) ?? 0.0,
+                                );
+                                return Text(
+                                  '${(dist / 1000).toStringAsFixed(2)} km away',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Colors.teal,
+                                        fontSize: 12,
+                                      ),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -29,7 +29,8 @@ class _MainScreenState extends State<MainScreen> {
           builder: (context) {
             final homeState = _homeScreenKey.currentState;
             final restaurants = homeState?.nearestRestaurantsForMap ?? [];
-            return MapScreen(restaurants: restaurants);
+            final cuisines = homeState?.categories ?? [];
+            return MapScreen(restaurants: restaurants, cuisines: cuisines);
           },
         ),
         const ProfileScreen(),
