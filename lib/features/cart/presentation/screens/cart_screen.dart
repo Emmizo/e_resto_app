@@ -183,9 +183,9 @@ class _CartSummary extends StatefulWidget {
 }
 
 class _CartSummaryState extends State<_CartSummary> {
-  void _showPaymentOptions(BuildContext context) {
+  void _showPaymentOptions(BuildContext parentContext) {
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (context) => AlertDialog(
         title: const Text('Choose Payment Option'),
         content: Column(
@@ -196,7 +196,7 @@ class _CartSummaryState extends State<_CartSummary> {
               title: const Text('Pay Now'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(parentContext).showSnackBar(
                   const SnackBar(content: Text('You chose to Pay Now')),
                 );
                 // TODO: Navigate to payment screen or handle payment
@@ -207,7 +207,7 @@ class _CartSummaryState extends State<_CartSummary> {
               title: const Text('Pay Later'),
               onTap: () {
                 Navigator.pop(context);
-                _showPayLaterForm(context);
+                _showPayLaterForm(parentContext);
               },
             ),
           ],
@@ -216,12 +216,12 @@ class _CartSummaryState extends State<_CartSummary> {
     );
   }
 
-  void _showPayLaterForm(BuildContext context) {
+  void _showPayLaterForm(BuildContext parentContext) {
     final addressController = TextEditingController();
     final instructionsController = TextEditingController();
     String orderType = 'dine_in';
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: const Text('Pay Later - Order Details'),
@@ -267,7 +267,7 @@ class _CartSummaryState extends State<_CartSummary> {
               onPressed: () async {
                 Navigator.pop(context);
                 await _submitPayLaterOrder(
-                  context,
+                  parentContext,
                   addressController.text,
                   instructionsController.text,
                   orderType,
@@ -281,7 +281,7 @@ class _CartSummaryState extends State<_CartSummary> {
     );
   }
 
-  Future<void> _submitPayLaterOrder(BuildContext context, String address,
+  Future<void> _submitPayLaterOrder(BuildContext parentContext, String address,
       String instructions, String orderType) async {
     final cartProvider = context.read<CartProvider>();
     if (cartProvider.items.isEmpty) return;
@@ -300,10 +300,10 @@ class _CartSummaryState extends State<_CartSummary> {
       'order_type': orderType,
       'items': items,
     };
-    print('Order data being sent: $data');
     try {
       final dio = Dio();
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider =
+          Provider.of<AuthProvider>(parentContext, listen: false);
       final token = authProvider.token;
       await dio.post(
         ApiEndpoints.orders,
@@ -315,43 +315,83 @@ class _CartSummaryState extends State<_CartSummary> {
         ),
       );
       await cartProvider.clearCart();
-      _showPayLaterConfirmation(context);
+      await showDialog(
+        context: parentContext,
+        builder: (context) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.check_circle,
+                    color: Colors.green, size: 28),
+              ),
+              const SizedBox(width: 10),
+              const Text('Order Placed!'),
+            ],
+          ),
+          content: const Text(
+              'Your order has been placed. Please pay at the restaurant or upon delivery.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Optionally: Navigate to order history or home
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     } catch (e) {
-      final parsed = parseDioError(e);
+      String errorMsg = 'An error occurred. Please try again.';
+      if (e is DioException && e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data['message'] != null) {
+          errorMsg = data['message'];
+        } else if (data is Map && data['errors'] != null) {
+          final errors = data['errors'] as Map;
+          errorMsg = errors.values
+              .map((v) => v is List ? v.join('\n') : v.toString())
+              .join('\n');
+        }
+      }
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => ErrorStateWidget(
-          message: parsed.message,
-          code: parsed.code,
-          onRetry: () {
-            Navigator.pop(context);
-            _submitPayLaterOrder(context, address, instructions, orderType);
-          },
+      await showDialog(
+        context: parentContext,
+        builder: (context) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.error_outline,
+                    color: Colors.red, size: 28),
+              ),
+              const SizedBox(width: 10),
+              const Text('Error'),
+            ],
+          ),
+          content: Text(errorMsg),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
         ),
       );
     }
-  }
-
-  void _showPayLaterConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Order Placed!'),
-        content: const Text(
-          'Your order has been placed. Please pay at the restaurant or upon delivery.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Optionally: Navigate to order history or home
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

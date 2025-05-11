@@ -5,7 +5,7 @@ import '../../../auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({Key? key}) : super(key: key);
+  const ChangePasswordScreen({super.key});
 
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
