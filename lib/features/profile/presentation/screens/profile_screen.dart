@@ -1,3 +1,4 @@
+import 'package:e_resta_app/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -566,6 +567,19 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
               context,
               MaterialPageRoute(
                 builder: (context) => const PaymentMethodsScreen(),
+              ),
+            );
+          },
+        ),
+        _ProfileOption(
+          icon: Icons.lock_outline,
+          title: 'Change Password',
+          subtitle: 'Change your account password',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ChangePasswordScreen(),
               ),
             );
           },
