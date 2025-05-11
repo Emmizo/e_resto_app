@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/providers/auth_provider.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import '../../../home/presentation/screens/main_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -17,6 +17,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -31,12 +32,6 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    String? fcmToken;
-    try {
-      fcmToken = await FirebaseMessaging.instance.getToken();
-    } catch (e) {
-      fcmToken = null;
-    }
     final success = await authProvider.signup(
       firstName: _nameController.text.trim(),
       lastName: _nameController.text.trim(),
@@ -44,10 +39,13 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       address: _addressController.text.trim(),
-      fcmToken: fcmToken,
+      fcmToken: null,
     );
     if (success) {
-      Navigator.pop(context); // or navigate to home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.error ?? 'Sign up failed')),
@@ -57,69 +55,433 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your name' : null,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.zero,
+              boxShadow: [],
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.zero,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top angled blue section
+                  ClipPath(
+                    clipper: _TopAngleClipper(),
+                    child: Container(
+                      width: double.infinity,
+                      color: const Color(0xFFD6E9FF),
+                      padding: const EdgeInsets.only(
+                          top: 80, left: 32, right: 32, bottom: 120),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/logo.png',
+                            height: 48,
+                            width: 48,
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'The Resto',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 24,
+                                  color: Color(0xFF227C9D),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Find Your Favorite Restaurant',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFF227C9D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 8),
+                          Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 32,
+                              color: Color(0xFF227C9D),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 32),
+                          Text(
+                            'Name',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                          TextFormField(
+                            controller: _nameController,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'Enter your name'
+                                : null,
+                            style: const TextStyle(fontSize: 16),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xFFF5F7FA),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'Your Name',
+                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            'Email',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (v) => v == null || !v.contains('@')
+                                ? 'Enter a valid email'
+                                : null,
+                            style: const TextStyle(fontSize: 16),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xFFF5F7FA),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'raziul.cse@gmail.com',
+                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            'Password',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: !_isPasswordVisible,
+                            validator: (v) => v == null || v.length < 6
+                                ? 'Password must be at least 6 characters'
+                                : null,
+                            style: const TextStyle(fontSize: 16),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xFFF5F7FA),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'Password',
+                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.black45,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            'Phone Number',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                          TextFormField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'Enter your phone number'
+                                : null,
+                            style: const TextStyle(fontSize: 16),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xFFF5F7FA),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'Your Phone Number',
+                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            'Address',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                          TextFormField(
+                            controller: _addressController,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'Enter your address'
+                                : null,
+                            style: const TextStyle(fontSize: 16),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xFFF5F7FA),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'Your Address',
+                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed:
+                                  Provider.of<AuthProvider>(context).isLoading
+                                      ? null
+                                      : _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF227C9D),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Divider(
+                                  color: Color(0xFFDFE6F1),
+                                  thickness: 1,
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'Or continue with',
+                                  style: TextStyle(
+                                    color: Colors.black.withOpacity(0.5),
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              const Expanded(
+                                child: Divider(
+                                  color: Color(0xFFDFE6F1),
+                                  thickness: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  icon: Image.asset('assets/icons/google.png',
+                                      height: 20),
+                                  label: const Text('Google',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 15)),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    side: const BorderSide(
+                                        color: Color(0xFFDFE6F1)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: () {},
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  icon: Image.asset('assets/icons/facebook.png',
+                                      height: 20),
+                                  label: const Text('Facebook',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 15)),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    side: const BorderSide(
+                                        color: Color(0xFFDFE6F1)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Already have an account? ',
+                                style: TextStyle(
+                                  color: Colors.black.withOpacity(0.6),
+                                  fontSize: 15,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushReplacementNamed(
+                                      context, '/login');
+                                },
+                                child: const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    color: Color(0xFF227C9D),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) => v == null || !v.contains('@')
-                    ? 'Enter a valid email'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (v) => v == null || v.length < 6
-                    ? 'Password must be at least 6 characters'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.phone,
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your phone number' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Address'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your address' : null,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: authProvider.isLoading ? null : _submit,
-                child: authProvider.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Sign Up'),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Already have an account? Sign In'),
-              ),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopAngleClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 40);
+    path.lineTo(size.width / 2, size.height);
+    path.lineTo(size.width, size.height - 40);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _SocialButton extends StatelessWidget {
+  final Widget icon;
+  final String label;
+  final bool isDark;
+  final VoidCallback onTap;
+  const _SocialButton({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF232A38) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? Colors.white12 : Colors.black12,
+          ),
+        ),
+        child: Row(
+          children: [
+            icon,
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ),
     );

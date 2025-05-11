@@ -1,16 +1,13 @@
 import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/providers/theme_provider.dart';
 import 'restaurant_details_screen.dart';
 import '../../data/models/restaurant_model.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
-import 'package:e_resta_app/features/map/presentation/screens/map_screen.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -86,7 +83,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Failed: [0m${e.toString()}'),
+            content: Text('Failed: ${e.toString()}'),
             backgroundColor: Colors.red),
       );
     }
@@ -105,9 +102,10 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
     } else if (_restaurants.isEmpty) {
       return _buildEmptyState(context);
     } else {
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
+      return ListView.separated(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         itemCount: _restaurants.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 18),
         itemBuilder: (context, index) {
           final item = _restaurants[index];
           return _RestaurantCard(
@@ -117,7 +115,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
                     ? item['id']
                     : int.tryParse(item['id'].toString()) ?? 0,
                 index),
-          ).animate(delay: (100 * index).ms).fadeIn().slideX();
+          );
         },
       );
     }
@@ -125,44 +123,64 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.favorite_border,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Favorites Yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/empty_favorites.png',
+              height: 120,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.favorite_border,
+                size: 80,
+                color: Colors.grey[400],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Favorites Yet',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Add restaurants to your favorites to see them here.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HomeScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.restaurant),
+              label: const Text('Discover Restaurants'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF184C55),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add restaurants to your favorites',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HomeScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.restaurant),
-            label: const Text('Discover Restaurants'),
-          ),
-        ],
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
       ),
-    ).animate().fadeIn();
+    );
   }
 }
 
@@ -180,93 +198,124 @@ class _RestaurantCard extends StatelessWidget {
     final restaurant = item['restaurant'] ?? item;
     final averageRating = item['average_rating'] ?? 0;
     final reviewsCount = item['reviews_count'] ?? 0;
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Restaurant Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: restaurant['image'] != null &&
-                      restaurant['image'].toString().isNotEmpty
-                  ? Image.network(
-                      restaurant['image'],
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 80,
-                        height: 80,
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RestaurantDetailsScreen(
+              restaurant: RestaurantModel.fromJson(restaurant),
+              cuisines: const [], // Pass real cuisines if available
+            ),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 8,
+        shadowColor: Colors.black.withOpacity(0.10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Restaurant Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: restaurant['image'] != null &&
+                        restaurant['image'].toString().isNotEmpty
+                    ? Image.network(
+                        restaurant['image'],
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 90,
+                          height: 90,
+                          color: Colors.grey[200],
+                          child:
+                              const Icon(Icons.restaurant, color: Colors.grey),
+                        ),
+                      )
+                    : Container(
+                        width: 90,
+                        height: 90,
                         color: Colors.grey[200],
                         child: const Icon(Icons.restaurant, color: Colors.grey),
                       ),
-                    )
-                  : Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.restaurant, color: Colors.grey),
-                    ),
-            ),
-            const SizedBox(width: 12),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    restaurant['name'] ?? '',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    restaurant['address'] ?? '',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 3),
-                      Text(
-                        averageRating.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '($reviewsCount reviews)',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                      ),
-                      const Spacer(),
-                      Icon(Icons.favorite, color: Colors.red, size: 20),
-                      // Optionally, add a remove button here
-                    ],
-                  ),
-                ],
               ),
-            ),
-          ],
+              const SizedBox(width: 18),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            restaurant['name'] ?? '',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.favorite,
+                              color: Colors.red, size: 26),
+                          tooltip: 'Remove from favorites',
+                          onPressed: onRemove,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      restaurant['address'] ?? '',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(Icons.star, color: Colors.amber, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          averageRating.toStringAsFixed(1),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '($reviewsCount reviews)',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

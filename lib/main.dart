@@ -78,6 +78,7 @@ class MyApp extends StatelessWidget {
               '/payment-methods': (context) => const PaymentMethodsScreen(),
               '/settings': (context) => const NotificationPreferencesScreen(),
               '/signup': (context) => const SignupScreen(),
+              '/login': (context) => const LoginScreen(),
             },
           );
         },

@@ -200,6 +200,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
             slivers: [
               // Enhanced Header with Gradient and Glassmorphism
               SliverAppBar(
+                automaticallyImplyLeading: false,
                 expandedHeight: 270,
                 pinned: true,
                 backgroundColor: Colors.transparent,
