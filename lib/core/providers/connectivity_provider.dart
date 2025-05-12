@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
@@ -26,10 +27,13 @@ class ConnectivityProvider extends ChangeNotifier {
       // Try to ping a reliable server using Dio
       try {
         final dio = Dio();
-        final response = await dio.get('https://www.google.com',
-            options: Options(receiveTimeout: const Duration(seconds: 3)));
+        final response = await dio.get(
+          ApiConfig.baseUrl, // Use your API health endpoint if possible
+          options: Options(receiveTimeout: const Duration(seconds: 5)),
+        );
         online = response.statusCode == 200;
-      } catch (_) {
+      } catch (e) {
+        print('Connectivity check failed: $e');
         online = false;
       }
     }
