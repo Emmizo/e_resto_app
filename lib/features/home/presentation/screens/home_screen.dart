@@ -12,6 +12,7 @@ import '../../../restaurant/data/restaurant_remote_datasource.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 import 'dart:async';
 import 'package:carousel_slider/carousel_slider.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 
 class CuisineCategory {
   final int? id; // null for 'All'
@@ -455,6 +456,7 @@ class HomeScreenState extends State<HomeScreen>
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
     final name = user != null ? user.firstName : 'Guest';
+    final isOnline = context.watch<ConnectivityProvider>().isOnline;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -615,53 +617,63 @@ class HomeScreenState extends State<HomeScreen>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    onPressed: () {
-                                      final promoRestaurant =
-                                          restaurants.firstWhere(
-                                        (r) => r.id == banner.restaurantId,
-                                        orElse: () => RestaurantModel(
-                                          id: -1,
-                                          name: '',
-                                          description: '',
-                                          address: '',
-                                          longitude: '',
-                                          latitude: '',
-                                          phoneNumber: '',
-                                          email: '',
-                                          website: null,
-                                          openingHours: '',
-                                          cuisineId: null,
-                                          priceRange: '',
-                                          image: null,
-                                          ownerId: -1,
-                                          isApproved: false,
-                                          status: false,
-                                          menus: [],
-                                          averageRating: 0.0,
-                                          isFavorite: false,
-                                        ),
-                                      );
-                                      if (promoRestaurant.id ==
-                                          banner.restaurantId) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                RestaurantDetailsScreen(
-                                              restaurant: promoRestaurant,
-                                              cuisines: _categories,
-                                            ),
-                                          ),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                              content: Text(
-                                                  'Restaurant not found.')),
-                                        );
-                                      }
-                                    },
+                                    onPressed: isOnline
+                                        ? () {
+                                            final promoRestaurant =
+                                                restaurants.firstWhere(
+                                              (r) =>
+                                                  r.id == banner.restaurantId,
+                                              orElse: () => RestaurantModel(
+                                                id: -1,
+                                                name: '',
+                                                description: '',
+                                                address: '',
+                                                longitude: '',
+                                                latitude: '',
+                                                phoneNumber: '',
+                                                email: '',
+                                                website: null,
+                                                openingHours: '',
+                                                cuisineId: null,
+                                                priceRange: '',
+                                                image: null,
+                                                ownerId: -1,
+                                                isApproved: false,
+                                                status: false,
+                                                menus: [],
+                                                averageRating: 0.0,
+                                                isFavorite: false,
+                                              ),
+                                            );
+                                            if (promoRestaurant.id ==
+                                                banner.restaurantId) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      RestaurantDetailsScreen(
+                                                    restaurant: promoRestaurant,
+                                                    cuisines: _categories,
+                                                  ),
+                                                ),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                    content: Text(
+                                                        'Restaurant not found.')),
+                                              );
+                                            }
+                                          }
+                                        : () {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'No internet connection. Please try again later.')),
+                                            );
+                                          },
                                     child: const Text('Order now',
                                         style: TextStyle(fontSize: 13)),
                                   ),
@@ -774,18 +786,27 @@ class HomeScreenState extends State<HomeScreen>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              RestaurantDetailsScreen(
-                                            restaurant: restaurant,
-                                            cuisines: _categories,
-                                          ),
-                                        ),
-                                      );
-                                    },
+                                    onPressed: isOnline
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    RestaurantDetailsScreen(
+                                                  restaurant: restaurant,
+                                                  cuisines: _categories,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        : () {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'No internet connection. Please try again later.')),
+                                            );
+                                          },
                                     child: const Text('Order now',
                                         style: TextStyle(fontSize: 13)),
                                   ),
@@ -883,19 +904,27 @@ class HomeScreenState extends State<HomeScreen>
                         ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AllRestaurantsScreen(
-                            restaurants: _filteredRestaurants,
-                            categories: _categories,
-                            userLat: _userLat,
-                            userLng: _userLng,
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: isOnline
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AllRestaurantsScreen(
+                                  restaurants: _filteredRestaurants,
+                                  categories: _categories,
+                                  userLat: _userLat,
+                                  userLng: _userLng,
+                                ),
+                              ),
+                            );
+                          }
+                        : () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      'No internet connection. Please try again later.')),
+                            );
+                          },
                     child: const Text('See more'),
                   ),
                 ],
@@ -1015,6 +1044,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
     final onFavoriteToggle = widget.onFavoriteToggle;
     final isLoading = widget.isLoading;
     final distance = widget.distance;
+    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,

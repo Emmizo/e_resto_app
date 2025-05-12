@@ -19,6 +19,7 @@ import 'package:dio/dio.dart';
 import 'favorite_tab_screen.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -194,6 +195,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         user != null ? ('${user.firstName} ${user.lastName}') : 'Guest';
     final email = user?.email ?? '';
     final profilePic = user?.profilePicture;
+    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return Scaffold(
       body: Stack(
         children: [
@@ -504,6 +506,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
   }
 
   Widget _buildProfileOptions(BuildContext context) {
+    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return Column(
       children: [
         _ProfileOption(
@@ -575,14 +578,22 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
           icon: Icons.lock_outline,
           title: 'Change Password',
           subtitle: 'Change your account password',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ChangePasswordScreen(),
-              ),
-            );
-          },
+          onTap: isOnline
+              ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChangePasswordScreen(),
+                    ),
+                  );
+                }
+              : () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            'No internet connection. Please try again later.')),
+                  );
+                },
         ),
       ],
     ).animate().fadeIn(delay: 200.ms).slideX();

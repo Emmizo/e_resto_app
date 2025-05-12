@@ -62,6 +62,7 @@ dependencies:
   cloud_firestore: ^5.6.7
   firebase_auth: ^5.5.3
   carousel_slider: ^5.0.0
+  connectivity_plus: ^5.0.2
 
 dev_dependencies:
   flutter_test:

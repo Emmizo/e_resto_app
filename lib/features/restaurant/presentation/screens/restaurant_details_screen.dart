@@ -400,6 +400,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                         height: 280,
                         width: double.infinity,
                         fit: BoxFit.cover,
+                        filterQuality: FilterQuality.high,
                       )
                     : Container(
                         height: 280,

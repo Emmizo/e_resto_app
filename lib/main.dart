@@ -24,6 +24,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/services/notification_service.dart';
+import 'core/providers/connectivity_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         ChangeNotifierProvider(create: (_) => CartProvider(prefs)),
         ChangeNotifierProvider(create: (_) => ReservationProvider(prefs)),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: MyApp(prefs: prefs),
     ),
@@ -135,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'E-Resta',
+              'E-Resto',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,

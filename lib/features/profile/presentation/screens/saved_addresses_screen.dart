@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/providers/connectivity_provider.dart';
+import 'package:provider/provider.dart';
 
 class Address {
   final String id;
@@ -113,12 +115,21 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isOnline = Provider.of<ConnectivityProvider>(context).isOnline;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Saved Addresses'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddAddressDialog,
+        onPressed: isOnline
+            ? _showAddAddressDialog
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          'No internet connection. Please try again later.')),
+                );
+              },
         child: const Icon(Icons.add),
       ),
       body: _addresses.isEmpty
@@ -145,7 +156,15 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: _showAddAddressDialog,
+                    onPressed: isOnline
+                        ? _showAddAddressDialog
+                        : () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      'No internet connection. Please try again later.')),
+                            );
+                          },
                     icon: const Icon(Icons.add),
                     label: const Text('Add Address'),
                   ),
@@ -159,8 +178,24 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                 final address = _addresses[index];
                 return _AddressCard(
                   address: address,
-                  onEdit: () => _showEditAddressDialog(address),
-                  onDelete: () => _showDeleteConfirmation(address),
+                  onEdit: isOnline
+                      ? () => _showEditAddressDialog(address)
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'No internet connection. Please try again later.')),
+                          );
+                        },
+                  onDelete: isOnline
+                      ? () => _showDeleteConfirmation(address)
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'No internet connection. Please try again later.')),
+                          );
+                        },
                 ).animate(delay: (50 * index).ms).fadeIn().slideX();
               },
             ),

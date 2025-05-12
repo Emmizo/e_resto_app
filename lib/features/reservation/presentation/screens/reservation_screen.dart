@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 
 class Reservation {
   final String id;
@@ -322,6 +323,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Make a Reservation'),
@@ -344,8 +346,18 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 onSelectTime: () => _selectTime(context),
                 onGuestsChanged: (int guests) =>
                     setState(() => _selectedGuests = guests),
-                onSubmit:
-                    _isSubmitting ? null : () => _submitReservation(context),
+                onSubmit: !_isSubmitting && isOnline
+                    ? () => _submitReservation(context)
+                    : () {
+                        if (!isOnline) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'No internet connection. Please try again later.'),
+                            ),
+                          );
+                        }
+                      },
               ),
             ),
           ),
