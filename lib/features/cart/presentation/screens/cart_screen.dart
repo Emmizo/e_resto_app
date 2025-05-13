@@ -7,6 +7,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:e_resta_app/features/profile/data/address_provider.dart';
+import 'package:flutter/services.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -233,15 +234,22 @@ class _CartSummaryState extends State<_CartSummary> {
         Provider.of<CartProvider>(parentContext, listen: false);
     final cartTotal = cartProvider.total;
     final cartItems = cartProvider.items;
+    bool orderStepCompleted = false;
+    bool isLoading = false;
+    String? errorMessage;
+    bool isOrderStepValid = addressController.text.trim().isNotEmpty &&
+        phoneController.text.trim().isNotEmpty;
+    addressController.addListener(() {
+      if (orderStepCompleted) setState(() => orderStepCompleted = false);
+    });
+    phoneController.addListener(() {
+      if (orderStepCompleted) setState(() => orderStepCompleted = false);
+    });
     showDialog(
       context: parentContext,
       barrierColor: Colors.black.withOpacity(0.3),
       builder: (context) {
         int step = 0; // 0: Order, 1: Review
-        bool isLoading = false;
-        String? errorMessage;
-        bool isOrderStepValid = addressController.text.trim().isNotEmpty &&
-            phoneController.text.trim().isNotEmpty;
         return StatefulBuilder(
           builder: (context, setState) => Dialog(
             backgroundColor: Theme.of(context).dialogBackgroundColor,
@@ -251,7 +259,7 @@ class _CartSummaryState extends State<_CartSummary> {
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 500;
                 final dialogWidth =
-                    isWide ? 400.0 : MediaQuery.of(context).size.width * 0.95;
+                    isWide ? 440.0 : MediaQuery.of(context).size.width * 0.98;
                 return Container(
                   width: dialogWidth,
                   padding:
@@ -279,8 +287,8 @@ class _CartSummaryState extends State<_CartSummary> {
                               isActive: step == 0,
                               icon: Icons.receipt_long,
                               label: 'Order',
-                              isValid: step > 0 && isOrderStepValid,
-                              isInvalid: step > 0 && !isOrderStepValid),
+                              isValid: orderStepCompleted,
+                              isInvalid: !orderStepCompleted && step > 0),
                           _StepperLine(isActive: step > 0),
                           _StepperCircle(
                               isActive: step == 1,
@@ -352,8 +360,12 @@ class _CartSummaryState extends State<_CartSummary> {
                                           'Contact phone is required.');
                                       valid = false;
                                     }
-                                    if (!valid) return;
-                                    setState(() => step++);
+                                    if (valid) {
+                                      setState(() {
+                                        orderStepCompleted = true;
+                                        step++;
+                                      });
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
@@ -439,26 +451,43 @@ class _CartSummaryState extends State<_CartSummary> {
         Provider.of<CartProvider>(parentContext, listen: false);
     final cartTotal = cartProvider.total;
     final cartItems = cartProvider.items;
+    bool orderStepCompleted = false;
+    bool paymentStepCompleted = false;
+    String orderType = 'dine_in';
+    String paymentMethod = 'visa';
+    bool isLoading = false;
+    String? errorMessage;
+    bool isPaymentStepValid = paymentMethod == 'visa'
+        ? cardNumberController.text.trim().length >= 16 &&
+            cardExpiryController.text.trim().length == 5 &&
+            cardExpiryController.text.contains('/') &&
+            cardCvvController.text.trim().length >= 3
+        : paymentMethod == 'mobile_money'
+            ? mobileMoneyController.text.trim().length >= 10
+            : false;
+    addressController.addListener(() {
+      if (orderStepCompleted) setState(() => orderStepCompleted = false);
+    });
+    phoneController.addListener(() {
+      if (orderStepCompleted) setState(() => orderStepCompleted = false);
+    });
+    cardNumberController.addListener(() {
+      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
+    });
+    cardExpiryController.addListener(() {
+      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
+    });
+    cardCvvController.addListener(() {
+      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
+    });
+    mobileMoneyController.addListener(() {
+      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
+    });
     showDialog(
       context: parentContext,
       barrierColor: Colors.black.withOpacity(0.3),
       builder: (context) {
         int step = 0; // 0: Order, 1: Payment, 2: Review
-        String orderType = 'dine_in';
-        String paymentMethod = 'visa';
-        bool isLoading = false;
-        String? errorMessage;
-        bool isOrderStepValid = (orderType != 'delivery' ||
-                addressController.text.trim().isNotEmpty) &&
-            phoneController.text.trim().isNotEmpty;
-        bool isPaymentStepValid = paymentMethod == 'visa'
-            ? cardNumberController.text.trim().length >= 16 &&
-                cardExpiryController.text.trim().length == 5 &&
-                cardExpiryController.text.contains('/') &&
-                cardCvvController.text.trim().length >= 3
-            : paymentMethod == 'mobile_money'
-                ? mobileMoneyController.text.trim().length >= 10
-                : false;
         void nextStep() => step < 2 ? step++ : null;
         void prevStep() => step > 0 ? step-- : null;
         return StatefulBuilder(
@@ -470,7 +499,7 @@ class _CartSummaryState extends State<_CartSummary> {
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 500;
                 final dialogWidth =
-                    isWide ? 400.0 : MediaQuery.of(context).size.width * 0.95;
+                    isWide ? 440.0 : MediaQuery.of(context).size.width * 0.98;
                 return Container(
                   width: dialogWidth,
                   padding:
@@ -498,15 +527,15 @@ class _CartSummaryState extends State<_CartSummary> {
                               isActive: step == 0,
                               icon: Icons.receipt_long,
                               label: 'Order',
-                              isValid: step > 0 && isOrderStepValid,
-                              isInvalid: step > 0 && !isOrderStepValid),
+                              isValid: orderStepCompleted,
+                              isInvalid: !orderStepCompleted && step > 0),
                           _StepperLine(isActive: step > 0),
                           _StepperCircle(
                               isActive: step == 1,
                               icon: Icons.payment,
                               label: 'Payment',
-                              isValid: step > 1 && isPaymentStepValid,
-                              isInvalid: step > 1 && !isPaymentStepValid),
+                              isValid: paymentStepCompleted,
+                              isInvalid: !paymentStepCompleted && step > 1),
                           _StepperLine(isActive: step > 1),
                           _StepperCircle(
                               isActive: step == 2,
@@ -594,6 +623,12 @@ class _CartSummaryState extends State<_CartSummary> {
                                             'Contact phone is required.');
                                         valid = false;
                                       }
+                                      if (valid) {
+                                        setState(() {
+                                          orderStepCompleted = true;
+                                          step++;
+                                        });
+                                      }
                                     } else if (step == 1) {
                                       if (paymentMethod == 'visa') {
                                         if (cardNumberController.text
@@ -633,9 +668,13 @@ class _CartSummaryState extends State<_CartSummary> {
                                           valid = false;
                                         }
                                       }
+                                      if (valid) {
+                                        setState(() {
+                                          paymentStepCompleted = true;
+                                          step++;
+                                        });
+                                      }
                                     }
-                                    if (!valid) return;
-                                    setState(() => step++);
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
@@ -980,43 +1019,39 @@ class _PaymentStep extends StatelessWidget {
             ),
             keyboardType: TextInputType.number,
             maxLength: 19,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              _CardNumberInputFormatter(),
+            ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: cardExpiryController,
-                  decoration: InputDecoration(
-                    labelText: 'Expiry (MM/YY)',
-                    hintText: '08/25',
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceVariant,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  keyboardType: TextInputType.datetime,
-                  maxLength: 5,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: cardCvvController,
-                  decoration: InputDecoration(
-                    labelText: 'CVV',
-                    hintText: '123',
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceVariant,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  keyboardType: TextInputType.number,
-                  obscureText: true,
-                  maxLength: 4,
-                ),
-              ),
-            ],
+          TextField(
+            controller: cardExpiryController,
+            decoration: InputDecoration(
+              labelText: 'Expiry (MM/YY)',
+              hintText: '08/25',
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            keyboardType: TextInputType.datetime,
+            maxLength: 5,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: cardCvvController,
+            decoration: InputDecoration(
+              labelText: 'CVV',
+              hintText: '123',
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            keyboardType: TextInputType.number,
+            obscureText: true,
+            maxLength: 4,
           ),
         ],
         if (paymentMethod == 'mobile_money')
@@ -1052,61 +1087,186 @@ class _ReviewStep extends StatelessWidget {
   final String paymentMethod;
   final String cardNumber;
   final String mobileMoney;
-  const _ReviewStep(
-      {required this.cartTotal,
-      required this.cartItems,
-      required this.orderType,
-      required this.address,
-      required this.phone,
-      required this.email,
-      required this.instructions,
-      required this.tip,
-      required this.paymentMethod,
-      required this.cardNumber,
-      required this.mobileMoney});
+  const _ReviewStep({
+    required this.cartTotal,
+    required this.cartItems,
+    required this.orderType,
+    required this.address,
+    required this.phone,
+    required this.email,
+    required this.instructions,
+    required this.tip,
+    required this.paymentMethod,
+    required this.cardNumber,
+    required this.mobileMoney,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return SingleChildScrollView(
       key: const ValueKey('review'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('Review & Confirm',
-            style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 12),
-        Card(
-          color: Theme.of(context).colorScheme.surface,
-          elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                    'Order Type: ${orderType[0].toUpperCase()}${orderType.substring(1)}'),
-                if (orderType == 'delivery') Text('Delivery Address: $address'),
-                Text('Contact Phone: $phone'),
-                if (email.isNotEmpty) Text('Email: $email'),
-                if (instructions.isNotEmpty)
-                  Text('Instructions: $instructions'),
-                if (tip.isNotEmpty) Text('Tip: $tip'),
-                const SizedBox(height: 8),
-                Text(
-                    'Payment Method: ${paymentMethod == 'visa' ? 'Visa Card' : 'Mobile Money'}'),
-                if (paymentMethod == 'visa')
-                  Text(
-                      'Card: **** **** **** ${cardNumber.length >= 4 ? cardNumber.substring(cardNumber.length - 4) : ''}'),
-                if (paymentMethod == 'mobile_money')
-                  Text('Mobile Money: $mobileMoney'),
-                const SizedBox(height: 8),
-                Text('Total: \$${cartTotal.toStringAsFixed(2)}'),
-                Text('Items: ${cartItems.length}'),
-              ],
-            ),
+      child: Card(
+        color: Theme.of(context).colorScheme.surface,
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Order Summary',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              ...cartItems.map<Widget>((item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: item.imageUrl != null && item.imageUrl.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(item.imageUrl,
+                                width: 40, height: 40, fit: BoxFit.cover),
+                          )
+                        : Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child:
+                                const Icon(Icons.fastfood, color: Colors.grey),
+                          ),
+                    title: Text(item.name,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    subtitle: Text('Qty: ${item.quantity}',
+                        style: Theme.of(context).textTheme.bodySmall),
+                    trailing: Text('₣${item.total.toStringAsFixed(2)}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                  )),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Total',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('₣${cartTotal.toStringAsFixed(2)}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text('Contact & Delivery',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              if (orderType == 'delivery')
+                Row(children: [
+                  Icon(Icons.location_on_outlined, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text(address,
+                          style: Theme.of(context).textTheme.bodyMedium))
+                ]),
+              Row(children: [
+                Icon(Icons.phone, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                    child: Text(phone,
+                        style: Theme.of(context).textTheme.bodyMedium))
+              ]),
+              if (email.isNotEmpty)
+                Row(children: [
+                  Icon(Icons.email_outlined, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text(email,
+                          style: Theme.of(context).textTheme.bodyMedium))
+                ]),
+              if (instructions.isNotEmpty)
+                Row(children: [
+                  Icon(Icons.note_alt_outlined, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text(instructions,
+                          style: Theme.of(context).textTheme.bodyMedium))
+                ]),
+              if (tip.isNotEmpty)
+                Row(children: [
+                  Icon(Icons.attach_money, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text('Tip: $tip',
+                          style: Theme.of(context).textTheme.bodyMedium))
+                ]),
+              const SizedBox(height: 18),
+              Text('Payment',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    paymentMethod == 'visa'
+                        ? Icons.credit_card
+                        : paymentMethod == 'mobile_money'
+                            ? Icons.phone_android
+                            : Icons.money,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      paymentMethod == 'visa'
+                          ? 'Visa Card: **** **** **** ${cardNumber.length >= 4 ? cardNumber.substring(cardNumber.length - 4) : ''}'
+                          : paymentMethod == 'mobile_money'
+                              ? 'Mobile Money: $mobileMoney'
+                              : paymentMethod,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _CardNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final buffer = StringBuffer();
+    for (int i = 0; i < digitsOnly.length; i++) {
+      if (i != 0 && i % 4 == 0) buffer.write(' ');
+      buffer.write(digitsOnly[i]);
+    }
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
