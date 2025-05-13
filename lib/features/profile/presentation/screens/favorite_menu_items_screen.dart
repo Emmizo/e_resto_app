@@ -1,4 +1,3 @@
-import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
+import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
+
 
 class FavoriteMenuItemsScreen extends StatefulWidget {
   const FavoriteMenuItemsScreen({super.key});
@@ -114,11 +115,12 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.push(
+                Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HomeScreen(),
+                    builder: (context) => const MainScreen(initialIndex: 0),
                   ),
+                  (route) => false,
                 );
               },
               icon: const Icon(Icons.restaurant),

@@ -26,6 +26,7 @@ import 'firebase_options.dart';
 import 'core/services/notification_service.dart';
 import 'core/providers/connectivity_provider.dart';
 import 'core/providers/action_queue_provider.dart';
+import 'features/profile/data/address_provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -45,6 +46,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ReservationProvider(prefs)),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => ActionQueueProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider()),
       ],
       child: MyApp(prefs: prefs),
     ),

@@ -28,5 +28,7 @@ class ApiEndpoints {
       '${ApiConfig.baseUrl}/promo-banners-with-restaurant';
   static const String changePassword =
       '${ApiConfig.baseUrl}/user/change-password';
+  static const String addresses = '${ApiConfig.baseUrl}/addresses';
+  static String addressById(int id) => '${ApiConfig.baseUrl}/addresses/$id';
   // Add more endpoints as needed
 }

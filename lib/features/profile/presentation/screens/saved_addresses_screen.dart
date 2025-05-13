@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/providers/connectivity_provider.dart';
 import 'package:provider/provider.dart';
+import '../../data/address_provider.dart';
 
 class Address {
-  final String id;
+  final int id;
   final String title;
   final String fullAddress;
   final String type;
@@ -17,6 +18,25 @@ class Address {
     required this.type,
     this.isDefault = false,
   });
+
+  factory Address.fromJson(Map<String, dynamic> json) {
+    return Address(
+      id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
+      title: json['title'] ?? '',
+      fullAddress: json['address'] ?? '',
+      type: json['type'] ?? 'other',
+      isDefault: json['is_default'] == true || json['is_default'] == 1,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'address': fullAddress,
+      'type': type,
+      'is_default': isDefault ? 1 : 0,
+    };
+  }
 }
 
 class SavedAddressesScreen extends StatefulWidget {
@@ -27,27 +47,12 @@ class SavedAddressesScreen extends StatefulWidget {
 }
 
 class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
-  final List<Address> _addresses = [
-    Address(
-      id: '1',
-      title: 'Home',
-      fullAddress: '123 Main Street, Apt 4B, New York, NY 10001',
-      type: 'home',
-      isDefault: true,
-    ),
-    Address(
-      id: '2',
-      title: 'Work',
-      fullAddress: '456 Business Ave, Floor 12, New York, NY 10002',
-      type: 'work',
-    ),
-    Address(
-      id: '3',
-      title: 'Gym',
-      fullAddress: '789 Fitness Blvd, New York, NY 10003',
-      type: 'other',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => Provider.of<AddressProvider>(context, listen: false)
+        .fetchAddresses(context));
+  }
 
   void _showAddAddressDialog() {
     showModalBottomSheet(
@@ -62,7 +67,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: const _AddAddressForm(),
+        child: _AddAddressForm(),
       ),
     );
   }
@@ -97,10 +102,10 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _addresses.removeWhere((a) => a.id == address.id);
-              });
+            onPressed: () async {
+              final provider =
+                  Provider.of<AddressProvider>(context, listen: false);
+              await provider.deleteAddress(address.id, context);
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(
@@ -116,89 +121,100 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   @override
   Widget build(BuildContext context) {
     final isOnline = Provider.of<ConnectivityProvider>(context).isOnline;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved Addresses'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: isOnline
-            ? _showAddAddressDialog
-            : () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          'No internet connection. Please try again later.')),
-                );
-              },
-        child: const Icon(Icons.add),
-      ),
-      body: _addresses.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
+    return Consumer<AddressProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (provider.error != null) {
+          return Center(child: Text('Error: ${provider.error}'));
+        }
+        final addresses = provider.addresses;
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Saved Addresses'),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: isOnline
+                ? _showAddAddressDialog
+                : () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(
+                              'No internet connection. Please try again later.')),
+                    );
+                  },
+            child: const Icon(Icons.add),
+          ),
+          body: addresses.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No addresses saved',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add your delivery addresses',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: isOnline
+                            ? _showAddAddressDialog
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'No internet connection. Please try again later.')),
+                                );
+                              },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Address'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No addresses saved',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Add your delivery addresses',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: isOnline
-                        ? _showAddAddressDialog
-                        : () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(
-                                      'No internet connection. Please try again later.')),
-                            );
-                          },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Address'),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _addresses.length,
-              itemBuilder: (context, index) {
-                final address = _addresses[index];
-                return _AddressCard(
-                  address: address,
-                  onEdit: isOnline
-                      ? () => _showEditAddressDialog(address)
-                      : () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    'No internet connection. Please try again later.')),
-                          );
-                        },
-                  onDelete: isOnline
-                      ? () => _showDeleteConfirmation(address)
-                      : () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    'No internet connection. Please try again later.')),
-                          );
-                        },
-                ).animate(delay: (50 * index).ms).fadeIn().slideX();
-              },
-            ),
+                ).animate().fadeIn()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: addresses.length,
+                  itemBuilder: (context, index) {
+                    final address = addresses[index];
+                    return _AddressCard(
+                      address: address,
+                      onEdit: isOnline
+                          ? () => _showEditAddressDialog(address)
+                          : () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'No internet connection. Please try again later.')),
+                              );
+                            },
+                      onDelete: isOnline
+                          ? () => _showDeleteConfirmation(address)
+                          : () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'No internet connection. Please try again later.')),
+                              );
+                            },
+                    ).animate(delay: (50 * index).ms).fadeIn().slideX();
+                  },
+                ),
+        );
+      },
     );
   }
 }
@@ -343,6 +359,8 @@ class _AddAddressFormState extends State<_AddAddressForm> {
   late TextEditingController _addressController;
   String _selectedType = 'home';
   bool _isDefault = false;
+  bool _isSubmitting = false;
+  String? _error;
 
   @override
   void initState() {
@@ -363,6 +381,38 @@ class _AddAddressFormState extends State<_AddAddressForm> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+    final provider = Provider.of<AddressProvider>(context, listen: false);
+    final address = Address(
+      id: widget.address?.id ?? 0,
+      title: _titleController.text.trim(),
+      fullAddress: _addressController.text.trim(),
+      type: _selectedType,
+      isDefault: _isDefault,
+    );
+    bool success;
+    if (widget.address == null) {
+      success = await provider.addAddress(address, context);
+    } else {
+      success = await provider.updateAddress(address, context);
+    }
+    setState(() {
+      _isSubmitting = false;
+    });
+    if (success) {
+      Navigator.pop(context);
+    } else {
+      setState(() {
+        _error = provider.error;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -379,6 +429,10 @@ class _AddAddressFormState extends State<_AddAddressForm> {
                     fontWeight: FontWeight.bold,
                   ),
             ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(_error!, style: TextStyle(color: Colors.red)),
+            ],
             const SizedBox(height: 24),
             TextFormField(
               controller: _titleController,
@@ -449,20 +503,22 @@ class _AddAddressFormState extends State<_AddAddressForm> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed:
+                        _isSubmitting ? null : () => Navigator.pop(context),
                     child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // TODO: Save address
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Text(widget.address == null ? 'Add' : 'Save'),
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(widget.address == null ? 'Add' : 'Save'),
                   ),
                 ),
               ],

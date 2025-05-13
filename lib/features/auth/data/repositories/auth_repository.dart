@@ -48,22 +48,17 @@ class AuthRepository {
     required String firstName,
     required String lastName,
     required String email,
-    required String password,
     required String phoneNumber,
-    required String address,
     String? fcmToken,
   }) async {
     final response = await remote.signup(
       firstName: firstName,
       lastName: lastName,
       email: email,
-      password: password,
-      passwordConfirmation: password,
       phoneNumber: phoneNumber,
-      address: address,
       fcmToken: fcmToken,
     );
-    print('Signup repository response: $response');
+
     if (response['token'] != null && response['user'] != null) {
       await prefs.setString(_tokenKey, response['token']);
       await prefs.setString(_userKey, jsonEncode(response['user']));

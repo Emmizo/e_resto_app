@@ -12,20 +12,18 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
   bool _isPasswordVisible = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -33,18 +31,16 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.signup(
-      firstName: _nameController.text.trim(),
-      lastName: _nameController.text.trim(),
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
-      address: _addressController.text.trim(),
-      fcmToken: null,
     );
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
+        MaterialPageRoute(
+            builder: (context) => const MainScreen(initialIndex: 0)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,7 +60,7 @@ class _SignupScreenState extends State<SignupScreen> {
             width: double.infinity,
             constraints: const BoxConstraints(),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.zero,
               boxShadow: [],
             ),
@@ -78,7 +74,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     clipper: _TopAngleClipper(),
                     child: Container(
                       width: double.infinity,
-                      color: const Color(0xFFD6E9FF),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.12),
                       padding: const EdgeInsets.only(
                           top: 80, left: 32, right: 32, bottom: 120),
                       child: Row(
@@ -95,19 +94,25 @@ class _SignupScreenState extends State<SignupScreen> {
                             children: [
                               Text(
                                 'The Resto',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24,
-                                  color: Color(0xFF227C9D),
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'Find Your Favorite Restaurant',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF227C9D),
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
                               ),
                             ],
                           ),
@@ -126,49 +131,104 @@ class _SignupScreenState extends State<SignupScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'Sign Up',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 32,
-                              color: Color(0xFF227C9D),
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 32),
                           Text(
-                            'Name',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
+                            'First Name',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                           TextFormField(
-                            controller: _nameController,
+                            controller: _firstNameController,
                             validator: (v) => v == null || v.isEmpty
-                                ? 'Enter your name'
+                                ? 'Enter your first name'
                                 : null,
-                            style: const TextStyle(fontSize: 16),
+                            style: Theme.of(context).textTheme.bodyLarge,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Color(0xFFF5F7FA),
+                              fillColor: Theme.of(context)
+                                      .inputDecorationTheme
+                                      .fillColor ??
+                                  Theme.of(context).cardColor,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
-                              hintText: 'Your Name',
-                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
-                              contentPadding: EdgeInsets.symmetric(
+                              hintText: 'First Name',
+                              hintStyle: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .hintStyle,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            'Last Name',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          TextFormField(
+                            controller: _lastNameController,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'Enter your last name'
+                                : null,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Theme.of(context)
+                                      .inputDecorationTheme
+                                      .fillColor ??
+                                  Theme.of(context).cardColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'Last Name',
+                              hintStyle: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .hintStyle,
+                              contentPadding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 16),
                             ),
                           ),
                           const SizedBox(height: 28),
                           Text(
                             'Email',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                           TextFormField(
                             controller: _emailController,
@@ -176,70 +236,38 @@ class _SignupScreenState extends State<SignupScreen> {
                             validator: (v) => v == null || !v.contains('@')
                                 ? 'Enter a valid email'
                                 : null,
-                            style: const TextStyle(fontSize: 16),
+                            style: Theme.of(context).textTheme.bodyLarge,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Color(0xFFF5F7FA),
+                              fillColor: Theme.of(context)
+                                      .inputDecorationTheme
+                                      .fillColor ??
+                                  Theme.of(context).cardColor,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
-                              hintText: 'raziul.cse@gmail.com',
-                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
-                              contentPadding: EdgeInsets.symmetric(
+                              hintText: 'Email',
+                              hintStyle: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .hintStyle,
+                              contentPadding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 16),
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                          Text(
-                            'Password',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                          ),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: !_isPasswordVisible,
-                            validator: (v) => v == null || v.length < 6
-                                ? 'Password must be at least 6 characters'
-                                : null,
-                            style: const TextStyle(fontSize: 16),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Color(0xFFF5F7FA),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              hintText: 'Password',
-                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
-                              contentPadding: EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 16),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _isPasswordVisible
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: Colors.black45,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                              ),
                             ),
                           ),
                           const SizedBox(height: 28),
                           Text(
                             'Phone Number',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                           TextFormField(
                             controller: _phoneController,
@@ -247,45 +275,22 @@ class _SignupScreenState extends State<SignupScreen> {
                             validator: (v) => v == null || v.isEmpty
                                 ? 'Enter your phone number'
                                 : null,
-                            style: const TextStyle(fontSize: 16),
+                            style: Theme.of(context).textTheme.bodyLarge,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Color(0xFFF5F7FA),
+                              fillColor: Theme.of(context)
+                                      .inputDecorationTheme
+                                      .fillColor ??
+                                  Theme.of(context).cardColor,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                               hintText: 'Your Phone Number',
-                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
-                              contentPadding: EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 16),
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                          Text(
-                            'Address',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                          ),
-                          TextFormField(
-                            controller: _addressController,
-                            validator: (v) => v == null || v.isEmpty
-                                ? 'Enter your address'
-                                : null,
-                            style: const TextStyle(fontSize: 16),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Color(0xFFF5F7FA),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              hintText: 'Your Address',
-                              hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
-                              contentPadding: EdgeInsets.symmetric(
+                              hintStyle: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .hintStyle,
+                              contentPadding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 16),
                             ),
                           ),
@@ -298,8 +303,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                       ? null
                                       : _submit,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF227C9D),
-                                foregroundColor: Colors.white,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -326,10 +333,12 @@ class _SignupScreenState extends State<SignupScreen> {
                                     const EdgeInsets.symmetric(horizontal: 12),
                                 child: Text(
                                   'Or continue with',
-                                  style: TextStyle(
-                                    color: Colors.black.withOpacity(0.5),
-                                    fontSize: 15,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.black.withOpacity(0.5),
+                                      ),
                                 ),
                               ),
                               const Expanded(
@@ -393,10 +402,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             children: [
                               Text(
                                 'Already have an account? ',
-                                style: TextStyle(
-                                  color: Colors.black.withOpacity(0.6),
-                                  fontSize: 15,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.black.withOpacity(0.6),
+                                    ),
                               ),
                               GestureDetector(
                                 onTap: () {

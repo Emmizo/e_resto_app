@@ -16,11 +16,11 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart';
 import 'package:dio/dio.dart';
-import 'favorite_tab_screen.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 import '../../../../core/providers/connectivity_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
+import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -101,7 +101,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Image',
-          toolbarColor: Color(0xFF184C55),
+          toolbarColor: Theme.of(context).colorScheme.primary,
           toolbarWidgetColor: Colors.white,
           initAspectRatio: CropAspectRatioPreset.original,
           lockAspectRatio: false,
@@ -214,9 +214,12 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                     children: [
                       // Gradient background
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xFF184C55), Color(0xFF5DB1B9)],
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.secondary,
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -230,206 +233,329 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                               horizontal: 20.0, vertical: 16),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.25),
+                              color:
+                                  Theme.of(context).cardColor.withOpacity(0.7),
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 16,
+                                  color: Theme.of(context)
+                                      .shadowColor
+                                      .withOpacity(0.10),
+                                  blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
                               ],
                               border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 1.2),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant
+                                    .withOpacity(0.4),
+                                width: 1.2,
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 20),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Stack(
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 28),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withOpacity(0.18),
-                                              blurRadius: 12,
-                                              offset: const Offset(0, 6),
+                                      Stack(
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.18),
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 6),
+                                                ),
+                                              ],
+                                              border: Border.all(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimary,
+                                                width: 3,
+                                              ),
                                             ),
-                                          ],
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 3,
-                                          ),
-                                        ),
-                                        child: ClipOval(
-                                          child: _profileImage != null
-                                              ? Image.file(
-                                                  _profileImage!,
-                                                  width: 88,
-                                                  height: 88,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (context, error,
-                                                          stackTrace) =>
-                                                      const Icon(
-                                                    Icons.person,
-                                                    size: 44,
-                                                    color: Color(0xFF184C55),
-                                                  ),
-                                                )
-                                              : (profilePic != null &&
-                                                      profilePic.isNotEmpty
-                                                  ? Image.network(
-                                                      profilePic,
+                                            child: ClipOval(
+                                              child: _profileImage != null
+                                                  ? Image.file(
+                                                      _profileImage!,
                                                       width: 88,
                                                       height: 88,
                                                       fit: BoxFit.cover,
                                                       errorBuilder: (context,
                                                               error,
                                                               stackTrace) =>
-                                                          const Icon(
+                                                          Icon(
                                                         Icons.person,
                                                         size: 44,
-                                                        color:
-                                                            Color(0xFF184C55),
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary,
                                                       ),
                                                     )
-                                                  : const Icon(
-                                                      Icons.person,
-                                                      size: 44,
-                                                      color: Color(0xFF184C55),
-                                                    )),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        bottom: 4,
-                                        right: 4,
-                                        child: GestureDetector(
-                                          onTap: () async {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              shape:
-                                                  const RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.vertical(
-                                                        top: Radius.circular(
-                                                            24)),
-                                              ),
-                                              builder: (context) => SafeArea(
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                          Icons.photo_camera),
-                                                      title: const Text(
-                                                          'Take Photo'),
-                                                      onTap: () async {
-                                                        Navigator.pop(context);
-                                                        await _pickAndEditImage(
-                                                            fromCamera: true);
-                                                      },
+                                                  : (profilePic != null &&
+                                                          profilePic.isNotEmpty
+                                                      ? Image.network(
+                                                          profilePic,
+                                                          width: 88,
+                                                          height: 88,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (context,
+                                                                  error,
+                                                                  stackTrace) =>
+                                                              Icon(
+                                                            Icons.person,
+                                                            size: 44,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .primary,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.person,
+                                                          size: 44,
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .primary,
+                                                        )),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 4,
+                                            right: 4,
+                                            child: GestureDetector(
+                                              onTap: () async {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  shape:
+                                                      const RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                    24)),
+                                                  ),
+                                                  builder: (context) =>
+                                                      SafeArea(
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        ListTile(
+                                                          leading: const Icon(
+                                                              Icons
+                                                                  .photo_camera),
+                                                          title: const Text(
+                                                              'Take Photo'),
+                                                          onTap: () async {
+                                                            Navigator.pop(
+                                                                context);
+                                                            await _pickAndEditImage(
+                                                                fromCamera:
+                                                                    true);
+                                                          },
+                                                        ),
+                                                        ListTile(
+                                                          leading: const Icon(
+                                                              Icons
+                                                                  .photo_library),
+                                                          title: const Text(
+                                                              'Choose from Gallery'),
+                                                          onTap: () async {
+                                                            Navigator.pop(
+                                                                context);
+                                                            await _pickAndEditImage(
+                                                                fromCamera:
+                                                                    false);
+                                                          },
+                                                        ),
+                                                      ],
                                                     ),
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                          Icons.photo_library),
-                                                      title: const Text(
-                                                          'Choose from Gallery'),
-                                                      onTap: () async {
-                                                        Navigator.pop(context);
-                                                        await _pickAndEditImage(
-                                                            fromCamera: false);
-                                                      },
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 2,
                                                     ),
                                                   ],
                                                 ),
-                                              ),
-                                            );
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withOpacity(0.1),
-                                                  blurRadius: 2,
+                                                padding:
+                                                    const EdgeInsets.all(3),
+                                                child: Icon(
+                                                  Icons.camera_alt,
+                                                  size: 16,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
                                                 ),
-                                              ],
+                                              ),
                                             ),
-                                            padding: const EdgeInsets.all(3),
-                                            child: const Icon(Icons.camera_alt,
-                                                size: 16,
-                                                color: Color(0xFF184C55)),
                                           ),
+                                        ],
+                                      ),
+                                      const SizedBox(width: 24),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              name,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface,
+                                                  ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              email,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.copyWith(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withOpacity(0.7),
+                                                  ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 18),
+                                          ],
                                         ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit,
+                                            color: Color(0xFF184C55)),
+                                        onPressed: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                      top: Radius.circular(24)),
+                                            ),
+                                            builder: (context) =>
+                                                const _EditProfileForm(),
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF184C55),
-                                                fontSize: 20,
-                                              ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                ),
+                                // Floating stats card
+                                Positioned(
+                                  left: 65,
+                                  right: 0,
+                                  bottom: 30, // Float below the card
+                                  child: Center(
+                                    child: Card(
+                                      elevation: 4,
+                                      color: Theme.of(context).cardColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                      child: Container(
+                                        width: 200,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 10),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: _stats?.map((stat) {
+                                                final label = stat['label'];
+                                                final icon =
+                                                    _getStatIcon(label);
+                                                return Flexible(
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(icon,
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .primary,
+                                                          size: 20),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        stat['value'],
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .titleMedium
+                                                            ?.copyWith(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .colorScheme
+                                                                  .primary,
+                                                              fontSize: 13,
+                                                            ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                      const SizedBox(height: 1),
+                                                      Text(
+                                                        label,
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall
+                                                            ?.copyWith(
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .colorScheme
+                                                                  .onSurface
+                                                                  .withOpacity(
+                                                                      0.7),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                              fontSize: 10,
+                                                            ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }).toList() ??
+                                              [],
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          email,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                color: Colors.grey[800],
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 14,
-                                              ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 14),
-                                        // User stats row
-                                        _buildStats(),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Color(0xFF184C55)),
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(24)),
-                                        ),
-                                        builder: (context) =>
-                                            const _EditProfileForm(),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -437,20 +563,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                     ],
                   ),
                 ),
-                actions: [
-                  IconButton(
-                    icon: Icon(
-                      context.watch<ThemeProvider>().themeMode == ThemeMode.dark
-                          ? Icons.light_mode
-                          : Icons.dark_mode,
-                      color: Color(0xFF184C55),
-                    ),
-                    onPressed: () {
-                      final themeProvider = context.read<ThemeProvider>();
-                      themeProvider.toggleTheme();
-                    },
-                  ),
-                ],
               ),
               // Section divider
               SliverToBoxAdapter(
@@ -458,7 +570,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: Divider(
-                    color: Colors.grey[300],
+                    color: Theme.of(context).dividerColor,
                     thickness: 1.2,
                   ),
                 ),
@@ -492,16 +604,16 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
             ),
         ],
       ),
-      backgroundColor: const Color(0xFFF6F8FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     );
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF184C55),
+            color: Theme.of(context).colorScheme.primary,
           ),
     ).animate().fadeIn().slideX();
   }
@@ -541,11 +653,12 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
           title: 'Favorites',
           subtitle: 'Your favorite dishes and restaurants',
           onTap: () {
-            Navigator.push(
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => const FavoriteTabScreen(),
+                builder: (context) => const MainScreen(initialIndex: 2),
               ),
+              (route) => false,
             );
           },
         ),
@@ -604,9 +717,9 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     return Column(
       children: [
         _ProfileOption(
-          icon: Icons.settings,
-          title: 'Settings',
-          subtitle: 'App preferences and configurations',
+          icon: Icons.notifications,
+          title: 'Notification Settings',
+          subtitle: 'Manage your notification preferences',
           onTap: () {
             Navigator.push(
               context,
@@ -707,73 +820,17 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     );
   }
 
-  Widget _buildStats() {
-    if (_isLoadingStats) {
-      return const Center(child: CircularProgressIndicator());
+  IconData _getStatIcon(String label) {
+    switch (label.toLowerCase()) {
+      case 'orders':
+        return Icons.shopping_bag;
+      case 'favorites':
+        return Icons.favorite;
+      case 'reservations':
+        return Icons.event;
+      default:
+        return Icons.info;
     }
-    final stats = _stats ?? [];
-    final icons = {
-      'Orders': Icons.shopping_bag,
-      'Favorites': Icons.favorite,
-      'Reservations': Icons.calendar_today,
-    };
-    final shortLabels = {
-      'Orders': 'Orders',
-      'Favorites': 'Favs',
-      'Reservations': 'Resvs',
-    };
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: stats.map((stat) {
-          final icon = icons[stat['label']] ?? Icons.info;
-          final label = shortLabels[stat['label']] ?? stat['label'];
-          return Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: Color(0xFF184C55), size: 24),
-                const SizedBox(height: 4),
-                Text(
-                  stat['value'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Color(0xFF184C55),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.2,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    ).animate().fadeIn().slideY(begin: 0.1);
   }
 }
 
@@ -800,31 +857,36 @@ class _ProfileOption extends StatelessWidget {
         : const Color(0xFF184C55).withAlpha(26);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+      color: Theme.of(context).cardColor,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: backgroundColor,
+                  color: isDestructive
+                      ? Theme.of(context).colorScheme.error.withOpacity(0.12)
+                      : Theme.of(context).colorScheme.primary.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  color: color,
+                  color: isDestructive
+                      ? Theme.of(context).colorScheme.error
+                      : Theme.of(context).colorScheme.primary,
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -833,7 +895,9 @@ class _ProfileOption extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: color,
+                            color: isDestructive
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
                     const SizedBox(height: 4),
@@ -841,10 +905,9 @@ class _ProfileOption extends StatelessWidget {
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.color
-                                ?.withAlpha(179),
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.7),
                           ),
                     ),
                   ],
@@ -852,11 +915,7 @@ class _ProfileOption extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.color
-                    ?.withAlpha(128),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
               ),
             ],
           ),

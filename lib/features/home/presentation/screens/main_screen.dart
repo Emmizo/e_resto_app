@@ -13,18 +13,28 @@ import 'dart:ui';
 import '../../../../core/providers/connectivity_provider.dart';
 import 'package:e_resta_app/core/providers/action_queue_provider.dart';
 import 'package:e_resta_app/core/screens/failed_actions_screen.dart';
+import 'package:e_resta_app/core/providers/theme_provider.dart';
+import 'package:e_resta_app/features/order/presentation/screens/order_history_screen.dart';
+import 'package:e_resta_app/features/reservation/presentation/screens/my_reservations_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final GlobalKey<HomeScreenState> _homeScreenKey =
       GlobalKey<HomeScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   List<Widget> get _screens => [
         HomeScreen(key: _homeScreenKey),
@@ -70,14 +80,17 @@ class _MainScreenState extends State<MainScreen> {
             flexibleSpace: Stack(
               children: [
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF184C55), Color(0xFF227C9D)],
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius:
-                        BorderRadius.vertical(bottom: Radius.circular(24)),
+                    borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(24)),
                   ),
                 ),
                 Container(
@@ -97,25 +110,27 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ],
             ),
-            title: const Text(
+            title: Text(
               'E-Resta',
-              style: TextStyle(
-                color: Colors.white,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
                 letterSpacing: 1.2,
                 shadows: [
                   Shadow(
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.shadow,
                     blurRadius: 8,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
             ),
             centerTitle: true,
-            iconTheme: const IconThemeData(color: Colors.white),
-            actionsIconTheme: const IconThemeData(color: Colors.white),
+            iconTheme:
+                IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+            actionsIconTheme:
+                IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
             leading: Builder(
               builder: (context) => IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
@@ -215,13 +230,16 @@ class _MainScreenState extends State<MainScreen> {
                       final email = user?.email ?? '';
                       final profilePic = user?.profilePicture;
                       return Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xFF184C55), Color(0xFF227C9D)],
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.secondary,
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.vertical(
+                          borderRadius: const BorderRadius.vertical(
                             bottom: Radius.circular(32),
                           ),
                         ),
@@ -250,7 +268,10 @@ class _MainScreenState extends State<MainScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                          color: Colors.white, width: 3),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                          width: 3),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.18),
@@ -261,7 +282,9 @@ class _MainScreenState extends State<MainScreen> {
                                     ),
                                     child: CircleAvatar(
                                       radius: 38,
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
                                       backgroundImage: profilePic != null &&
                                               profilePic.isNotEmpty
                                           ? NetworkImage(profilePic)
@@ -289,15 +312,22 @@ class _MainScreenState extends State<MainScreen> {
                                       children: [
                                         Text(
                                           name,
-                                          style: const TextStyle(
-                                            color: Colors.white,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 20,
                                             shadows: [
                                               Shadow(
-                                                color: Colors.black54,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .shadow,
                                                 blurRadius: 8,
-                                                offset: Offset(0, 2),
+                                                offset: const Offset(0, 2),
                                               ),
                                             ],
                                           ),
@@ -332,37 +362,55 @@ class _MainScreenState extends State<MainScreen> {
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     child: Text('Account',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: Colors.grey[700],
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontWeight: FontWeight.bold,
                             )),
                   ),
                   _ModernListTile(
                     icon: Icons.person,
                     label: 'Profile',
-                    onTap: () => Navigator.pushNamed(context, '/profile'),
+                    onTap: () => Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MainScreen(initialIndex: 2),
+                      ),
+                      (route) => false,
+                    ),
                     trailing: Icons.arrow_forward_ios,
                   ),
                   _ModernListTile(
                     icon: Icons.history,
                     label: 'Order History',
-                    onTap: () => Navigator.pushNamed(context, '/order-history'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OrderHistoryScreen(),
+                      ),
+                    ),
                     trailing: Icons.arrow_forward_ios,
                   ),
                   _ModernListTile(
                     icon: Icons.calendar_today,
                     label: 'My Reservations',
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/my-reservations'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyReservationsScreen(),
+                      ),
+                    ),
                     trailing: Icons.arrow_forward_ios,
                   ),
                   _ModernListTile(
                     icon: Icons.favorite,
                     label: 'Favorites',
-                    onTap: () => Navigator.push(
+                    onTap: () => Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const FavoriteTabScreen(),
+                        builder: (context) => const MainScreen(initialIndex: 2),
                       ),
+                      (route) => false,
                     ),
                     trailing: Icons.arrow_forward_ios,
                   ),
@@ -372,7 +420,9 @@ class _MainScreenState extends State<MainScreen> {
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     child: Text('Settings',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: Colors.grey[700],
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontWeight: FontWeight.bold,
                             )),
                   ),
@@ -393,8 +443,27 @@ class _MainScreenState extends State<MainScreen> {
                   _ModernListTile(
                     icon: Icons.settings,
                     label: 'Settings',
-                    onTap: () => Navigator.pushNamed(context, '/settings'),
+                    onTap: () => Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MainScreen(initialIndex: 3),
+                      ),
+                      (route) => false,
+                    ),
                     trailing: Icons.arrow_forward_ios,
+                  ),
+                  Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, _) => SwitchListTile(
+                      secondary: Icon(
+                        themeProvider.themeMode == ThemeMode.dark
+                            ? Icons.dark_mode
+                            : Icons.light_mode,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      title: Text('Dark Mode'),
+                      value: themeProvider.themeMode == ThemeMode.dark,
+                      onChanged: (val) => themeProvider.toggleTheme(),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -402,7 +471,9 @@ class _MainScreenState extends State<MainScreen> {
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     child: Text('Other',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: Colors.grey[700],
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontWeight: FontWeight.bold,
                             )),
                   ),
@@ -541,17 +612,23 @@ class _MainScreenState extends State<MainScreen> {
                             Text(
                               'No Internet Connection',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                color: Theme.of(context).colorScheme.onError,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 26,
                                 letterSpacing: 0.5,
                                 height: 1.1,
                                 shadows: [
                                   Shadow(
-                                    color: Colors.black.withOpacity(0.15),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .shadow
+                                        .withOpacity(0.15),
                                     blurRadius: 2,
-                                    offset: Offset(0, 2),
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
@@ -571,8 +648,11 @@ class _MainScreenState extends State<MainScreen> {
                       const SizedBox(width: 18),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white, width: 2),
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onError,
+                          side: BorderSide(
+                              color: Theme.of(context).colorScheme.onError,
+                              width: 2),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -644,7 +724,8 @@ class _ModernListTile extends StatelessWidget {
             ),
             child: ListTile(
               leading: Icon(icon,
-                  color: iconColor ?? const Color(0xFF184C55), size: 26),
+                  color: iconColor ?? Theme.of(context).colorScheme.primary,
+                  size: 26),
               title: Text(
                 label,
                 style: Theme.of(context)

@@ -153,11 +153,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 24),
               Text(
                 'Current Password',
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.7),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 15,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
               TextFormField(
                 controller: _currentPasswordController,
@@ -165,16 +163,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 validator: (v) => v == null || v.isEmpty
                     ? 'Enter your current password'
                     : null,
-                style: const TextStyle(fontSize: 16),
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color(0xFFF5F7FA),
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      Theme.of(context).cardColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
                   hintText: 'Current password',
-                  hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                  hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
@@ -182,11 +181,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 24),
               Text(
                 'New Password',
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.7),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 15,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
               TextFormField(
                 controller: _newPasswordController,
@@ -197,16 +194,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     return 'Password must be at least 8 characters';
                   return null;
                 },
-                style: const TextStyle(fontSize: 16),
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color(0xFFF5F7FA),
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      Theme.of(context).cardColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
                   hintText: 'New password',
-                  hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                  hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
@@ -214,11 +212,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 24),
               Text(
                 'Confirm New Password',
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.7),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 15,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
               TextFormField(
                 controller: _confirmPasswordController,
@@ -230,16 +226,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     return 'Passwords do not match';
                   return null;
                 },
-                style: const TextStyle(fontSize: 16),
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color(0xFFF5F7FA),
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      Theme.of(context).cardColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
                   hintText: 'Confirm new password',
-                  hintStyle: TextStyle(color: Color(0xFFB0B8C1)),
+                  hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
@@ -267,21 +264,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF184C55),
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).colorScheme.onPrimary),
                           ),
                         )
                       : const Text(

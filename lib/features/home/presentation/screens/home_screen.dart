@@ -611,11 +611,15 @@ class HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: TextField(
                 controller: _searchController,
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   hintText: 'Search restaurant or cuisine...',
-                  prefixIcon: Icon(Icons.search, color: Color(0xFF184C55)),
+                  hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
+                  prefixIcon: Icon(Icons.search,
+                      color: Theme.of(context).colorScheme.primary),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      Theme.of(context).cardColor,
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                   border: OutlineInputBorder(
@@ -1004,27 +1008,31 @@ class HomeScreenState extends State<HomeScreen>
                       children: [
                         CircleAvatar(
                           backgroundColor: isSelected
-                              ? Color(0xFF184C55)
-                              : Color(0xFFF5F6FA),
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.surface,
                           radius: 24,
                           child: Icon(
                             Icons.fastfood,
-                            color:
-                                isSelected ? Colors.white : Color(0xFF184C55),
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           cat.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                color: isSelected ? Color(0xFF184C55) : null,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: isSelected
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.color,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
                         ),
                       ],
                     ),
@@ -1290,7 +1298,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Divider(height: 1, color: Colors.grey[300]),
+                Divider(height: 1, color: Theme.of(context).dividerColor),
                 const SizedBox(height: 4),
                 Text(
                   restaurant.name,
@@ -1311,7 +1319,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                       )
                       .name,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                         fontSize: 12,
                       ),
@@ -1322,7 +1330,10 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                 Text(
                   restaurant.address,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[500],
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
                         fontSize: 11,
                       ),
                   maxLines: 1,
@@ -1334,7 +1345,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                     child: Text(
                       '${(distance / 1000).toStringAsFixed(2)} km away',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.blueGrey,
+                            color: Theme.of(context).colorScheme.secondary,
                             fontSize: 11,
                           ),
                     ),
@@ -1345,7 +1356,9 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.star, color: Colors.amber, size: 16),
+                        Icon(Icons.star,
+                            color: Theme.of(context).colorScheme.secondary,
+                            size: 16),
                         const SizedBox(width: 3),
                         Text(
                           restaurant.averageRating.toStringAsFixed(1),
@@ -1440,7 +1453,8 @@ class AllRestaurantsScreen extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceVariant,
                       backgroundImage: (restaurant.image != null &&
                               restaurant.image!.isNotEmpty)
                           ? NetworkImage(restaurant.image!)
@@ -1448,7 +1462,10 @@ class AllRestaurantsScreen extends StatelessWidget {
                       child: (restaurant.image == null ||
                               restaurant.image!.isEmpty)
                           ? Icon(Icons.restaurant,
-                              color: Colors.grey[400], size: 32)
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              size: 32)
                           : null,
                     ),
                     const SizedBox(width: 16),
@@ -1471,17 +1488,22 @@ class AllRestaurantsScreen extends StatelessWidget {
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
-                                ?.copyWith(color: Colors.blueGrey),
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             restaurant.address,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: Colors.grey[600]),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1500,7 +1522,9 @@ class AllRestaurantsScreen extends StatelessWidget {
                                       .textTheme
                                       .bodySmall
                                       ?.copyWith(
-                                        color: Colors.teal,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondary,
                                         fontSize: 12,
                                       ),
                                 );

@@ -69,9 +69,7 @@ class AuthProvider extends ChangeNotifier {
     required String firstName,
     required String lastName,
     required String email,
-    required String password,
     required String phoneNumber,
-    required String address,
     String? fcmToken,
   }) async {
     _loading = true;
@@ -82,9 +80,7 @@ class AuthProvider extends ChangeNotifier {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        password: password,
         phoneNumber: phoneNumber,
-        address: address,
         fcmToken: fcmToken,
       );
       if (user != null) {
@@ -94,7 +90,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = 'Sign up failed $user';
+        _error = 'Sign up failed';
       }
     } catch (e) {
       if (e is DioException) {
