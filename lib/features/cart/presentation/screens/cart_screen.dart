@@ -240,6 +240,8 @@ class _CartSummaryState extends State<_CartSummary> {
         int step = 0; // 0: Order, 1: Review
         bool isLoading = false;
         String? errorMessage;
+        bool isOrderStepValid = addressController.text.trim().isNotEmpty &&
+            phoneController.text.trim().isNotEmpty;
         return StatefulBuilder(
           builder: (context, setState) => Dialog(
             backgroundColor: Theme.of(context).dialogBackgroundColor,
@@ -276,12 +278,16 @@ class _CartSummaryState extends State<_CartSummary> {
                           _StepperCircle(
                               isActive: step == 0,
                               icon: Icons.receipt_long,
-                              label: 'Order'),
+                              label: 'Order',
+                              isValid: step > 0 && isOrderStepValid,
+                              isInvalid: step > 0 && !isOrderStepValid),
                           _StepperLine(isActive: step > 0),
                           _StepperCircle(
                               isActive: step == 1,
                               icon: Icons.check_circle,
-                              label: 'Review'),
+                              label: 'Review',
+                              isValid: false,
+                              isInvalid: false),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -335,16 +341,18 @@ class _CartSummaryState extends State<_CartSummary> {
                                 child: ElevatedButton(
                                   onPressed: () async {
                                     setState(() => errorMessage = null);
+                                    bool valid = true;
                                     if (addressController.text.trim().isEmpty) {
                                       setState(() => errorMessage =
                                           'Delivery address is required.');
-                                      return;
+                                      valid = false;
                                     }
                                     if (phoneController.text.trim().isEmpty) {
                                       setState(() => errorMessage =
                                           'Contact phone is required.');
-                                      return;
+                                      valid = false;
                                     }
+                                    if (!valid) return;
                                     setState(() => step++);
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -440,6 +448,17 @@ class _CartSummaryState extends State<_CartSummary> {
         String paymentMethod = 'visa';
         bool isLoading = false;
         String? errorMessage;
+        bool isOrderStepValid = (orderType != 'delivery' ||
+                addressController.text.trim().isNotEmpty) &&
+            phoneController.text.trim().isNotEmpty;
+        bool isPaymentStepValid = paymentMethod == 'visa'
+            ? cardNumberController.text.trim().length >= 16 &&
+                cardExpiryController.text.trim().length == 5 &&
+                cardExpiryController.text.contains('/') &&
+                cardCvvController.text.trim().length >= 3
+            : paymentMethod == 'mobile_money'
+                ? mobileMoneyController.text.trim().length >= 10
+                : false;
         void nextStep() => step < 2 ? step++ : null;
         void prevStep() => step > 0 ? step-- : null;
         return StatefulBuilder(
@@ -478,17 +497,23 @@ class _CartSummaryState extends State<_CartSummary> {
                           _StepperCircle(
                               isActive: step == 0,
                               icon: Icons.receipt_long,
-                              label: 'Order'),
+                              label: 'Order',
+                              isValid: step > 0 && isOrderStepValid,
+                              isInvalid: step > 0 && !isOrderStepValid),
                           _StepperLine(isActive: step > 0),
                           _StepperCircle(
                               isActive: step == 1,
                               icon: Icons.payment,
-                              label: 'Payment'),
+                              label: 'Payment',
+                              isValid: step > 1 && isPaymentStepValid,
+                              isInvalid: step > 1 && !isPaymentStepValid),
                           _StepperLine(isActive: step > 1),
                           _StepperCircle(
                               isActive: step == 2,
                               icon: Icons.check_circle,
-                              label: 'Review'),
+                              label: 'Review',
+                              isValid: false,
+                              isInvalid: false),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -554,7 +579,7 @@ class _CartSummaryState extends State<_CartSummary> {
                                 child: ElevatedButton(
                                   onPressed: () async {
                                     setState(() => errorMessage = null);
-                                    // Validation for each step
+                                    bool valid = true;
                                     if (step == 0) {
                                       if (orderType == 'delivery' &&
                                           addressController.text
@@ -562,12 +587,12 @@ class _CartSummaryState extends State<_CartSummary> {
                                               .isEmpty) {
                                         setState(() => errorMessage =
                                             'Delivery address is required.');
-                                        return;
+                                        valid = false;
                                       }
                                       if (phoneController.text.trim().isEmpty) {
                                         setState(() => errorMessage =
                                             'Contact phone is required.');
-                                        return;
+                                        valid = false;
                                       }
                                     } else if (step == 1) {
                                       if (paymentMethod == 'visa') {
@@ -577,7 +602,7 @@ class _CartSummaryState extends State<_CartSummary> {
                                             16) {
                                           setState(() => errorMessage =
                                               'Enter a valid card number.');
-                                          return;
+                                          valid = false;
                                         }
                                         if (cardExpiryController.text
                                                     .trim()
@@ -587,7 +612,7 @@ class _CartSummaryState extends State<_CartSummary> {
                                                 .contains('/')) {
                                           setState(() => errorMessage =
                                               'Enter a valid expiry date (MM/YY).');
-                                          return;
+                                          valid = false;
                                         }
                                         if (cardCvvController.text
                                                 .trim()
@@ -595,7 +620,7 @@ class _CartSummaryState extends State<_CartSummary> {
                                             3) {
                                           setState(() => errorMessage =
                                               'Enter a valid CVV.');
-                                          return;
+                                          valid = false;
                                         }
                                       }
                                       if (paymentMethod == 'mobile_money') {
@@ -605,10 +630,11 @@ class _CartSummaryState extends State<_CartSummary> {
                                             10) {
                                           setState(() => errorMessage =
                                               'Enter a valid mobile money number.');
-                                          return;
+                                          valid = false;
                                         }
                                       }
                                     }
+                                    if (!valid) return;
                                     setState(() => step++);
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -731,29 +757,40 @@ class _CartSummaryState extends State<_CartSummary> {
 // Stepper widgets
 class _StepperCircle extends StatelessWidget {
   final bool isActive;
+  final bool isValid;
+  final bool isInvalid;
   final IconData icon;
   final String label;
   const _StepperCircle(
-      {required this.isActive, required this.icon, required this.label});
+      {required this.isActive,
+      required this.icon,
+      required this.label,
+      this.isValid = false,
+      this.isInvalid = false});
   @override
   Widget build(BuildContext context) {
+    Color color;
+    IconData displayIcon = icon;
+    if (isValid) {
+      color = Colors.green;
+      displayIcon = Icons.check_circle;
+    } else if (isInvalid) {
+      color = Colors.red;
+      displayIcon = Icons.error;
+    } else if (isActive) {
+      color = Theme.of(context).colorScheme.primary;
+    } else {
+      color = Colors.grey[300]!;
+    }
     return Column(
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: isActive
-              ? Theme.of(context).colorScheme.primary
-              : Colors.grey[300],
-          child: Icon(icon,
-              color: isActive ? Colors.white : Colors.grey[600], size: 18),
+          backgroundColor: color,
+          child: Icon(displayIcon, color: Colors.white, size: 18),
         ),
         const SizedBox(height: 4),
-        Text(label,
-            style: TextStyle(
-                fontSize: 11,
-                color: isActive
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 11, color: color)),
       ],
     );
   }
