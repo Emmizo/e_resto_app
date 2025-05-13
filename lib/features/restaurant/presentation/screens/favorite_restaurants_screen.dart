@@ -40,7 +40,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       _errorCode = null;
     });
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -66,7 +66,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
 
   Future<void> _unfavoriteRestaurant(int restaurantId, int index) async {
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       await dio.post(

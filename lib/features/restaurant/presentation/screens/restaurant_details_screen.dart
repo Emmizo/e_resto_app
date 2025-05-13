@@ -341,7 +341,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final data = {
         'restaurant_id': restaurant.id,
         'rating': rating,
@@ -649,7 +649,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
 
   Future<void> _fetchFavoriteStatus() async {
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -659,6 +659,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
         }),
       );
       final favorites = response.data['data'] as List;
+
       setState(() {
         _isFavorite = favorites.any((fav) => fav['id'] == widget.item.id);
       });
@@ -667,7 +668,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
 
   Future<void> _toggleFavorite() async {
     setState(() => _loading = true);
-    final dio = DioService.getDio(context);
+    final dio = DioService.getDio();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
     final endpoint =

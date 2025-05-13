@@ -65,7 +65,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final response = await dio.get(
         ApiEndpoints.finalStats, // Define this as '/final-stats'
         options: Options(headers: {
@@ -140,7 +140,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
       _isUploading = true;
     });
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final dio = DioService.getDio(context);
+    final dio = DioService.getDio();
     final profileDatasource = ProfileRemoteDatasource(dio);
     try {
       final response = await profileDatasource.uploadProfilePicture(

@@ -32,7 +32,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       _error = null;
     });
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(

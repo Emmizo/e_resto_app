@@ -27,6 +27,8 @@ import 'core/services/notification_service.dart';
 import 'core/providers/connectivity_provider.dart';
 import 'core/providers/action_queue_provider.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -59,6 +61,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'E-Resta',
           color: Colors.white,
           debugShowCheckedModeBanner: false,

@@ -17,6 +17,7 @@ import '../../../../core/services/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:e_resta_app/core/services/action_queue_helper.dart';
 import 'package:e_resta_app/core/providers/action_queue_provider.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
 
 class CuisineCategory {
   final int? id; // null for 'All'
@@ -156,7 +157,7 @@ class HomeScreenState extends State<HomeScreen>
       _categoriesError = null;
     });
     try {
-      final response = await Dio().get(ApiEndpoints.cuisines);
+      final response = await DioService.getDio().get(ApiEndpoints.cuisines);
       final data = response.data['data'] as List;
       final cuisineCategories = data
           .map((c) =>
@@ -458,7 +459,7 @@ class HomeScreenState extends State<HomeScreen>
       });
       return;
     }
-    final dio = Dio();
+    final dio = DioService.getDio();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
     try {
@@ -507,7 +508,7 @@ class HomeScreenState extends State<HomeScreen>
   Future<void> _fetchPromoBanners() async {
     setState(() => _isPromoLoading = true);
     try {
-      final response = await Dio().get(ApiEndpoints.promoBanners);
+      final response = await DioService.getDio().get(ApiEndpoints.promoBanners);
       final data = response.data['data'] as List;
       final banners = data.map((e) => PromoBanner.fromJson(e)).toList();
 
@@ -1076,7 +1077,33 @@ class HomeScreenState extends State<HomeScreen>
               child: _isRestaurantLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _restaurantError != null
-                      ? Center(child: Text('Error: \\$_restaurantError'))
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline,
+                                  size: 54, color: Colors.red[300]),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Something went wrong',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'We couldn\'t load restaurants. Please try again.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: Colors.grey[600]),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
                       : _filteredRestaurants.isEmpty
                           ? Center(
                               child: Card(
@@ -1108,9 +1135,7 @@ class HomeScreenState extends State<HomeScreen>
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
-                                            ?.copyWith(
-                                              color: Colors.grey[600],
-                                            ),
+                                            ?.copyWith(color: Colors.grey[600]),
                                         textAlign: TextAlign.center,
                                       ),
                                     ],

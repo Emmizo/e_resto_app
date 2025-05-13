@@ -32,7 +32,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
       _error = null;
     });
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -201,7 +201,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     tooltip: 'Remove from favorites',
                     onPressed: () async {
-                      final dio = DioService.getDio(context);
+                      final dio = DioService.getDio();
                       final authProvider =
                           Provider.of<AuthProvider>(context, listen: false);
                       final token = authProvider.token;

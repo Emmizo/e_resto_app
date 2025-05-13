@@ -300,7 +300,7 @@ class _CartSummaryState extends State<_CartSummary> {
       'items': items,
     };
     try {
-      final dio = DioService.getDio(context);
+      final dio = DioService.getDio();
       final authProvider =
           Provider.of<AuthProvider>(parentContext, listen: false);
       final token = authProvider.token;
