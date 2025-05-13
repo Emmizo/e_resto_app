@@ -3,6 +3,7 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository repository;
@@ -58,6 +59,9 @@ class AuthProvider extends ChangeNotifier {
     await repository.logout();
     _user = null;
     _token = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_user');
+    await prefs.remove('auth_token');
     notifyListeners();
   }
 

@@ -25,6 +25,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/services/notification_service.dart';
 import 'core/providers/connectivity_provider.dart';
+import 'core/providers/action_queue_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CartProvider(prefs)),
         ChangeNotifierProvider(create: (_) => ReservationProvider(prefs)),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
+        ChangeNotifierProvider(create: (_) => ActionQueueProvider()),
       ],
       child: MyApp(prefs: prefs),
     ),
@@ -54,37 +56,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
-        ChangeNotifierProvider(create: (_) => CartProvider(prefs)),
-        ChangeNotifierProvider(create: (_) => ReservationProvider(prefs)),
-      ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
-          return MaterialApp(
-            title: 'E-Resta',
-            color: Colors.white,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            home: const SplashScreen(),
-            routes: {
-              '/profile': (context) => const ProfileScreen(),
-              '/order-history': (context) => const OrderHistoryScreen(),
-              '/my-reservations': (context) => const MyReservationsScreen(),
-              '/favorite-restaurants': (context) =>
-                  const FavoriteRestaurantsScreen(),
-              '/saved-addresses': (context) => const SavedAddressesScreen(),
-              '/payment-methods': (context) => const PaymentMethodsScreen(),
-              '/settings': (context) => const NotificationPreferencesScreen(),
-              '/signup': (context) => const SignupScreen(),
-              '/login': (context) => const LoginScreen(),
-            },
-          );
-        },
-      ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'E-Resta',
+          color: Colors.white,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: const SplashScreen(),
+          routes: {
+            '/profile': (context) => const ProfileScreen(),
+            '/order-history': (context) => const OrderHistoryScreen(),
+            '/my-reservations': (context) => const MyReservationsScreen(),
+            '/favorite-restaurants': (context) =>
+                const FavoriteRestaurantsScreen(),
+            '/saved-addresses': (context) => const SavedAddressesScreen(),
+            '/payment-methods': (context) => const PaymentMethodsScreen(),
+            '/settings': (context) => const NotificationPreferencesScreen(),
+            '/signup': (context) => const SignupScreen(),
+            '/login': (context) => const LoginScreen(),
+          },
+        );
+      },
     );
   }
 }

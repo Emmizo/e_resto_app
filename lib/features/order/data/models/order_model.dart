@@ -78,45 +78,60 @@ class RestaurantModel {
         address: json['address'],
         image: json['image'],
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'address': address,
+        'image': image,
+      };
 }
 
 class OrderModel {
-  final int id;
-  final String orderType;
-  final String totalAmount;
-  final String status;
-  final String paymentStatus;
-  final String deliveryAddress;
-  final String specialInstructions;
+  final int? id;
+  final List<Map<String, dynamic>> items;
+  final double total;
+  final String address;
+  final String status; // 'pending', 'placed', 'failed'
   final DateTime createdAt;
   final RestaurantModel restaurant;
-  final List<OrderItemModel> orderItems;
+  final String orderType;
 
   OrderModel({
-    required this.id,
-    required this.orderType,
-    required this.totalAmount,
+    this.id,
+    required this.items,
+    required this.total,
+    required this.address,
     required this.status,
-    required this.paymentStatus,
-    required this.deliveryAddress,
-    required this.specialInstructions,
     required this.createdAt,
     required this.restaurant,
-    required this.orderItems,
+    required this.orderType,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'items': items,
+        'total': total,
+        'address': address,
+        'status': status,
+        'createdAt': createdAt.toIso8601String(),
+        'restaurant': restaurant.toJson(),
+        'orderType': orderType,
+      };
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
         id: json['id'],
-        orderType: json['order_type'],
-        totalAmount: json['total_amount'],
+        items: (json['order_items'] as List<dynamic>? ?? [])
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(),
+        total: (json['total_amount'] != null &&
+                json['total_amount'].toString().isNotEmpty)
+            ? double.tryParse(json['total_amount'].toString()) ?? 0.0
+            : 0.0,
+        address: json['delivery_address'] ?? '',
         status: json['status'],
-        paymentStatus: json['payment_status'],
-        deliveryAddress: json['delivery_address'],
-        specialInstructions: json['special_instructions'],
         createdAt: DateTime.parse(json['created_at']),
         restaurant: RestaurantModel.fromJson(json['restaurant']),
-        orderItems: (json['order_items'] as List)
-            .map((item) => OrderItemModel.fromJson(item))
-            .toList(),
+        orderType: json['order_type'] ?? 'delivery',
       );
 }

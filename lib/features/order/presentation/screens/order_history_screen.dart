@@ -6,6 +6,7 @@ import '../../../order/data/models/order_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/core/providers/cart_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -31,7 +32,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       _error = null;
     });
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -76,16 +77,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   _OrderStatusChip(status: order.status),
                 ],
               ),
-              Text('Total: Frw${order.totalAmount}'),
+              Text('Total: Frw${order.total}'),
               const SizedBox(height: 12),
               const Text('Items:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              ...order.orderItems.map((item) => ListTile(
-                    leading: Image.network(item.menuItem.image,
+              ...order.items.map((item) => ListTile(
+                    leading: Image.network(item['image'],
                         width: 40, height: 40, fit: BoxFit.cover),
-                    title: Text(item.menuItem.name),
-                    subtitle: Text('Qty: ${item.quantity}'),
-                    trailing: Text('₣${item.price}'),
+                    title: Text(item['name']),
+                    subtitle: Text('Qty: ${item['quantity']}'),
+                    trailing: Text('₣${item['price']}'),
                   )),
             ],
           ),
@@ -104,16 +105,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 onPressed: isDifferentRestaurant
                     ? null
                     : () async {
-                        for (final item in order.orderItems) {
+                        for (final item in order.items) {
                           await cartProvider.addItem(CartItem(
-                            id: item.menuItem.id.toString(),
-                            name: item.menuItem.name,
-                            description: item.menuItem.description,
-                            price: double.tryParse(item.menuItem.price) ?? 0,
-                            imageUrl: item.menuItem.image,
+                            id: item['id'],
+                            name: item['name'],
+                            description: item['description'],
+                            price: double.tryParse(item['price']) ?? 0,
+                            imageUrl: item['image'],
                             restaurantId: order.restaurant.id.toString(),
                             restaurantName: order.restaurant.name,
-                            quantity: item.quantity,
+                            quantity: item['quantity'],
                           ));
                         }
                         Navigator.pop(context);
@@ -139,21 +140,46 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Error: $_error'))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 64, color: Colors.red[300]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Something went wrong',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'We couldn\'t load your orders. Please try again later.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _fetchOrders,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
               : _orders.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.receipt_long,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
+                          Icon(Icons.receipt_long,
+                              size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 16),
                           Text(
-                            'No Orders Yet',
+                            'No Orders Found',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
@@ -163,7 +189,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "You haven't placed any orders yet.\nStart exploring and order your favorite meal!",
+                            "You haven't placed any orders yet.",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -172,24 +198,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/');
-                            },
-                            icon: const Icon(Icons.restaurant_menu),
-                            label: const Text('Browse Restaurants'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
-                    ).animate().fadeIn()
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _orders.length,
@@ -223,7 +234,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                     _OrderStatusChip(status: order.status),
                                   ],
                                 ),
-                                Text('Total: ₣${order.totalAmount}'),
+                                Text('Total: ₣${order.total}'),
                                 Text('Placed: ${order.createdAt.toLocal()}'),
                               ],
                             ),

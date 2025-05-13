@@ -11,6 +11,7 @@ import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
 import '../../../home/presentation/screens/home_screen.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
 
 class RestaurantDetailsScreen extends StatelessWidget {
   final RestaurantModel restaurant;
@@ -340,7 +341,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final data = {
         'restaurant_id': restaurant.id,
         'rating': rating,
@@ -648,7 +649,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
 
   Future<void> _fetchFavoriteStatus() async {
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -666,7 +667,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
 
   Future<void> _toggleFavorite() async {
     setState(() => _loading = true);
-    final dio = Dio();
+    final dio = DioService.getDio(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
     final endpoint =

@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
 
 class FavoriteMenuItemsScreen extends StatefulWidget {
   const FavoriteMenuItemsScreen({super.key});
@@ -31,7 +32,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
       _error = null;
     });
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -57,7 +58,35 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (_error != null) {
-      return Center(child: Text('Error:  $_error'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            const SizedBox(height: 16),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'We couldn\'t load your favorite menu items. Please try again later.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _fetchFavorites,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
     } else if (_favoriteMenuItems.isEmpty) {
       return Center(
         child: Column(
@@ -172,7 +201,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     tooltip: 'Remove from favorites',
                     onPressed: () async {
-                      final dio = Dio();
+                      final dio = DioService.getDio(context);
                       final authProvider =
                           Provider.of<AuthProvider>(context, listen: false);
                       final token = authProvider.token;

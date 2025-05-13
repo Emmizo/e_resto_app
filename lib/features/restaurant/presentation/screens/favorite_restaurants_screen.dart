@@ -8,6 +8,8 @@ import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -38,7 +40,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       _errorCode = null;
     });
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final response = await dio.get(
@@ -64,7 +66,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
 
   Future<void> _unfavoriteRestaurant(int restaurantId, int index) async {
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       await dio.post(
@@ -95,7 +97,8 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       return const Center(child: CircularProgressIndicator());
     } else if (_error != null) {
       return ErrorStateWidget(
-        message: _errorMessage,
+        message:
+            "We couldn't load your favorite restaurants. Please try again.",
         code: _errorCode,
         onRetry: _fetchFavorites,
       );
@@ -115,7 +118,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
                     ? item['id']
                     : int.tryParse(item['id'].toString()) ?? 0,
                 index),
-          );
+          ).animate(delay: (100 * index).ms).fadeIn();
         },
       );
     }
@@ -123,62 +126,42 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/empty_favorites.png',
-              height: 120,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.favorite_border,
-                size: 80,
-                color: Colors.grey[400],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Favorites Yet',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Add restaurants to your favorites to see them here.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 28),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HomeScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.restaurant),
-              label: const Text('Discover Restaurants'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF184C55),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.favorite_border,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No Favorites Yet',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add restaurants to your favorites',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HomeScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.restaurant),
+            label: const Text('Discover Restaurants'),
+          ),
+        ],
       ),
     );
   }
@@ -270,7 +253,7 @@ class _RestaurantCard extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.favorite,
+                          icon: const Icon(Icons.delete_outline,
                               color: Colors.red, size: 26),
                           tooltip: 'Remove from favorites',
                           onPressed: onRemove,

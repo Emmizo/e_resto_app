@@ -5,8 +5,7 @@ import '../../../../core/providers/cart_provider.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/widgets/error_state_widget.dart';
-import 'package:e_resta_app/core/utils/error_utils.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -301,7 +300,7 @@ class _CartSummaryState extends State<_CartSummary> {
       'items': items,
     };
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final authProvider =
           Provider.of<AuthProvider>(parentContext, listen: false);
       final token = authProvider.token;

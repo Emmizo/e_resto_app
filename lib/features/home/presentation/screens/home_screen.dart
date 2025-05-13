@@ -13,6 +13,10 @@ import '../../../restaurant/data/models/restaurant_model.dart';
 import 'dart:async';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../../../core/providers/connectivity_provider.dart';
+import '../../../../core/services/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:e_resta_app/core/services/action_queue_helper.dart';
+import 'package:e_resta_app/core/providers/action_queue_provider.dart';
 
 class CuisineCategory {
   final int? id; // null for 'All'
@@ -152,13 +156,23 @@ class HomeScreenState extends State<HomeScreen>
       _categoriesError = null;
     });
     try {
-      final dio = Dio();
-      final response = await dio.get(ApiEndpoints.cuisines);
+      final response = await Dio().get(ApiEndpoints.cuisines);
       final data = response.data['data'] as List;
       final cuisineCategories = data
           .map((c) =>
               CuisineCategory(id: c['id'] as int, name: c['name'] as String))
           .toList();
+
+      // Cache to SQLite
+      final db = await DatabaseHelper().db;
+      final batch = db.batch();
+      batch.delete('categories');
+      for (final c in cuisineCategories) {
+        batch.insert('categories', {'id': c.id, 'name': c.name},
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
+
       setState(() {
         _categories = [
           CuisineCategory(id: null, name: 'All'),
@@ -176,10 +190,34 @@ class HomeScreenState extends State<HomeScreen>
         });
       });
     } catch (e) {
-      setState(() {
-        _isCategoriesLoading = false;
-        _categoriesError = e.toString();
-      });
+      // Try to load from SQLite
+      try {
+        final db = await DatabaseHelper().db;
+        final maps = await db.query('categories');
+        final cached = maps
+            .map((m) =>
+                CuisineCategory(id: m['id'] as int?, name: m['name'] as String))
+            .toList();
+        setState(() {
+          _categories = [CuisineCategory(id: null, name: 'All'), ...cached];
+          _isCategoriesLoading = false;
+          _categoriesError = 'Showing offline data.';
+        });
+        _tabController?.dispose();
+        _tabController = TabController(length: _categories.length, vsync: this);
+        _tabController?.addListener(() {
+          if (_tabController?.indexIsChanging ?? false) {
+            setState(() {
+              _selectedCategoryIndex = _tabController?.index ?? 0;
+            });
+          }
+        });
+      } catch (e2) {
+        setState(() {
+          _isCategoriesLoading = false;
+          _categoriesError = e.toString();
+        });
+      }
     }
   }
 
@@ -200,11 +238,20 @@ class HomeScreenState extends State<HomeScreen>
       _restaurantError = null;
     });
     try {
-      final dio = Dio();
-      final datasource = RestaurantRemoteDatasource(dio);
+      final datasource = RestaurantRemoteDatasource(context);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final restaurants = await datasource.fetchRestaurants(token: token);
+
+      // Cache to SQLite
+      final db = await DatabaseHelper().db;
+      final batch = db.batch();
+      batch.delete('restaurants');
+      for (final r in restaurants) {
+        batch.insert('restaurants', r.toJson(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
 
       setState(() {
         this.restaurants = restaurants;
@@ -214,10 +261,24 @@ class HomeScreenState extends State<HomeScreen>
       _applyFiltersAndSearch();
     } catch (e) {
       debugPrint('Error fetching restaurants: \\${e.toString()}');
-      setState(() {
-        _isRestaurantLoading = false;
-        _restaurantError = e.toString();
-      });
+      // Try to load from SQLite
+      try {
+        final db = await DatabaseHelper().db;
+        final maps = await db.query('restaurants');
+        final cached = maps.map((m) => RestaurantModel.fromJson(m)).toList();
+        setState(() {
+          restaurants = cached;
+          _filteredRestaurants = cached;
+          _isRestaurantLoading = false;
+          _restaurantError = 'Showing offline data.';
+        });
+        _applyFiltersAndSearch();
+      } catch (e2) {
+        setState(() {
+          _isRestaurantLoading = false;
+          _restaurantError = e.toString();
+        });
+      }
     }
   }
 
@@ -355,13 +416,51 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _toggleFavorite(RestaurantModel restaurant) async {
-    final dio = Dio();
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final token = authProvider.token;
+    final isOnline = context.read<ConnectivityProvider>().isOnline;
     final isCurrentlyFavorite = restaurant.isFavorite;
     setState(() {
       _favoriteLoading.add(restaurant.id);
     });
+    if (!isOnline) {
+      // Queue the action using the helper
+      await ActionQueueHelper.queueAction(
+        actionType: isCurrentlyFavorite ? 'unfavorite' : 'favorite',
+        payload: {'restaurant_id': restaurant.id},
+      );
+      // Refresh the badge
+      if (mounted) {
+        context.read<ActionQueueProvider>().refresh();
+      }
+      // Optimistically update the UI
+      setState(() {
+        restaurants = restaurants.map((r) {
+          if (r.id == restaurant.id) {
+            return r.copyWith(isFavorite: !isCurrentlyFavorite);
+          }
+          return r;
+        }).toList();
+        _filteredRestaurants = _filteredRestaurants.map((r) {
+          if (r.id == restaurant.id) {
+            return r.copyWith(isFavorite: !isCurrentlyFavorite);
+          }
+          return r;
+        }).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isCurrentlyFavorite
+              ? 'Will remove from favorites when online'
+              : 'Will add to favorites when online'),
+        ),
+      );
+      setState(() {
+        _favoriteLoading.remove(restaurant.id);
+      });
+      return;
+    }
+    final dio = Dio();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
     try {
       final endpoint = isCurrentlyFavorite
           ? ApiEndpoints.restaurantUnfavorite
@@ -402,25 +501,67 @@ class HomeScreenState extends State<HomeScreen>
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      setState(() {
-        _favoriteLoading.remove(restaurant.id);
-      });
     }
   }
 
   Future<void> _fetchPromoBanners() async {
     setState(() => _isPromoLoading = true);
     try {
-      final dio = Dio();
-      final response = await dio.get(ApiEndpoints.promoBanners);
+      final response = await Dio().get(ApiEndpoints.promoBanners);
       final data = response.data['data'] as List;
+      final banners = data.map((e) => PromoBanner.fromJson(e)).toList();
+
+      // Cache to SQLite
+      final db = await DatabaseHelper().db;
+      final batch = db.batch();
+      batch.delete('banners');
+      for (final b in banners) {
+        batch.insert(
+            'banners',
+            {
+              'id': b.id,
+              'restaurantId': b.restaurantId,
+              'title': b.title,
+              'description': b.description,
+              'imagePath': b.imagePath,
+              'startDate': b.startDate,
+              'endDate': b.endDate,
+              'isActive': b.isActive ? 1 : 0,
+              'restaurantName': b.restaurantName,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
+
       setState(() {
-        _promoBanners = data.map((e) => PromoBanner.fromJson(e)).toList();
+        _promoBanners = banners;
         _isPromoLoading = false;
       });
     } catch (e) {
-      setState(() => _isPromoLoading = false);
+      // Try to load from SQLite
+      try {
+        final db = await DatabaseHelper().db;
+        final maps = await db.query('banners');
+        final cached = maps
+            .map((m) => PromoBanner(
+                  id: m['id'] as int,
+                  restaurantId: m['restaurantId'] as int,
+                  title: m['title'] as String,
+                  description: m['description'] as String,
+                  imagePath: m['imagePath'] as String,
+                  startDate: m['startDate'] as String,
+                  endDate: m['endDate'] as String,
+                  isActive: (m['isActive'] as int) == 1,
+                  restaurantName: m['restaurantName'] as String,
+                ))
+            .toList();
+        setState(() {
+          _promoBanners = cached;
+          _isPromoLoading = false;
+        });
+      } catch (e2) {
+        setState(() => _isPromoLoading = false);
+      }
     }
   }
 
@@ -991,6 +1132,8 @@ class HomeScreenState extends State<HomeScreen>
                                   child: _ApiRestaurantCard(
                                     restaurant: restaurant,
                                     categories: _categories,
+                                    onFavoriteToggle: () =>
+                                        _toggleFavorite(restaurant),
                                   ),
                                 );
                               },

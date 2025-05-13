@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:e_resta_app/core/services/database_helper.dart';
+import 'package:e_resta_app/core/providers/connectivity_provider.dart';
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -96,60 +98,64 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 64, color: Colors.red[300]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Something went wrong',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'We couldn\'t load your reservations. Please try again later.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () =>
+                            _fetchReservations(_statuses[_tabController.index]),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
               : _reservations.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.event_busy,
-                            size: 80,
-                            color: Colors.grey[300],
-                          ),
+                          Icon(Icons.event_busy,
+                              size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 16),
                           Text(
-                            'No reservations yet',
+                            'No Reservations Found',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(
-                                  color: Colors.grey[600],
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Make a reservation to see it here',
+                            "You haven't made any reservations yet.",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
                                   color: Colors.grey[600],
                                 ),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HomeScreen(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.restaurant),
-                            label: const Text('Discover Restaurants'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -182,6 +188,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
   }
 
   void _showDeleteConfirmation(BuildContext context, Reservation reservation) {
+    final isOnline =
+        Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -195,8 +203,28 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
             child: const Text('No'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
+              if (!isOnline) {
+                // Queue the cancel action in SQLite
+                final db = await DatabaseHelper().db;
+                await db.insert('action_queue', {
+                  'actionType': 'cancel_reservation',
+                  'payload': '{"id": ${reservation.id}}',
+                  'createdAt': DateTime.now().toIso8601String(),
+                });
+                setState(() {
+                  _reservations.removeWhere((r) => r.id == reservation.id);
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Reservation will be cancelled when online'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+              // ... existing code ...
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Reservation cancelled'),

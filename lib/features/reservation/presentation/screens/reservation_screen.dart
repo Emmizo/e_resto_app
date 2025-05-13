@@ -8,6 +8,7 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import '../../../../core/providers/connectivity_provider.dart';
+import 'package:e_resta_app/core/services/database_helper.dart';
 
 class Reservation {
   final String id;
@@ -176,6 +177,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
     final ctx = parentContext ?? context;
     final authProvider = Provider.of<AuthProvider>(ctx, listen: false);
     final token = authProvider.token;
+    final isOnline =
+        Provider.of<ConnectivityProvider>(ctx, listen: false).isOnline;
     if (token == null) {
       ScaffoldMessenger.of(ctx).showSnackBar(
         const SnackBar(
@@ -211,6 +214,58 @@ class _ReservationScreenState extends State<ReservationScreen> {
           'phone_number': _phoneController.text,
           'special_requests': _notesController.text,
         };
+        if (!isOnline) {
+          // Queue the reservation in SQLite
+          final db = await DatabaseHelper().db;
+          await db.insert('action_queue', {
+            'actionType': 'make_reservation',
+            'payload': jsonEncode(data),
+            'createdAt': DateTime.now().toIso8601String(),
+          });
+          if (mounted) {
+            await showDialog(
+              context: ctx,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.wifi_off,
+                          color: Colors.orange, size: 28),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Reservation Queued!',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                content: const Text(
+                    'Your reservation will be submitted when you are back online.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(ctx).maybePop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          setState(() {
+            _isSubmitting = false;
+          });
+          return;
+        }
         final dio = Dio();
 
         final response = await dio.post(

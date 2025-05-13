@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:e_resta_app/core/services/database_helper.dart';
+import 'package:provider/provider.dart';
+import 'package:e_resta_app/core/providers/connectivity_provider.dart';
 
 class CartItem {
   final String id;
@@ -85,12 +88,13 @@ class CartProvider extends ChangeNotifier {
     await _prefs.setString(_cartKey, cartJson);
   }
 
-  Future<void> addItem(CartItem item) async {
+  Future<void> addItem(CartItem item, {BuildContext? context}) async {
+    final isOffline = context != null &&
+        !Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     if (_currentRestaurantId != null &&
         _currentRestaurantId != item.restaurantId) {
       throw Exception('Cannot add items from different restaurants');
     }
-
     final existingItemIndex = _items.indexWhere((i) => i.id == item.id);
     if (existingItemIndex >= 0) {
       _items[existingItemIndex].quantity += item.quantity;
@@ -98,21 +102,41 @@ class CartProvider extends ChangeNotifier {
       _items.add(item);
       _currentRestaurantId = item.restaurantId;
     }
-
     await _saveCart();
     notifyListeners();
+    if (isOffline) {
+      final db = await DatabaseHelper().db;
+      await db.insert('action_queue', {
+        'actionType': 'add_to_cart',
+        'payload': json.encode(item.toJson()),
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+    }
   }
 
-  Future<void> removeItem(String itemId) async {
+  Future<void> removeItem(String itemId, {BuildContext? context}) async {
+    final isOffline = context != null &&
+        !Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     _items.removeWhere((item) => item.id == itemId);
     if (_items.isEmpty) {
       _currentRestaurantId = null;
     }
     await _saveCart();
     notifyListeners();
+    if (isOffline) {
+      final db = await DatabaseHelper().db;
+      await db.insert('action_queue', {
+        'actionType': 'remove_from_cart',
+        'payload': json.encode({'id': itemId}),
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+    }
   }
 
-  Future<void> updateQuantity(String itemId, int quantity) async {
+  Future<void> updateQuantity(String itemId, int quantity,
+      {BuildContext? context}) async {
+    final isOffline = context != null &&
+        !Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     final itemIndex = _items.indexWhere((item) => item.id == itemId);
     if (itemIndex >= 0) {
       if (quantity <= 0) {
@@ -125,6 +149,14 @@ class CartProvider extends ChangeNotifier {
       }
       await _saveCart();
       notifyListeners();
+      if (isOffline) {
+        final db = await DatabaseHelper().db;
+        await db.insert('action_queue', {
+          'actionType': 'update_cart_quantity',
+          'payload': json.encode({'id': itemId, 'quantity': quantity}),
+          'createdAt': DateTime.now().toIso8601String(),
+        });
+      }
     }
   }
 

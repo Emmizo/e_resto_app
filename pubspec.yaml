@@ -63,6 +63,8 @@ dependencies:
   firebase_auth: ^5.5.3
   carousel_slider: ^5.0.0
   connectivity_plus: ^5.0.2
+  sqflite: ^2.3.2
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:

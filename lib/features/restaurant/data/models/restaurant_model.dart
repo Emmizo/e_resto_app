@@ -165,4 +165,25 @@ class RestaurantModel {
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'address': address,
+        'longitude': longitude,
+        'latitude': latitude,
+        'phoneNumber': phoneNumber,
+        'email': email,
+        'website': website,
+        'openingHours': openingHours,
+        'cuisineId': cuisineId,
+        'priceRange': priceRange,
+        'image': image,
+        'ownerId': ownerId,
+        'isApproved': isApproved ? 1 : 0,
+        'status': status ? 1 : 0,
+        'averageRating': averageRating,
+        'isFavorite': isFavorite ? 1 : 0,
+      };
 }

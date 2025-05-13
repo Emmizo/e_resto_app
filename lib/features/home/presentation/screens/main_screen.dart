@@ -11,6 +11,8 @@ import '../../../auth/presentation/screens/login_screen.dart';
 import 'package:e_resta_app/features/profile/presentation/screens/favorite_tab_screen.dart';
 import 'dart:ui';
 import '../../../../core/providers/connectivity_provider.dart';
+import 'package:e_resta_app/core/providers/action_queue_provider.dart';
+import 'package:e_resta_app/core/screens/failed_actions_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -42,6 +44,18 @@ class _MainScreenState extends State<MainScreen> {
       context,
       MaterialPageRoute(builder: (context) => const CartScreen()),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user == null || authProvider.token == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
+      });
+    }
   }
 
   @override
@@ -143,6 +157,35 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       );
                     },
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Consumer<ActionQueueProvider>(
+                      builder: (context, queue, child) {
+                        if (queue.pendingCount == 0) return SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            queue.pendingCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -315,7 +358,6 @@ class _MainScreenState extends State<MainScreen> {
                   _ModernListTile(
                     icon: Icons.favorite,
                     label: 'Favorites',
-                    iconColor: Colors.pink,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -363,6 +405,18 @@ class _MainScreenState extends State<MainScreen> {
                               color: Colors.grey[700],
                               fontWeight: FontWeight.bold,
                             )),
+                  ),
+                  _ModernListTile(
+                    icon: Icons.error,
+                    label: 'Sync Errors',
+                    iconColor: Colors.red,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FailedActionsScreen(),
+                      ),
+                    ),
+                    trailing: Icons.arrow_forward_ios,
                   ),
                   _ModernListTile(
                     icon: Icons.logout,
@@ -539,6 +593,18 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _MainScreenWrapper extends StatelessWidget {
+  const _MainScreenWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ActionQueueProvider(),
+      child: const MainScreen(),
     );
   }
 }

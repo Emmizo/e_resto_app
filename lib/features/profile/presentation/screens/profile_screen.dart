@@ -20,6 +20,7 @@ import 'favorite_tab_screen.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 import '../../../../core/providers/connectivity_provider.dart';
+import 'package:e_resta_app/core/services/dio_service.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -64,7 +65,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
     try {
-      final dio = Dio();
+      final dio = DioService.getDio(context);
       final response = await dio.get(
         ApiEndpoints.finalStats, // Define this as '/final-stats'
         options: Options(headers: {
@@ -139,7 +140,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
       _isUploading = true;
     });
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final dio = Dio();
+    final dio = DioService.getDio(context);
     final profileDatasource = ProfileRemoteDatasource(dio);
     try {
       final response = await profileDatasource.uploadProfilePicture(
