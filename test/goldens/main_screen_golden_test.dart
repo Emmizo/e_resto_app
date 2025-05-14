@@ -20,8 +20,7 @@ import 'package:e_resta_app/core/services/database_helper.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import '../unit/connectivity_provider_test.mocks.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common/sqlite_api.dart';
+import '../test_helpers/firebase_mocks.dart';
 
 late MockDio mockDio;
 late MockDatabaseHelper mockDbHelper;
@@ -50,7 +49,9 @@ void setupPlatformMocks() {
 
 @GenerateMocks([Dio, DatabaseHelper])
 void main() {
+  setupFirebaseCoreMocks();
   TestWidgetsFlutterBinding.ensureInitialized();
+
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
   setupPlatformMocks();

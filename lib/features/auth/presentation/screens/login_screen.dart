@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../domain/providers/auth_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../home/presentation/screens/main_screen.dart';
+import 'package:e_resta_app/core/services/biometrics_service.dart';
+import 'package:local_auth/local_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +24,44 @@ class _LoginScreenState extends State<LoginScreen> {
   final _lastNameController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoginMode = true;
+  final BiometricsService _biometricsService = BiometricsService();
+  bool _canCheckBiometrics = false;
+  List<BiometricType> _availableBiometrics = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final canCheck = await _biometricsService.canCheckBiometrics();
+    final availableBiometrics =
+        await _biometricsService.getAvailableBiometrics();
+    print('Available biometrics: $availableBiometrics');
+    setState(() {
+      _canCheckBiometrics = canCheck && availableBiometrics.isNotEmpty;
+      _availableBiometrics = availableBiometrics;
+    });
+  }
+
+  String getBiometricLabel() {
+    if (_availableBiometrics.contains(BiometricType.face)) {
+      return 'Login with Face ID';
+    } else if (_availableBiometrics.contains(BiometricType.fingerprint)) {
+      return 'Login with Fingerprint';
+    }
+    return 'Login with Biometrics';
+  }
+
+  IconData getBiometricIcon() {
+    if (_availableBiometrics.contains(BiometricType.face)) {
+      return Icons.face;
+    } else if (_availableBiometrics.contains(BiometricType.fingerprint)) {
+      return Icons.fingerprint;
+    }
+    return Icons.verified_user;
+  }
 
   @override
   void dispose() {
@@ -312,6 +352,43 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 32),
+                      if (_canCheckBiometrics) ...[
+                        SizedBox(
+                          height: 48,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              bool authenticated =
+                                  await _biometricsService.authenticate();
+                              if (authenticated) {
+                                _submit();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Biometric authentication failed or unavailable.')),
+                                );
+                              }
+                            },
+                            icon: Icon(getBiometricIcon(), size: 24),
+                            label: Text(
+                              getBiometricLabel(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                       Row(
                         children: [
                           Expanded(

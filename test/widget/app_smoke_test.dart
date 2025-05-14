@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_resta_app/main.dart';
 import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 import 'package:e_resta_app/features/auth/presentation/screens/login_screen.dart';
@@ -10,81 +8,12 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 import 'package:e_resta_app/core/providers/theme_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/services.dart';
-
-// Generate mocks using build_runner:
-// flutter pub run build_runner build
-@GenerateMocks([SharedPreferences, AuthProvider])
+import '../test_helpers/firebase_mocks.dart';
 import 'app_smoke_test.mocks.dart';
 
 void main() {
+  setupFirebaseCoreMocks();
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  // Firebase Core
-  const MethodChannel firebaseCoreChannel =
-      MethodChannel('plugins.flutter.io/firebase_core');
-  firebaseCoreChannel.setMockMethodCallHandler((MethodCall methodCall) async {
-    if (methodCall.method == 'initializeCore') {
-      return [
-        {
-          'name': '[DEFAULT]',
-          'options': {
-            'apiKey': 'fake',
-            'appId': 'fake',
-            'messagingSenderId': 'fake',
-            'projectId': 'fake',
-          },
-          'pluginConstants': {
-            'firebase_auth': {},
-            'firebase_messaging': {},
-            'cloud_firestore': {},
-            'firebase_analytics': {},
-          },
-        }
-      ];
-    }
-    if (methodCall.method == 'initializeApp') {
-      return {
-        'name': '[DEFAULT]',
-        'options': {
-          'apiKey': 'fake',
-          'appId': 'fake',
-          'messagingSenderId': 'fake',
-          'projectId': 'fake',
-        },
-        'pluginConstants': {
-          'firebase_auth': {},
-          'firebase_messaging': {},
-          'cloud_firestore': {},
-          'firebase_analytics': {},
-        },
-      };
-    }
-    return null;
-  });
-
-  // Firebase Auth
-  const MethodChannel firebaseAuthChannel =
-      MethodChannel('plugins.flutter.io/firebase_auth');
-  firebaseAuthChannel.setMockMethodCallHandler((MethodCall methodCall) async {
-    return null;
-  });
-
-  // Firebase Messaging
-  const MethodChannel firebaseMessagingChannel =
-      MethodChannel('plugins.flutter.io/firebase_messaging');
-  firebaseMessagingChannel
-      .setMockMethodCallHandler((MethodCall methodCall) async {
-    return null;
-  });
-
-  // Firebase Analytics (if used)
-  const MethodChannel firebaseAnalyticsChannel =
-      MethodChannel('plugins.flutter.io/firebase_analytics');
-  firebaseAnalyticsChannel
-      .setMockMethodCallHandler((MethodCall methodCall) async {
-    return null;
-  });
 
   setUpAll(() async {
     await Firebase.initializeApp();

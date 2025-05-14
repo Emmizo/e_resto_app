@@ -104,5 +104,9 @@
     <!-- Additional Firebase Config -->
     <key>FirebaseScreenReportingEnabled</key>
     <false/>
+
+    <!-- FaceID Usage Description -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>We use Face ID to protect your data.</string>
 </dict>
 </plist>
