@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -9,14 +8,36 @@ import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart'
 import 'package:e_resta_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
+import 'package:e_resta_app/core/providers/theme_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 
 // Generate mocks using build_runner:
 // flutter pub run build_runner build
 @GenerateMocks([SharedPreferences, AuthProvider])
 import 'app_smoke_test.mocks.dart';
 
-void main() {
+void setupFirebaseMocks() {
+  const MethodChannel channel =
+      MethodChannel('plugins.flutter.io/firebase_core');
   TestWidgetsFlutterBinding.ensureInitialized();
+  channel.setMockMethodCallHandler((MethodCall methodCall) async {
+    if (methodCall.method == 'initializeCore' ||
+        methodCall.method == 'initializeApp') {
+      return null;
+    }
+    return null;
+  });
+}
+
+void main() {
+  setupFirebaseMocks();
+
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    await Firebase.initializeApp();
+  });
 
   group('App Widget Test', () {
     late MockSharedPreferences mockPrefs;
@@ -39,6 +60,7 @@ void main() {
         google2faSecret: null,
         address: '123 Test St',
       );
+      when(mockPrefs.getBool('isDarkMode')).thenReturn(false);
     });
 
     testWidgets('shows splash and navigates to correct screen', (tester) async {
@@ -50,6 +72,8 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ThemeProvider>(
+                create: (_) => ThemeProvider(mockPrefs)),
           ],
           child: MyApp(prefs: mockPrefs),
         ),
@@ -73,6 +97,8 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ThemeProvider>(
+                create: (_) => ThemeProvider(mockPrefs)),
           ],
           child: MyApp(prefs: mockPrefs),
         ),

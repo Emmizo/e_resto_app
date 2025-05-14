@@ -6,8 +6,7 @@ import 'package:flutter/material.dart';
 
 class RestaurantRemoteDatasource {
   final Dio dio;
-  RestaurantRemoteDatasource(BuildContext context)
-      : dio = DioService.getDio();
+  RestaurantRemoteDatasource(this.dio);
 
   Future<List<RestaurantModel>> fetchRestaurants({String? token}) async {
     try {

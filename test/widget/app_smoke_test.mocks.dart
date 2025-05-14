@@ -12,7 +12,7 @@ import 'package:e_resta_app/features/auth/data/repositories/auth_repository.dart
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart'
     as _i5;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:shared_preferences/src/shared_preferences_legacy.dart' as _i3;
+import 'package:shared_preferences/shared_preferences.dart' as _i3;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -282,9 +282,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
     required String? firstName,
     required String? lastName,
     required String? email,
-    required String? password,
     required String? phoneNumber,
-    required String? address,
     String? fcmToken,
   }) =>
       (super.noSuchMethod(
@@ -295,9 +293,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
             #firstName: firstName,
             #lastName: lastName,
             #email: email,
-            #password: password,
             #phoneNumber: phoneNumber,
-            #address: address,
             #fcmToken: fcmToken,
           },
         ),

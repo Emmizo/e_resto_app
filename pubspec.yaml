@@ -74,6 +74,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_gherkin: ^2.0.0
+  sqflite_common_ffi: ^2.3.5
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/providers/cart_provider.dart';
-import 'package:dio/dio.dart';
-import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:e_resta_app/features/profile/data/address_provider.dart';
 import 'package:flutter/services.dart';
 

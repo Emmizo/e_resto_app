@@ -46,7 +46,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ReservationProvider(prefs)),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => ActionQueueProvider()),
-        ChangeNotifierProvider(create: (_) => AddressProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider(dio)),
       ],
       child: MyApp(prefs: prefs),
     ),

@@ -239,7 +239,7 @@ class HomeScreenState extends State<HomeScreen>
       _restaurantError = null;
     });
     try {
-      final datasource = RestaurantRemoteDatasource(context);
+      final datasource = RestaurantRemoteDatasource(Dio());
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
       final restaurants = await datasource.fetchRestaurants(token: token);

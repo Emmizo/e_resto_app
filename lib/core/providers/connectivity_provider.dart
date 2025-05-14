@@ -7,13 +7,22 @@ import 'dart:convert';
 import 'package:e_resta_app/core/services/database_helper.dart';
 
 class ConnectivityProvider extends ChangeNotifier {
-  final Connectivity _connectivity = Connectivity();
+  final Connectivity _connectivity;
+  final Dio dio;
+  final DatabaseHelper dbHelper;
+
   late StreamSubscription<ConnectivityResult> _subscription;
   bool _isOnline = true;
 
   bool get isOnline => _isOnline;
 
-  ConnectivityProvider() {
+  ConnectivityProvider({
+    Connectivity? connectivity,
+    Dio? dio,
+    DatabaseHelper? dbHelper,
+  })  : _connectivity = connectivity ?? Connectivity(),
+        dio = dio ?? Dio(),
+        dbHelper = dbHelper ?? DatabaseHelper() {
     _init();
   }
 
@@ -26,9 +35,7 @@ class ConnectivityProvider extends ChangeNotifier {
   Future<void> _updateStatus(ConnectivityResult result) async {
     bool online = result != ConnectivityResult.none;
     if (online) {
-      // Try to ping a reliable server using Dio
       try {
-        final dio = Dio();
         final response = await dio.get(
           'https://www.google.com/generate_204',
           options: Options(receiveTimeout: const Duration(seconds: 5)),
@@ -51,10 +58,9 @@ class ConnectivityProvider extends ChangeNotifier {
   }
 
   Future<void> _processActionQueue() async {
-    final db = await DatabaseHelper().db;
+    final db = await dbHelper.db;
     final List<Map<String, dynamic>> actions =
         await db.query('action_queue', orderBy: 'createdAt ASC');
-    final dio = Dio();
     const maxRetries = 3;
     for (final action in actions) {
       final String type = action['actionType'];

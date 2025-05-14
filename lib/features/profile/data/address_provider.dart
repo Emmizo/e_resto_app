@@ -4,6 +4,7 @@ import 'address_remote_datasource.dart';
 import '../presentation/screens/saved_addresses_screen.dart';
 import '../../auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
+import 'package:dio/dio.dart';
 
 class AddressProvider extends ChangeNotifier {
   List<Address> _addresses = [];
@@ -16,8 +17,8 @@ class AddressProvider extends ChangeNotifier {
 
   late AddressRemoteDatasource _datasource;
 
-  AddressProvider() {
-    _datasource = AddressRemoteDatasource(DioService.getDio());
+  AddressProvider(Dio dio) {
+    _datasource = AddressRemoteDatasource(dio);
   }
 
   Future<void> fetchAddresses(BuildContext context) async {
