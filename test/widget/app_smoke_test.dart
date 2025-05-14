@@ -17,23 +17,74 @@ import 'package:flutter/services.dart';
 @GenerateMocks([SharedPreferences, AuthProvider])
 import 'app_smoke_test.mocks.dart';
 
-void setupFirebaseMocks() {
-  const MethodChannel channel =
-      MethodChannel('plugins.flutter.io/firebase_core');
+void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  channel.setMockMethodCallHandler((MethodCall methodCall) async {
-    if (methodCall.method == 'initializeCore' ||
-        methodCall.method == 'initializeApp') {
-      return null;
+
+  // Firebase Core
+  const MethodChannel firebaseCoreChannel =
+      MethodChannel('plugins.flutter.io/firebase_core');
+  firebaseCoreChannel.setMockMethodCallHandler((MethodCall methodCall) async {
+    if (methodCall.method == 'initializeCore') {
+      return [
+        {
+          'name': '[DEFAULT]',
+          'options': {
+            'apiKey': 'fake',
+            'appId': 'fake',
+            'messagingSenderId': 'fake',
+            'projectId': 'fake',
+          },
+          'pluginConstants': {
+            'firebase_auth': {},
+            'firebase_messaging': {},
+            'cloud_firestore': {},
+            'firebase_analytics': {},
+          },
+        }
+      ];
+    }
+    if (methodCall.method == 'initializeApp') {
+      return {
+        'name': '[DEFAULT]',
+        'options': {
+          'apiKey': 'fake',
+          'appId': 'fake',
+          'messagingSenderId': 'fake',
+          'projectId': 'fake',
+        },
+        'pluginConstants': {
+          'firebase_auth': {},
+          'firebase_messaging': {},
+          'cloud_firestore': {},
+          'firebase_analytics': {},
+        },
+      };
     }
     return null;
   });
-}
 
-void main() {
-  setupFirebaseMocks();
+  // Firebase Auth
+  const MethodChannel firebaseAuthChannel =
+      MethodChannel('plugins.flutter.io/firebase_auth');
+  firebaseAuthChannel.setMockMethodCallHandler((MethodCall methodCall) async {
+    return null;
+  });
 
-  TestWidgetsFlutterBinding.ensureInitialized();
+  // Firebase Messaging
+  const MethodChannel firebaseMessagingChannel =
+      MethodChannel('plugins.flutter.io/firebase_messaging');
+  firebaseMessagingChannel
+      .setMockMethodCallHandler((MethodCall methodCall) async {
+    return null;
+  });
+
+  // Firebase Analytics (if used)
+  const MethodChannel firebaseAnalyticsChannel =
+      MethodChannel('plugins.flutter.io/firebase_analytics');
+  firebaseAnalyticsChannel
+      .setMockMethodCallHandler((MethodCall methodCall) async {
+    return null;
+  });
 
   setUpAll(() async {
     await Firebase.initializeApp();

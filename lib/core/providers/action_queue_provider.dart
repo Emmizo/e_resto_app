@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 class ActionQueueProvider extends ChangeNotifier {
   int _pendingCount = 0;
   int get pendingCount => _pendingCount;
+  bool _disposed = false;
 
   ActionQueueProvider() {
     refresh();
@@ -16,6 +17,12 @@ class ActionQueueProvider extends ChangeNotifier {
       await db.rawQuery('SELECT COUNT(*) FROM action_queue'),
     );
     _pendingCount = count ?? 0;
-    notifyListeners();
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
