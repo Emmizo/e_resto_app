@@ -7,7 +7,7 @@ class ParsedError {
 }
 
 ParsedError parseDioError(dynamic error) {
-  if (error is DioError) {
+  if (error is DioException) {
     final response = error.response;
     final code = response?.statusCode;
     String message = 'An unexpected error occurred';

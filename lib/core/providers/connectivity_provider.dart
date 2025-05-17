@@ -42,7 +42,7 @@ class ConnectivityProvider extends ChangeNotifier {
         );
         online = response.statusCode == 204;
       } catch (e) {
-        print('Connectivity check failed: $e');
+        // print('Connectivity check failed: $e');
         online = false;
       }
     }

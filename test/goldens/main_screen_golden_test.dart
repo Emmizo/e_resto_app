@@ -29,14 +29,17 @@ void setupPlatformMocks() {
   // Mock geolocator
   const MethodChannel geolocatorChannel =
       MethodChannel('flutter.baseflow.com/geolocator');
+  // ignore: deprecated_member_use
   geolocatorChannel.setMockMethodCallHandler((MethodCall methodCall) async {
-    if (methodCall.method == 'checkPermission')
+    if (methodCall.method == 'checkPermission') {
       return 1; // PermissionStatus.granted
+    }
     if (methodCall.method == 'requestPermission') return 1;
-    if (methodCall.method == 'getCurrentPosition')
+    if (methodCall.method == 'getCurrentPosition') {
       return {'latitude': 0.0, 'longitude': 0.0};
+    }
     return null;
-  });
+  }); // If this is deprecated, add ignore: deprecated_member_use
 
   // Mock path_provider
   const MethodChannel pathProviderChannel =
@@ -44,7 +47,7 @@ void setupPlatformMocks() {
   pathProviderChannel.setMockMethodCallHandler((MethodCall methodCall) async {
     if (methodCall.method == 'getApplicationDocumentsDirectory') return '/tmp';
     return null;
-  });
+  }); // If this is deprecated, add ignore: deprecated_member_use
 }
 
 @GenerateMocks([Dio, DatabaseHelper])
@@ -193,9 +196,6 @@ class FakeConnectivityProvider extends ChangeNotifier
 }
 
 class _FakeDb implements Database {
-  @override
-  Batch batch() => _FakeBatch();
-  @override
   Future<List<Map<String, dynamic>>> query(String table,
           {bool? distinct,
           List<String>? columns,
@@ -207,81 +207,54 @@ class _FakeDb implements Database {
           int? limit,
           int? offset}) async =>
       [];
-  @override
   Future<int> delete(String table,
           {String? where, List<Object?>? whereArgs}) async =>
       0;
-  @override
   Future<int> insert(String table, Map<String, dynamic> values,
           {String? nullColumnHack,
           ConflictAlgorithm? conflictAlgorithm}) async =>
       1;
-  @override
   Future<int> update(String table, Map<String, dynamic> values,
           {String? where,
           List<Object?>? whereArgs,
           ConflictAlgorithm? conflictAlgorithm}) async =>
       1;
-  @override
   Future<List<Map<String, dynamic>>> rawQuery(String sql,
           [List<Object?>? arguments]) async =>
       [];
-  @override
   Future<T> transaction<T>(Future<T> Function(Transaction txn) action,
           {bool? exclusive}) async =>
       throw UnimplementedError();
-  @override
   Future<void> close() async {}
-  @override
   Future<void> execute(String sql, [List<Object?>? arguments]) async {}
-  @override
   Future<int> getVersion() async => 1;
-  @override
   Future<void> setVersion(int version) async {}
-  @override
   Future<void> vacuum() async {}
-  @override
   Future<void> checkpoint([String? log]) async {}
-  @override
   Future<void> createFunction(
       {required String functionName,
       required Function function,
       int argumentCount = 1,
       bool deterministic = false}) async {}
-  @override
   String get path => '';
-  @override
   bool get isOpen => true;
-  @override
   Future<T> devInvokeMethod<T>(String method, [dynamic arguments]) async =>
       throw UnimplementedError();
-  @override
   Future<T> devInvokeSqlMethod<T>(String method, String sql,
           [List<Object?>? arguments]) async =>
       throw UnimplementedError();
-  @override
   Future<int> rawDelete(String sql, [List<Object?>? arguments]) async => 0;
-  @override
   Future<int> rawInsert(String sql, [List<Object?>? arguments]) async => 1;
-  @override
   Future<int> rawUpdate(String sql, [List<Object?>? arguments]) async => 1;
-  @override
   Future<void> executeBatch(List<String> sqlStatements) async {}
-  @override
   Future<void> onConfigure(Database db) async {}
-  @override
   Future<void> onCreate(Database db, int version) async {}
-  @override
   Future<void> onDowngrade(Database db, int oldVersion, int newVersion) async {}
-  @override
   Future<void> onOpen(Database db) async {}
-  @override
   Future<void> onUpgrade(Database db, int oldVersion, int newVersion) async {}
-  @override
   Future<T> readTransaction<T>(Future<T> Function(Transaction txn) action,
           {bool? exclusive}) async =>
       throw UnimplementedError();
-  @override
   Future<QueryCursor> queryCursor(String table,
           {bool? distinct,
           List<String>? columns,
@@ -294,34 +267,26 @@ class _FakeDb implements Database {
           int? offset,
           int? bufferSize}) async =>
       throw UnimplementedError();
-  @override
   Future<QueryCursor> rawQueryCursor(String sql, List<Object?>? arguments,
           {int? bufferSize}) async =>
       throw UnimplementedError();
-  @override
   Database get database => this;
+  @override
+  Batch batch() => _FakeBatch();
 }
 
 class _FakeBatch implements Batch {
-  @override
   void delete(String table, {String? where, List<Object?>? whereArgs}) {}
-  @override
   void insert(String table, Map<String, Object?> values,
       {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) {}
-  @override
   void update(String table, Map<String, Object?> values,
       {String? where,
       List<Object?>? whereArgs,
       ConflictAlgorithm? conflictAlgorithm}) {}
-  @override
   void execute(String sql, [List<Object?>? arguments]) {}
-  @override
   void rawDelete(String sql, [List<Object?>? arguments]) {}
-  @override
   void rawInsert(String sql, [List<Object?>? arguments]) {}
-  @override
   void rawUpdate(String sql, [List<Object?>? arguments]) {}
-  @override
   void query(String table,
       {bool? distinct,
       List<String>? columns,
@@ -332,15 +297,11 @@ class _FakeBatch implements Batch {
       String? orderBy,
       int? limit,
       int? offset}) {}
-  @override
   void rawQuery(String sql, [List<Object?>? arguments]) {}
-  @override
   Future<List<Object?>> commit(
           {bool? noResult, bool? continueOnError, bool? exclusive}) async =>
       [];
-  @override
   int get length => 0;
-  @override
   Future<List<Object?>> apply(
           {bool? noResult, bool? continueOnError, bool? exclusive}) async =>
       [];

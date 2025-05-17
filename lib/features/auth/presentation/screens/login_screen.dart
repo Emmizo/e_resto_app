@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   bool _isPasswordVisible = false;
-  bool _isLoginMode = true;
+  final bool _isLoginMode = true;
   final BiometricsService _biometricsService = BiometricsService();
   bool _canCheckBiometrics = false;
   List<BiometricType> _availableBiometrics = [];
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final canCheck = await _biometricsService.canCheckBiometrics();
     final availableBiometrics =
         await _biometricsService.getAvailableBiometrics();
-    print('Available biometrics: $availableBiometrics');
+    if (!mounted) return;
     setState(() {
       _canCheckBiometrics = canCheck && availableBiometrics.isNotEmpty;
       _availableBiometrics = availableBiometrics;
@@ -81,17 +81,17 @@ class _LoginScreenState extends State<LoginScreen> {
     String? fcmToken;
     try {
       fcmToken = await FirebaseMessaging.instance.getToken();
-      print('FCM Token (login): $fcmToken');
     } catch (e) {
-      print('Error fetching FCM token: $e');
       fcmToken = null;
     }
+    if (!mounted) return;
     if (_isLoginMode) {
       final success = await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
         fcmToken: fcmToken,
       );
+      if (!mounted) return;
       if (success) {
         Navigator.pushReplacement(
           context,
@@ -115,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
         phoneNumber: _phoneController.text.trim(),
         fcmToken: fcmToken,
       );
+      if (!mounted) return;
       if (success) {
         Navigator.pushReplacement(
           context,
@@ -131,7 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
@@ -143,7 +143,10 @@ class _LoginScreenState extends State<LoginScreen> {
               clipper: _TopAngleClipper(),
               child: Container(
                 width: double.infinity,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
                 padding: const EdgeInsets.only(
                     top: 80, left: 32, right: 32, bottom: 130),
                 child: Row(
@@ -218,8 +221,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
+                                  .onSurface
+                                  .withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                             ),
                       ),
@@ -259,8 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ?.copyWith(
                                     color: Theme.of(context)
                                         .colorScheme
-                                        .onBackground
-                                        .withOpacity(0.7),
+                                        .onSurface
+                                        .withValues(alpha: 0.7),
                                     fontWeight: FontWeight.w500,
                                   ),
                             ),
@@ -407,8 +410,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ?.copyWith(
                                     color: Theme.of(context)
                                         .colorScheme
-                                        .onBackground
-                                        .withOpacity(0.5),
+                                        .onSurface
+                                        .withValues(alpha: 0.5),
                                     fontSize: 15,
                                   ),
                             ),
@@ -480,8 +483,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ?.copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onBackground
-                                      .withOpacity(0.6),
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
                                   fontSize: 15,
                                 ),
                           ),
@@ -527,48 +530,4 @@ class _TopAngleClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class _SocialButton extends StatelessWidget {
-  final Widget icon;
-  final String label;
-  final bool isDark;
-  final VoidCallback onTap;
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-    required this.onTap,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF232A38) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? Colors.white12 : Colors.black12,
-          ),
-        ),
-        child: Row(
-          children: [
-            icon,
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -216,6 +216,7 @@ class _CartSummaryState extends State<_CartSummary> {
         Provider.of<AddressProvider>(parentContext, listen: false);
     if (addressProvider.addresses.isEmpty) {
       await addressProvider.fetchAddresses(parentContext);
+      if (!mounted) return;
     }
     final authProvider =
         Provider.of<AuthProvider>(parentContext, listen: false);
@@ -234,8 +235,6 @@ class _CartSummaryState extends State<_CartSummary> {
     bool orderStepCompleted = false;
     bool isLoading = false;
     String? errorMessage;
-    bool isOrderStepValid = addressController.text.trim().isNotEmpty &&
-        phoneController.text.trim().isNotEmpty;
     addressController.addListener(() {
       if (orderStepCompleted) setState(() => orderStepCompleted = false);
     });
@@ -244,184 +243,193 @@ class _CartSummaryState extends State<_CartSummary> {
     });
     showDialog(
       context: parentContext,
-      barrierColor: Colors.black.withOpacity(0.3),
+      barrierColor: Colors.black.withValues(alpha: 0.3),
       builder: (context) {
-        int step = 0; // 0: Order, 1: Review
         return StatefulBuilder(
-          builder: (context, setState) => Dialog(
-            backgroundColor: Theme.of(context).dialogBackgroundColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 500;
-                final dialogWidth =
-                    isWide ? 440.0 : MediaQuery.of(context).size.width * 0.98;
-                return Container(
-                  width: dialogWidth,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dialogBackgroundColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Stepper
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _StepperCircle(
-                              isActive: step == 0,
-                              icon: Icons.receipt_long,
-                              label: 'Order',
-                              isValid: orderStepCompleted,
-                              isInvalid: !orderStepCompleted && step > 0),
-                          _StepperLine(isActive: step > 0),
-                          _StepperCircle(
-                              isActive: step == 1,
-                              icon: Icons.check_circle,
-                              label: 'Review',
-                              isValid: false,
-                              isInvalid: false),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        transitionBuilder: (child, anim) =>
-                            FadeTransition(opacity: anim, child: child),
-                        child: step == 0
-                            ? _OrderDetailsStep(
-                                orderType:
-                                    'delivery', // Always delivery for Pay Later
-                                addressController: addressController,
-                                phoneController: phoneController,
-                                emailController: emailController,
-                                instructionsController: instructionsController,
-                                tipController: tipController,
-                                onOrderTypeChanged: (_) {}, // No-op
-                                errorMessage: errorMessage,
-                              )
-                            : _ReviewStep(
-                                cartTotal: cartTotal,
-                                cartItems: cartItems,
-                                orderType: 'delivery',
-                                address: addressController.text,
-                                phone: phoneController.text,
-                                email: emailController.text,
-                                instructions: instructionsController.text,
-                                tip: tipController.text,
-                                paymentMethod: 'Pay Later',
-                                cardNumber: '',
-                                mobileMoney: '',
+          builder: (context, setState) {
+            int step = 0; // 0: Order, 1: Review
+            return Dialog(
+              backgroundColor: Theme.of(context).dialogTheme.backgroundColor ??
+                  Theme.of(context).scaffoldBackgroundColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 500;
+                  final dialogWidth =
+                      isWide ? 440.0 : MediaQuery.of(context).size.width * 0.98;
+                  return Container(
+                    width: dialogWidth,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dialogTheme.backgroundColor ??
+                          Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Stepper
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _StepperCircle(
+                                isActive: step == 0,
+                                icon: Icons.receipt_long,
+                                label: 'Order',
+                                isValid: orderStepCompleted,
+                                isInvalid: !orderStepCompleted && step > 0),
+                            _StepperLine(isActive: step > 0),
+                            _StepperCircle(
+                                isActive: step == 1,
+                                icon: Icons.check_circle,
+                                label: 'Review',
+                                isValid: false,
+                                isInvalid: false),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 350),
+                          transitionBuilder: (child, anim) =>
+                              FadeTransition(opacity: anim, child: child),
+                          child: step == 0
+                              ? _OrderDetailsStep(
+                                  orderType:
+                                      'delivery', // Always delivery for Pay Later
+                                  addressController: addressController,
+                                  phoneController: phoneController,
+                                  emailController: emailController,
+                                  instructionsController:
+                                      instructionsController,
+                                  tipController: tipController,
+                                  onOrderTypeChanged: (_) {}, // No-op
+                                  errorMessage: errorMessage,
+                                )
+                              : _ReviewStep(
+                                  cartTotal: cartTotal,
+                                  cartItems: cartItems,
+                                  orderType: 'delivery',
+                                  address: addressController.text,
+                                  phone: phoneController.text,
+                                  email: emailController.text,
+                                  instructions: instructionsController.text,
+                                  tip: tipController.text,
+                                  paymentMethod: 'Pay Later',
+                                  cardNumber: '',
+                                  mobileMoney: '',
+                                ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (step > 0)
+                              TextButton(
+                                onPressed: () => setState(() => step--),
+                                child: Text('Back',
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary)),
                               ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (step > 0)
-                            TextButton(
-                              onPressed: () => setState(() => step--),
-                              child: Text('Back',
-                                  style: TextStyle(
-                                      color: Theme.of(context)
+                            if (step < 1)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      setState(() => errorMessage = null);
+                                      bool valid = true;
+                                      if (addressController.text
+                                          .trim()
+                                          .isEmpty) {
+                                        setState(() => errorMessage =
+                                            'Delivery address is required.');
+                                        valid = false;
+                                      }
+                                      if (phoneController.text.trim().isEmpty) {
+                                        setState(() => errorMessage =
+                                            'Contact phone is required.');
+                                        valid = false;
+                                      }
+                                      if (valid) {
+                                        setState(() {
+                                          orderStepCompleted = true;
+                                          step++;
+                                        });
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context)
                                           .colorScheme
-                                          .primary)),
-                            ),
-                          if (step < 1)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 12),
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    setState(() => errorMessage = null);
-                                    bool valid = true;
-                                    if (addressController.text.trim().isEmpty) {
-                                      setState(() => errorMessage =
-                                          'Delivery address is required.');
-                                      valid = false;
-                                    }
-                                    if (phoneController.text.trim().isEmpty) {
-                                      setState(() => errorMessage =
-                                          'Contact phone is required.');
-                                      valid = false;
-                                    }
-                                    if (valid) {
-                                      setState(() {
-                                        orderStepCompleted = true;
-                                        step++;
-                                      });
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    minimumSize: const Size.fromHeight(48),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                          .onPrimary,
+                                      minimumSize: const Size.fromHeight(48),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text('Review'),
                                   ),
-                                  child: const Text('Review'),
                                 ),
                               ),
-                            ),
-                          if (step == 1)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 12),
-                                child: ElevatedButton(
-                                  onPressed: isLoading
-                                      ? null
-                                      : () async {
-                                          setState(() => isLoading = true);
-                                          await Future.delayed(
-                                              const Duration(seconds: 1));
-                                          setState(() => isLoading = false);
-                                          Navigator.pop(context);
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    minimumSize: const Size.fromHeight(48),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                            if (step == 1)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: ElevatedButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () async {
+                                            setState(() => isLoading = true);
+                                            await Future.delayed(
+                                                const Duration(seconds: 1));
+                                            setState(() => isLoading = false);
+                                            Navigator.pop(context);
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                      minimumSize: const Size.fromHeight(48),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white),
+                                          )
+                                        : const Text('Place Order'),
                                   ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white),
-                                        )
-                                      : const Text('Place Order'),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
@@ -432,6 +440,7 @@ class _CartSummaryState extends State<_CartSummary> {
         Provider.of<AddressProvider>(parentContext, listen: false);
     if (addressProvider.addresses.isEmpty) {
       await addressProvider.fetchAddresses(parentContext);
+      if (!mounted) return;
     }
     final defaultAddress = addressProvider.defaultAddress;
     final addressController =
@@ -454,283 +463,266 @@ class _CartSummaryState extends State<_CartSummary> {
     String paymentMethod = 'visa';
     bool isLoading = false;
     String? errorMessage;
-    bool isPaymentStepValid = paymentMethod == 'visa'
-        ? cardNumberController.text.trim().length >= 16 &&
-            cardExpiryController.text.trim().length == 5 &&
-            cardExpiryController.text.contains('/') &&
-            cardCvvController.text.trim().length >= 3
-        : paymentMethod == 'mobile_money'
-            ? mobileMoneyController.text.trim().length >= 10
-            : false;
-    addressController.addListener(() {
-      if (orderStepCompleted) setState(() => orderStepCompleted = false);
-    });
-    phoneController.addListener(() {
-      if (orderStepCompleted) setState(() => orderStepCompleted = false);
-    });
-    cardNumberController.addListener(() {
-      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
-    });
-    cardExpiryController.addListener(() {
-      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
-    });
-    cardCvvController.addListener(() {
-      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
-    });
-    mobileMoneyController.addListener(() {
-      if (paymentStepCompleted) setState(() => paymentStepCompleted = false);
-    });
     showDialog(
       context: parentContext,
-      barrierColor: Colors.black.withOpacity(0.3),
+      barrierColor: Colors.black.withValues(alpha: 0.3),
       builder: (context) {
-        int step = 0; // 0: Order, 1: Payment, 2: Review
-        void nextStep() => step < 2 ? step++ : null;
-        void prevStep() => step > 0 ? step-- : null;
         return StatefulBuilder(
-          builder: (context, setState) => Dialog(
-            backgroundColor: Theme.of(context).dialogBackgroundColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 500;
-                final dialogWidth =
-                    isWide ? 440.0 : MediaQuery.of(context).size.width * 0.98;
-                return Container(
-                  width: dialogWidth,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dialogBackgroundColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Stepper
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _StepperCircle(
-                              isActive: step == 0,
-                              icon: Icons.receipt_long,
-                              label: 'Order',
-                              isValid: orderStepCompleted,
-                              isInvalid: !orderStepCompleted && step > 0),
-                          _StepperLine(isActive: step > 0),
-                          _StepperCircle(
-                              isActive: step == 1,
-                              icon: Icons.payment,
-                              label: 'Payment',
-                              isValid: paymentStepCompleted,
-                              isInvalid: !paymentStepCompleted && step > 1),
-                          _StepperLine(isActive: step > 1),
-                          _StepperCircle(
-                              isActive: step == 2,
-                              icon: Icons.check_circle,
-                              label: 'Review',
-                              isValid: false,
-                              isInvalid: false),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        transitionBuilder: (child, anim) =>
-                            FadeTransition(opacity: anim, child: child),
-                        child: step == 0
-                            ? _OrderDetailsStep(
-                                orderType: orderType,
-                                addressController: addressController,
-                                phoneController: phoneController,
-                                emailController: emailController,
-                                instructionsController: instructionsController,
-                                tipController: tipController,
-                                onOrderTypeChanged: (val) =>
-                                    setState(() => orderType = val),
-                                errorMessage: errorMessage,
-                              )
-                            : step == 1
-                                ? _PaymentStep(
-                                    paymentMethod: paymentMethod,
-                                    cardNumberController: cardNumberController,
-                                    cardExpiryController: cardExpiryController,
-                                    cardCvvController: cardCvvController,
-                                    mobileMoneyController:
-                                        mobileMoneyController,
-                                    onPaymentMethodChanged: (val) =>
-                                        setState(() => paymentMethod = val),
-                                    errorMessage: errorMessage,
-                                  )
-                                : _ReviewStep(
-                                    cartTotal: cartTotal,
-                                    cartItems: cartItems,
-                                    orderType: orderType,
-                                    address: addressController.text,
-                                    phone: phoneController.text,
-                                    email: emailController.text,
-                                    instructions: instructionsController.text,
-                                    tip: tipController.text,
-                                    paymentMethod: paymentMethod,
-                                    cardNumber: cardNumberController.text,
-                                    mobileMoney: mobileMoneyController.text,
-                                  ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (step > 0)
-                            TextButton(
-                              onPressed: () => setState(() => step--),
-                              child: Text('Back',
-                                  style: TextStyle(
-                                      color: Theme.of(context)
+          builder: (context, setState) {
+            int step = 0; // 0: Order, 1: Payment, 2: Review
+            return Dialog(
+              backgroundColor: Theme.of(context).dialogTheme.backgroundColor ??
+                  Theme.of(context).scaffoldBackgroundColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 500;
+                  final dialogWidth =
+                      isWide ? 440.0 : MediaQuery.of(context).size.width * 0.98;
+                  return Container(
+                    width: dialogWidth,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dialogTheme.backgroundColor ??
+                          Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Stepper
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _StepperCircle(
+                                isActive: step == 0,
+                                icon: Icons.receipt_long,
+                                label: 'Order',
+                                isValid: orderStepCompleted,
+                                isInvalid: !orderStepCompleted && step > 0),
+                            _StepperLine(isActive: step > 0),
+                            _StepperCircle(
+                                isActive: step == 1,
+                                icon: Icons.payment,
+                                label: 'Payment',
+                                isValid: paymentStepCompleted,
+                                isInvalid: !paymentStepCompleted && step > 1),
+                            _StepperLine(isActive: step > 1),
+                            _StepperCircle(
+                                isActive: step == 2,
+                                icon: Icons.check_circle,
+                                label: 'Review',
+                                isValid: false,
+                                isInvalid: false),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 350),
+                          transitionBuilder: (child, anim) =>
+                              FadeTransition(opacity: anim, child: child),
+                          child: step == 0
+                              ? _OrderDetailsStep(
+                                  orderType: orderType,
+                                  addressController: addressController,
+                                  phoneController: phoneController,
+                                  emailController: emailController,
+                                  instructionsController:
+                                      instructionsController,
+                                  tipController: tipController,
+                                  onOrderTypeChanged: (val) =>
+                                      setState(() => orderType = val),
+                                  errorMessage: errorMessage,
+                                )
+                              : step == 1
+                                  ? _PaymentStep(
+                                      paymentMethod: paymentMethod,
+                                      cardNumberController:
+                                          cardNumberController,
+                                      cardExpiryController:
+                                          cardExpiryController,
+                                      cardCvvController: cardCvvController,
+                                      mobileMoneyController:
+                                          mobileMoneyController,
+                                      onPaymentMethodChanged: (val) =>
+                                          setState(() => paymentMethod = val),
+                                      errorMessage: errorMessage,
+                                    )
+                                  : _ReviewStep(
+                                      cartTotal: cartTotal,
+                                      cartItems: cartItems,
+                                      orderType: orderType,
+                                      address: addressController.text,
+                                      phone: phoneController.text,
+                                      email: emailController.text,
+                                      instructions: instructionsController.text,
+                                      tip: tipController.text,
+                                      paymentMethod: paymentMethod,
+                                      cardNumber: cardNumberController.text,
+                                      mobileMoney: mobileMoneyController.text,
+                                    ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (step > 0)
+                              TextButton(
+                                onPressed: () => setState(() => step--),
+                                child: Text('Back',
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary)),
+                              ),
+                            if (step < 2)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      setState(() => errorMessage = null);
+                                      bool valid = true;
+                                      if (step == 0) {
+                                        if (orderType == 'delivery' &&
+                                            addressController.text
+                                                .trim()
+                                                .isEmpty) {
+                                          setState(() => errorMessage =
+                                              'Delivery address is required.');
+                                          valid = false;
+                                        }
+                                        if (phoneController.text
+                                            .trim()
+                                            .isEmpty) {
+                                          setState(() => errorMessage =
+                                              'Contact phone is required.');
+                                          valid = false;
+                                        }
+                                        if (valid) {
+                                          setState(() {
+                                            orderStepCompleted = true;
+                                            step++;
+                                          });
+                                        }
+                                      } else if (step == 1) {
+                                        if (paymentMethod == 'visa') {
+                                          if (cardNumberController.text
+                                                  .trim()
+                                                  .length <
+                                              16) {
+                                            setState(() => errorMessage =
+                                                'Enter a valid card number.');
+                                            valid = false;
+                                          }
+                                          if (cardExpiryController.text
+                                                      .trim()
+                                                      .length !=
+                                                  5 ||
+                                              !cardExpiryController.text
+                                                  .contains('/')) {
+                                            setState(() => errorMessage =
+                                                'Enter a valid expiry date (MM/YY).');
+                                            valid = false;
+                                          }
+                                          if (cardCvvController.text
+                                                  .trim()
+                                                  .length <
+                                              3) {
+                                            setState(() => errorMessage =
+                                                'Enter a valid CVV.');
+                                            valid = false;
+                                          }
+                                        }
+                                        if (paymentMethod == 'mobile_money') {
+                                          if (mobileMoneyController.text
+                                                  .trim()
+                                                  .length <
+                                              10) {
+                                            setState(() => errorMessage =
+                                                'Enter a valid mobile money number.');
+                                            valid = false;
+                                          }
+                                        }
+                                        if (valid) {
+                                          setState(() {
+                                            paymentStepCompleted = true;
+                                            step++;
+                                          });
+                                        }
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context)
                                           .colorScheme
-                                          .primary)),
-                            ),
-                          if (step < 2)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 12),
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    setState(() => errorMessage = null);
-                                    bool valid = true;
-                                    if (step == 0) {
-                                      if (orderType == 'delivery' &&
-                                          addressController.text
-                                              .trim()
-                                              .isEmpty) {
-                                        setState(() => errorMessage =
-                                            'Delivery address is required.');
-                                        valid = false;
-                                      }
-                                      if (phoneController.text.trim().isEmpty) {
-                                        setState(() => errorMessage =
-                                            'Contact phone is required.');
-                                        valid = false;
-                                      }
-                                      if (valid) {
-                                        setState(() {
-                                          orderStepCompleted = true;
-                                          step++;
-                                        });
-                                      }
-                                    } else if (step == 1) {
-                                      if (paymentMethod == 'visa') {
-                                        if (cardNumberController.text
-                                                .trim()
-                                                .length <
-                                            16) {
-                                          setState(() => errorMessage =
-                                              'Enter a valid card number.');
-                                          valid = false;
-                                        }
-                                        if (cardExpiryController.text
-                                                    .trim()
-                                                    .length !=
-                                                5 ||
-                                            !cardExpiryController.text
-                                                .contains('/')) {
-                                          setState(() => errorMessage =
-                                              'Enter a valid expiry date (MM/YY).');
-                                          valid = false;
-                                        }
-                                        if (cardCvvController.text
-                                                .trim()
-                                                .length <
-                                            3) {
-                                          setState(() => errorMessage =
-                                              'Enter a valid CVV.');
-                                          valid = false;
-                                        }
-                                      }
-                                      if (paymentMethod == 'mobile_money') {
-                                        if (mobileMoneyController.text
-                                                .trim()
-                                                .length <
-                                            10) {
-                                          setState(() => errorMessage =
-                                              'Enter a valid mobile money number.');
-                                          valid = false;
-                                        }
-                                      }
-                                      if (valid) {
-                                        setState(() {
-                                          paymentStepCompleted = true;
-                                          step++;
-                                        });
-                                      }
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    minimumSize: const Size.fromHeight(48),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                          .onPrimary,
+                                      minimumSize: const Size.fromHeight(48),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                    child: Text(step == 1 ? 'Review' : 'Next'),
                                   ),
-                                  child: Text(step == 1 ? 'Review' : 'Next'),
                                 ),
                               ),
-                            ),
-                          if (step == 2)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 12),
-                                child: ElevatedButton(
-                                  onPressed: isLoading
-                                      ? null
-                                      : () async {
-                                          setState(() => isLoading = true);
-                                          await Future.delayed(
-                                              const Duration(seconds: 1));
-                                          setState(() => isLoading = false);
-                                          Navigator.pop(context);
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    minimumSize: const Size.fromHeight(48),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                            if (step == 2)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: ElevatedButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () async {
+                                            setState(() => isLoading = true);
+                                            await Future.delayed(
+                                                const Duration(seconds: 1));
+                                            setState(() => isLoading = false);
+                                            Navigator.pop(context);
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                      minimumSize: const Size.fromHeight(48),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white),
+                                          )
+                                        : const Text('Pay & Place Order'),
                                   ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white),
-                                        )
-                                      : const Text('Pay & Place Order'),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
@@ -741,10 +733,9 @@ class _CartSummaryState extends State<_CartSummary> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -892,7 +883,7 @@ class _OrderDetailsStep extends StatelessWidget {
               labelText: 'Delivery Address',
               prefixIcon: const Icon(Icons.location_on_outlined),
               filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -904,7 +895,7 @@ class _OrderDetailsStep extends StatelessWidget {
             labelText: 'Contact Phone',
             prefixIcon: const Icon(Icons.phone),
             filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           keyboardType: TextInputType.phone,
@@ -916,7 +907,7 @@ class _OrderDetailsStep extends StatelessWidget {
             labelText: 'Email (optional)',
             prefixIcon: const Icon(Icons.email_outlined),
             filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           keyboardType: TextInputType.emailAddress,
@@ -928,7 +919,7 @@ class _OrderDetailsStep extends StatelessWidget {
             labelText: 'Special Instructions',
             prefixIcon: const Icon(Icons.note_alt_outlined),
             filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -939,7 +930,7 @@ class _OrderDetailsStep extends StatelessWidget {
             labelText: 'Tip (optional)',
             prefixIcon: const Icon(Icons.attach_money),
             filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           keyboardType: TextInputType.number,
@@ -1010,7 +1001,7 @@ class _PaymentStep extends StatelessWidget {
               hintText: '1234 5678 9012 3456',
               prefixIcon: const Icon(Icons.credit_card),
               filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -1028,7 +1019,7 @@ class _PaymentStep extends StatelessWidget {
               labelText: 'Expiry (MM/YY)',
               hintText: '08/25',
               filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -1042,7 +1033,7 @@ class _PaymentStep extends StatelessWidget {
               labelText: 'CVV',
               hintText: '123',
               filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -1059,7 +1050,7 @@ class _PaymentStep extends StatelessWidget {
               hintText: '07XX XXX XXX',
               prefixIcon: const Icon(Icons.phone_android),
               filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),

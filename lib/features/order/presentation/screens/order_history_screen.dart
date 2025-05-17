@@ -5,7 +5,6 @@ import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../order/data/models/order_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/core/providers/cart_provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -50,11 +49,22 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         _orders = orders;
         _isLoading = false;
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Orders loaded successfully!')),
+      );
     } catch (e) {
       setState(() {
         _isLoading = false;
         _error = e.toString();
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load orders: $_error'),
+          backgroundColor: Colors.red.withValues(alpha: 0.7),
+        ),
+      );
     }
   }
 

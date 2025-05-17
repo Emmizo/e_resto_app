@@ -23,7 +23,6 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
   List<dynamic> _restaurants = [];
   bool _isLoading = true;
   String? _error;
-  String? _errorMessage;
   int? _errorCode;
 
   @override
@@ -36,7 +35,6 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
     setState(() {
       _isLoading = true;
       _error = null;
-      _errorMessage = null;
       _errorCode = null;
     });
     try {
@@ -58,7 +56,6 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       setState(() {
         _isLoading = false;
         _error = parsed.message;
-        _errorMessage = parsed.message;
         _errorCode = parsed.code;
       });
     }
@@ -196,7 +193,7 @@ class _RestaurantCard extends StatelessWidget {
       },
       child: Card(
         elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.10),
+        shadowColor: Colors.black.withValues(alpha: 0.10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         margin: EdgeInsets.zero,
         child: Padding(

@@ -222,45 +222,44 @@ class _ReservationScreenState extends State<ReservationScreen> {
             'payload': jsonEncode(data),
             'createdAt': DateTime.now().toIso8601String(),
           });
-          if (mounted) {
-            await showDialog(
-              context: ctx,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                title: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.wifi_off,
-                          color: Colors.orange, size: 28),
+          if (!mounted) return;
+          await showDialog(
+            context: ctx,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Reservation Queued!',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                content: const Text(
-                    'Your reservation will be submitted when you are back online.'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(ctx).maybePop();
-                    },
-                    child: const Text('OK'),
+                    child: const Icon(Icons.wifi_off,
+                        color: Colors.orange, size: 28),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Reservation Queued!',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
-            );
-          }
+              content: const Text(
+                  'Your reservation will be submitted when you are back online.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(ctx).maybePop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          if (!mounted) return;
           setState(() {
             _isSubmitting = false;
           });
@@ -280,44 +279,42 @@ class _ReservationScreenState extends State<ReservationScreen> {
         );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          if (mounted) {
-            await showDialog(
-              context: ctx,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                title: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.check_circle,
-                          color: Colors.green, size: 28),
+          if (!mounted) return;
+          await showDialog(
+            context: ctx,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Reservation Confirmed!',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                content: const Text('Your reservation has been confirmed.'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(ctx).maybePop();
-                    },
-                    child: const Text('OK'),
+                    child: const Icon(Icons.check_circle,
+                        color: Colors.green, size: 28),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Reservation Confirmed!',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
-            );
-          }
+              content: const Text('Your reservation has been confirmed.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(ctx).maybePop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
         } else {
           throw Exception(
               'Failed to make reservation: ${response.statusMessage}');
@@ -335,43 +332,41 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 .join('\n');
           }
         }
-        if (mounted) {
-          await showDialog(
-            context: ctx,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.error_outline,
-                        color: Colors.red, size: 28),
+        if (!mounted) return;
+        await showDialog(
+          context: ctx,
+          builder: (context) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 10),
-                  const Text('Error'),
-                ],
-              ),
-              content: Text(errorMsg),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: const Icon(Icons.error_outline,
+                      color: Colors.red, size: 28),
                 ),
+                const SizedBox(width: 10),
+                const Text('Error'),
               ],
             ),
-          );
-        }
+            content: Text(errorMsg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
       } finally {
-        if (mounted) {
-          setState(() {
-            _isSubmitting = false;
-          });
-        }
+        if (!mounted) return;
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }

@@ -258,7 +258,7 @@ class _AddressCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF184C55).withOpacity(0.1),
+                    color: const Color(0xFF184C55).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -290,7 +290,8 @@ class _AddressCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF184C55).withOpacity(0.1),
+                                color: const Color(0xFF184C55)
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -411,6 +412,13 @@ class _AddAddressFormState extends State<_AddAddressForm> {
         _error = provider.error;
       });
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Address added successfully!'),
+        backgroundColor: Colors.green.withValues(alpha: 0.7),
+      ),
+    );
   }
 
   @override

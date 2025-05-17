@@ -59,8 +59,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '322982009700',
     projectId: 'resto-finder-d4214',
     storageBucket: 'resto-finder-d4214.firebasestorage.app',
-    androidClientId: '322982009700-62fsnkdtocm7ng74ljo6kb6bkrn7a7e0.apps.googleusercontent.com',
-    iosClientId: '322982009700-g0i9o9k95pk44lgd0otghmf7n2jia8hb.apps.googleusercontent.com',
+    androidClientId:
+        '322982009700-62fsnkdtocm7ng74ljo6kb6bkrn7a7e0.apps.googleusercontent.com',
+    iosClientId:
+        '322982009700-g0i9o9k95pk44lgd0otghmf7n2jia8hb.apps.googleusercontent.com',
     iosBundleId: 'com.example.eRestaApp',
   );
 
@@ -80,9 +82,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '322982009700',
     projectId: 'resto-finder-d4214',
     storageBucket: 'resto-finder-d4214.firebasestorage.app',
-    androidClientId: '322982009700-62fsnkdtocm7ng74ljo6kb6bkrn7a7e0.apps.googleusercontent.com',
-    iosClientId: '322982009700-g0i9o9k95pk44lgd0otghmf7n2jia8hb.apps.googleusercontent.com',
+    androidClientId:
+        '322982009700-62fsnkdtocm7ng74ljo6kb6bkrn7a7e0.apps.googleusercontent.com',
+    iosClientId:
+        '322982009700-g0i9o9k95pk44lgd0otghmf7n2jia8hb.apps.googleusercontent.com',
     iosBundleId: 'com.example.eRestaApp',
   );
-
 }

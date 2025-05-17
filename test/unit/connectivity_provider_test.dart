@@ -6,7 +6,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:e_resta_app/core/providers/connectivity_provider.dart';
 import 'package:e_resta_app/core/services/database_helper.dart';
 import 'connectivity_provider_test.mocks.dart';
-import '../goldens/main_screen_golden_test.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 

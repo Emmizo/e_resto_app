@@ -1,10 +1,7 @@
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/providers/theme_provider.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
@@ -72,13 +69,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final Set<Marker> _markers = {};
-
-  GoogleMapController? _mapController;
-  bool _isMapReady = false;
-  LatLng _initialPosition = const LatLng(0, 0);
-  bool _isLoading = true;
-  bool _hasLocationPermission = false;
   TabController? _tabController;
   int _selectedCategoryIndex = 0;
   String _searchQuery = '';
@@ -88,8 +78,6 @@ class HomeScreenState extends State<HomeScreen>
   bool _isRestaurantLoading = true;
   String? _restaurantError;
   List<CuisineCategory> _categories = [CuisineCategory(id: null, name: 'All')];
-  bool _isCategoriesLoading = true;
-  String? _categoriesError;
   final Set<int> _favoriteLoading = {};
   double? _userLat;
   double? _userLng;
@@ -140,7 +128,6 @@ class HomeScreenState extends State<HomeScreen>
       _sortRestaurantsByDistance();
     }, onError: (e) {
       // Optionally handle stream errors gracefully
-      debugPrint('Location stream error: \\${e.toString()}');
     });
   }
 
@@ -152,10 +139,6 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _fetchCategories() async {
-    setState(() {
-      _isCategoriesLoading = true;
-      _categoriesError = null;
-    });
     try {
       final response = await DioService.getDio().get(ApiEndpoints.cuisines);
       final data = response.data['data'] as List;
@@ -179,7 +162,6 @@ class HomeScreenState extends State<HomeScreen>
           CuisineCategory(id: null, name: 'All'),
           ...cuisineCategories
         ];
-        _isCategoriesLoading = false;
         _tabController?.dispose();
         _tabController = TabController(length: _categories.length, vsync: this);
         _tabController?.addListener(() {
@@ -201,8 +183,6 @@ class HomeScreenState extends State<HomeScreen>
             .toList();
         setState(() {
           _categories = [CuisineCategory(id: null, name: 'All'), ...cached];
-          _isCategoriesLoading = false;
-          _categoriesError = 'Showing offline data.';
         });
         _tabController?.dispose();
         _tabController = TabController(length: _categories.length, vsync: this);
@@ -215,8 +195,7 @@ class HomeScreenState extends State<HomeScreen>
         });
       } catch (e2) {
         setState(() {
-          _isCategoriesLoading = false;
-          _categoriesError = e.toString();
+          _isPromoLoading = false;
         });
       }
     }
@@ -227,7 +206,6 @@ class HomeScreenState extends State<HomeScreen>
     _debounce?.cancel();
     _positionStreamSubscription?.cancel();
     _locationRefreshTimer?.cancel();
-    _mapController?.dispose();
     _tabController?.dispose();
     _searchController.dispose();
     super.dispose();
@@ -328,46 +306,6 @@ class HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    if (!mounted) return;
-
-    setState(() {
-      _mapController = controller;
-      _isMapReady = true;
-    });
-
-    _onMapReady();
-    _updateMapState();
-  }
-
-  void _onMapReady() {
-    if (_mapController != null && _hasLocationPermission) {
-      _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: _initialPosition,
-            zoom: 15,
-          ),
-        ),
-      );
-    }
-  }
-
-  void _updateMapState() {
-    if (_isMapReady && _mapController != null && _hasLocationPermission) {
-      setState(() {
-        _markers.clear();
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('user_location'),
-            position: _initialPosition,
-            infoWindow: const InfoWindow(title: 'Your Location'),
-          ),
-        );
-      });
-    }
-  }
-
   Future<void> _getUserLocationAndSort() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
@@ -402,8 +340,9 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   List<RestaurantModel> get nearestRestaurantsForMap {
-    if (_userLat == null || _userLng == null)
+    if (_userLat == null || _userLng == null) {
       return restaurants.take(5).toList();
+    }
     return restaurants.take(5).toList(); // Already sorted by distance
   }
 
@@ -417,7 +356,7 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _toggleFavorite(RestaurantModel restaurant) async {
-    final isOnline = context.read<ConnectivityProvider>().isOnline;
+    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     final isCurrentlyFavorite = restaurant.isFavorite;
     setState(() {
       _favoriteLoading.add(restaurant.id);
@@ -460,8 +399,7 @@ class HomeScreenState extends State<HomeScreen>
       return;
     }
     final dio = DioService.getDio();
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final token = authProvider.token;
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     try {
       final endpoint = isCurrentlyFavorite
           ? ApiEndpoints.restaurantUnfavorite
@@ -594,12 +532,6 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = context.watch<ThemeProvider>().isDarkMode;
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-    final name = user != null ? user.firstName : 'Guest';
-    final isOnline = context.watch<ConnectivityProvider>().isOnline;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -709,8 +641,15 @@ class HomeScreenState extends State<HomeScreen>
                           ),
                           child: Container(
                             decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
-                              color: Colors.black.withOpacity(0.4),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -763,7 +702,9 @@ class HomeScreenState extends State<HomeScreen>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    onPressed: isOnline
+                                    onPressed: context
+                                            .watch<ConnectivityProvider>()
+                                            .isOnline
                                         ? () {
                                             final promoRestaurant =
                                                 restaurants.firstWhere(
@@ -871,8 +812,15 @@ class HomeScreenState extends State<HomeScreen>
                           ),
                           child: Container(
                             decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
-                              color: Colors.black.withOpacity(0.4),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -932,7 +880,9 @@ class HomeScreenState extends State<HomeScreen>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    onPressed: isOnline
+                                    onPressed: context
+                                            .watch<ConnectivityProvider>()
+                                            .isOnline
                                         ? () {
                                             Navigator.push(
                                               context,
@@ -1054,7 +1004,7 @@ class HomeScreenState extends State<HomeScreen>
                         ),
                   ),
                   TextButton(
-                    onPressed: isOnline
+                    onPressed: context.watch<ConnectivityProvider>().isOnline
                         ? () {
                             Navigator.push(
                               context,
@@ -1184,14 +1134,10 @@ class _ApiRestaurantCard extends StatefulWidget {
   final RestaurantModel restaurant;
   final List<CuisineCategory> categories;
   final VoidCallback? onFavoriteToggle;
-  final bool isLoading;
-  final double? distance;
   const _ApiRestaurantCard({
     required this.restaurant,
     required this.categories,
     this.onFavoriteToggle,
-    this.isLoading = false,
-    this.distance,
   });
 
   @override
@@ -1218,9 +1164,6 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
     final restaurant = widget.restaurant;
     final categories = widget.categories;
     final onFavoriteToggle = widget.onFavoriteToggle;
-    final isLoading = widget.isLoading;
-    final distance = widget.distance;
-    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -1243,7 +1186,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
           ..rotateX(_tilt),
         child: Card(
           elevation: 12, // Higher elevation for more depth
-          shadowColor: Colors.black.withOpacity(0.25),
+          shadowColor: Colors.black.withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -1333,23 +1276,12 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.7),
+                            .withValues(alpha: 0.7),
                         fontSize: 11,
                       ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (distance != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2, bottom: 2),
-                    child: Text(
-                      '${(distance / 1000).toStringAsFixed(2)} km away',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontSize: 11,
-                          ),
-                    ),
-                  ),
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1370,27 +1302,20 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                         ),
                       ],
                     ),
-                    isLoading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : IconButton(
-                            icon: Icon(
-                              restaurant.isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: Colors.red,
-                              size: 20,
-                            ),
-                            onPressed: onFavoriteToggle,
-                            tooltip: restaurant.isFavorite
-                                ? 'Unfavorite'
-                                : 'Favorite',
-                            padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(),
-                          ),
+                    IconButton(
+                      icon: Icon(
+                        restaurant.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      onPressed: onFavoriteToggle,
+                      tooltip:
+                          restaurant.isFavorite ? 'Unfavorite' : 'Favorite',
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
                   ],
                 ),
               ],
@@ -1409,12 +1334,11 @@ class AllRestaurantsScreen extends StatelessWidget {
   final double? userLat;
   final double? userLng;
   const AllRestaurantsScreen(
-      {Key? key,
+      {super.key,
       required this.restaurants,
       required this.categories,
       this.userLat,
-      this.userLng})
-      : super(key: key);
+      this.userLng});
 
   @override
   Widget build(BuildContext context) {
@@ -1454,7 +1378,7 @@ class AllRestaurantsScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor:
-                          Theme.of(context).colorScheme.surfaceVariant,
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       backgroundImage: (restaurant.image != null &&
                               restaurant.image!.isNotEmpty)
                           ? NetworkImage(restaurant.image!)

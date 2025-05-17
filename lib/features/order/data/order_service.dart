@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:e_resta_app/core/services/database_helper.dart';
 import 'package:e_resta_app/core/services/action_queue_helper.dart';
 import 'package:e_resta_app/features/order/data/models/order_model.dart';
-import 'package:e_resta_app/features/order/data/models/order_model.dart'
-    show RestaurantModel;
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:flutter/material.dart';

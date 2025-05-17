@@ -7,7 +7,6 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 
-
 class FavoriteMenuItemsScreen extends StatefulWidget {
   const FavoriteMenuItemsScreen({super.key});
 
@@ -32,6 +31,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
       _isLoading = true;
       _error = null;
     });
+    if (!mounted) return;
     try {
       final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -46,11 +46,25 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
         _favoriteMenuItems = response.data['data'] as List;
         _isLoading = false;
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Favorite menu items loaded successfully!'),
+          backgroundColor: Colors.green.withValues(alpha: 0.7),
+        ),
+      );
     } catch (e) {
       setState(() {
         _isLoading = false;
         _error = e.toString();
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load favorite menu items: $_error'),
+          backgroundColor: Colors.red.withValues(alpha: 0.7),
+        ),
+      );
     }
   }
 

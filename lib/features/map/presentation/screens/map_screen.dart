@@ -1,6 +1,7 @@
 import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latlong2;
 import 'package:geolocator/geolocator.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
@@ -8,75 +9,104 @@ import '../../../restaurant/presentation/screens/restaurant_details_screen.dart'
 class MapScreen extends StatefulWidget {
   final List<RestaurantModel> restaurants;
   final List<CuisineCategory> cuisines;
-  const MapScreen({Key? key, required this.restaurants, required this.cuisines})
-      : super(key: key);
+  const MapScreen(
+      {super.key, required this.restaurants, required this.cuisines});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  Set<Marker> _restaurantMarkers = {};
-  GoogleMapController? _mapController;
+  List<Marker> _restaurantMarkers = [];
+  latlong2.LatLng? _userLocation;
+  late final MapController _mapController;
+  double _currentZoom = 13;
+  late latlong2.LatLng _mapCenter;
 
   @override
   void initState() {
     super.initState();
-
+    final initialLatLng = widget.restaurants.isNotEmpty
+        ? latlong2.LatLng(
+            double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
+            double.tryParse(widget.restaurants.first.longitude) ?? 0.0,
+          )
+        : const latlong2.LatLng(0, 0);
+    _mapController = MapController();
+    _mapCenter = initialLatLng;
+    _initUserLocation();
     _setRestaurantMarkers(widget.restaurants);
+  }
+
+  Future<void> _initUserLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      setState(() {
+        _userLocation = latlong2.LatLng(position.latitude, position.longitude);
+      });
+      // Center map on user location
+      _mapController.move(_userLocation!, _currentZoom);
+    } catch (e) {
+      // Could not get location, ignore for now
+    }
   }
 
   void _setRestaurantMarkers(List<RestaurantModel> restaurants) {
     _restaurantMarkers = restaurants
         .where((r) => r.latitude.isNotEmpty && r.longitude.isNotEmpty)
         .map((restaurant) => Marker(
-              markerId: MarkerId(restaurant.id.toString()),
-              position: LatLng(
+              point: latlong2.LatLng(
                 double.tryParse(restaurant.latitude) ?? 0.0,
                 double.tryParse(restaurant.longitude) ?? 0.0,
               ),
-              infoWindow: InfoWindow(
-                title: restaurant.name,
-                snippet: restaurant.address,
+              width: 48,
+              height: 48,
+              child: GestureDetector(
                 onTap: () => _showDistanceInfo(restaurant),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 40,
+                  height: 40,
+                ),
               ),
-              onTap: () => _showDistanceInfo(restaurant),
             ))
-        .toSet();
+        .toList();
     setState(() {});
-    // Fit camera to all markers
-    if (_restaurantMarkers.isNotEmpty && _mapController != null) {
-      final bounds = _createLatLngBounds(
-          _restaurantMarkers.map((m) => m.position).toList());
-      _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-    }
   }
 
-  LatLngBounds _createLatLngBounds(List<LatLng> positions) {
-    double x0 = positions.first.latitude, x1 = positions.first.latitude;
-    double y0 = positions.first.longitude, y1 = positions.first.longitude;
-    for (LatLng latLng in positions) {
-      if (latLng.latitude > x1) x1 = latLng.latitude;
-      if (latLng.latitude < x0) x0 = latLng.latitude;
-      if (latLng.longitude > y1) y1 = latLng.longitude;
-      if (latLng.longitude < y0) y0 = latLng.longitude;
+  void _zoomIn() {
+    setState(() {
+      _currentZoom += 1;
+      _mapController.move(_mapCenter, _currentZoom);
+    });
+  }
+
+  void _zoomOut() {
+    setState(() {
+      _currentZoom -= 1;
+      _mapController.move(_mapCenter, _currentZoom);
+    });
+  }
+
+  void _recenter() {
+    if (_userLocation != null) {
+      _mapController.move(_userLocation!, _currentZoom);
     }
-    return LatLngBounds(
-      southwest: LatLng(x0, y0),
-      northeast: LatLng(x1, y1),
-    );
   }
 
   Future<void> _showDistanceInfo(RestaurantModel restaurant) async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
       double userLat = position.latitude;
       double userLng = position.longitude;
       double restLat = double.tryParse(restaurant.latitude) ?? 0.0;
       double restLng = double.tryParse(restaurant.longitude) ?? 0.0;
-      print('User location: $userLat, $userLng');
-      print('Restaurant location: $restLat, $restLng');
       double distanceMeters =
           Geolocator.distanceBetween(userLat, userLng, restLat, restLng);
       double distanceKm = distanceMeters / 1000.0;
@@ -217,33 +247,74 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final initialLatLng = widget.restaurants.isNotEmpty
+        ? latlong2.LatLng(
+            double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
+            double.tryParse(widget.restaurants.first.longitude) ?? 0.0,
+          )
+        : const latlong2.LatLng(0, 0);
+    List<Marker> allMarkers = List.from(_restaurantMarkers);
+    if (_userLocation != null) {
+      allMarkers.add(
+        Marker(
+          point: _userLocation!,
+          width: 32,
+          height: 32,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+            width: 24,
+            height: 24,
+          ),
+        ),
+      );
+    }
     return Scaffold(
       body: Stack(
         children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: widget.restaurants.isNotEmpty
-                  ? LatLng(
-                      double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
-                      double.tryParse(widget.restaurants.first.longitude) ??
-                          0.0,
-                    )
-                  : const LatLng(0, 0),
-              zoom: 13,
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: initialLatLng,
+              initialZoom: _currentZoom,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
+              onPositionChanged: (pos, hasGesture) {
+                setState(() {
+                  _currentZoom = pos.zoom;
+                  _mapCenter = pos.center;
+                });
+              },
             ),
-            markers: _restaurantMarkers,
-            onMapCreated: (controller) {
-              _mapController = controller;
-              // Fit camera after map is created and markers are set
-              if (_restaurantMarkers.isNotEmpty) {
-                final bounds = _createLatLngBounds(
-                    _restaurantMarkers.map((m) => m.position).toList());
-                _mapController!
-                    .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-              }
-            },
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.e_resta_app',
+              ),
+              MarkerLayer(markers: _restaurantMarkers),
+              // User location marker (not clustered)
+              if (_userLocation != null)
+                MarkerLayer(markers: [
+                  Marker(
+                    point: _userLocation!,
+                    width: 32,
+                    height: 32,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                ]),
+            ],
           ),
           // Top search bar overlay
           Positioned(
@@ -259,7 +330,7 @@ class _MapScreenState extends State<MapScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -284,7 +355,7 @@ class _MapScreenState extends State<MapScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -296,6 +367,35 @@ class _MapScreenState extends State<MapScreen> {
                       // TODO: Implement filter action
                     },
                   ),
+                ),
+              ],
+            ),
+          ),
+          // Zoom and recenter controls
+          Positioned(
+            bottom: 32,
+            right: 16,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: 'zoom_in',
+                  mini: true,
+                  onPressed: _zoomIn,
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'zoom_out',
+                  mini: true,
+                  onPressed: _zoomOut,
+                  child: const Icon(Icons.remove),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'recenter',
+                  mini: true,
+                  onPressed: _recenter,
+                  child: const Icon(Icons.my_location),
                 ),
               ],
             ),

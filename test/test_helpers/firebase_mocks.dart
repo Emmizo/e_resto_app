@@ -5,6 +5,7 @@ void setupFirebaseCoreMocks() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const MethodChannel firebaseCoreChannel =
       MethodChannel('plugins.flutter.io/firebase_core');
+  // ignore: deprecated_member_use
   firebaseCoreChannel.setMockMethodCallHandler((MethodCall methodCall) async {
     if (methodCall.method == 'initializeCore') {
       return [

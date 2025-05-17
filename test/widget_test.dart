@@ -7,11 +7,6 @@
 
 // This test has been removed because the default counter widget is not part of the app anymore.
 
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:e_resta_app/main.dart';
-
 void main() {
   // testWidgets('Counter increments smoke test', (WidgetTester tester) async {
   //   // Set up SharedPreferences for testing

@@ -95,7 +95,7 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     borderRadius: const BorderRadius.vertical(
                         bottom: Radius.circular(24)),
                   ),
@@ -253,7 +253,7 @@ class _MainScreenState extends State<MainScreen> {
                                     ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                                 child: Container(
                                   height: 180,
-                                  color: Colors.black.withOpacity(0.15),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                 ),
                               ),
                             ),
@@ -274,7 +274,8 @@ class _MainScreenState extends State<MainScreen> {
                                           width: 3),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.18),
+                                          color: Colors.black
+                                              .withValues(alpha: 0.18),
                                           blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
@@ -530,7 +531,7 @@ class _MainScreenState extends State<MainScreen> {
                         );
                       }
                     },
-                    highlightColor: Colors.red.withOpacity(0.08),
+                    highlightColor: Colors.red.withValues(alpha: 0.08),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -593,7 +594,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -626,7 +627,7 @@ class _MainScreenState extends State<MainScreen> {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .shadow
-                                        .withOpacity(0.15),
+                                        .withValues(alpha: 0.15),
                                     blurRadius: 2,
                                     offset: const Offset(0, 2),
                                   ),
@@ -677,18 +678,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-class _MainScreenWrapper extends StatelessWidget {
-  const _MainScreenWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ActionQueueProvider(),
-      child: const MainScreen(),
-    );
-  }
-}
-
 class _ModernListTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -704,8 +693,7 @@ class _ModernListTile extends StatelessWidget {
     this.trailing,
     this.iconColor,
     this.highlightColor,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -716,7 +704,7 @@ class _ModernListTile extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           highlightColor: highlightColor ??
-              Theme.of(context).colorScheme.primary.withOpacity(0.08),
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(

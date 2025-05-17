@@ -27,12 +27,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
       // Simulate API call
       await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _emailSent = true;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _emailSent = true;
+      });
     }
   }
 
@@ -49,7 +48,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               clipper: _TopAngleClipper(),
               child: Container(
                 width: double.infinity,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
                 padding: const EdgeInsets.only(
                     top: 80, left: 32, right: 32, bottom: 120),
                 child: Row(
@@ -133,8 +135,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context)
                       .colorScheme
-                      .onBackground
-                      .withOpacity(0.7),
+                      .onSurface
+                      .withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                 ),
           ),
@@ -197,8 +199,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
-                          .onBackground
-                          .withOpacity(0.6),
+                          .onSurface
+                          .withValues(alpha: 0.6),
                       fontSize: 15,
                     ),
               ),
@@ -248,8 +250,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         Text(
           'We\'ve sent password reset instructions to your email address.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color:
-                    Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7),
               ),
           textAlign: TextAlign.center,
         ),

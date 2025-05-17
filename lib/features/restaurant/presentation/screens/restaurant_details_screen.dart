@@ -39,10 +39,6 @@ class RestaurantDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _handleOrder(BuildContext context) {
-    _showDeliveryMethodDialog(context);
-  }
-
   void _showDeliveryMethodDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -133,7 +129,8 @@ class RestaurantDetailsScreen extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF184C55).withOpacity(0.1),
+                            color:
+                                const Color(0xFF184C55).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -415,7 +412,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                 top: MediaQuery.of(context).padding.top + 12,
                 left: 12,
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.4),
+                  backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
@@ -426,7 +423,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                 top: MediaQuery.of(context).padding.top + 12,
                 right: 12,
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.4),
+                  backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
                     icon:
                         const Icon(Icons.favorite_border, color: Colors.white),

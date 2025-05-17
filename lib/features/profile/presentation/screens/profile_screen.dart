@@ -2,7 +2,6 @@ import 'package:e_resta_app/features/profile/presentation/screens/change_passwor
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/providers/theme_provider.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../order/presentation/screens/order_history_screen.dart';
 import '../../../reservation/presentation/screens/my_reservations_screen.dart';
@@ -18,7 +17,6 @@ import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
-import '../../../../core/providers/connectivity_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
@@ -42,7 +40,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
   static const _profileImageKey = 'profile_image_path';
   bool _isUploading = false;
   List<Map<String, dynamic>>? _stats;
-  bool _isLoadingStats = true;
 
   @override
   void initState() {
@@ -80,12 +77,10 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                   'value': e['value'],
                 })
             .toList();
-        _isLoadingStats = false;
       });
     } catch (e) {
       setState(() {
         _stats = [];
-        _isLoadingStats = false;
       });
     }
   }
@@ -196,7 +191,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         user != null ? ('${user.firstName} ${user.lastName}') : 'Guest';
     final email = user?.email ?? '';
     final profilePic = user?.profilePicture;
-    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return Scaffold(
       body: Stack(
         children: [
@@ -233,14 +227,15 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                               horizontal: 20.0, vertical: 16),
                           child: Container(
                             decoration: BoxDecoration(
-                              color:
-                                  Theme.of(context).cardColor.withOpacity(0.7),
+                              color: Theme.of(context)
+                                  .cardColor
+                                  .withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
                                   color: Theme.of(context)
                                       .shadowColor
-                                      .withOpacity(0.10),
+                                      .withValues(alpha: 0.10),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -249,7 +244,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .outlineVariant
-                                    .withOpacity(0.4),
+                                    .withValues(alpha: 0.4),
                                 width: 1.2,
                               ),
                             ),
@@ -271,7 +266,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                               boxShadow: [
                                                 BoxShadow(
                                                   color: Colors.black
-                                                      .withOpacity(0.18),
+                                                      .withValues(alpha: 0.18),
                                                   blurRadius: 12,
                                                   offset: const Offset(0, 6),
                                                 ),
@@ -391,7 +386,8 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                                   boxShadow: [
                                                     BoxShadow(
                                                       color: Colors.black
-                                                          .withOpacity(0.1),
+                                                          .withValues(
+                                                              alpha: 0.1),
                                                       blurRadius: 2,
                                                     ),
                                                   ],
@@ -440,7 +436,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                                     color: Theme.of(context)
                                                         .colorScheme
                                                         .onSurface
-                                                        .withOpacity(0.7),
+                                                        .withValues(alpha: 0.7),
                                                   ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -534,8 +530,9 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                                                       context)
                                                                   .colorScheme
                                                                   .onSurface
-                                                                  .withOpacity(
-                                                                      0.7),
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.7),
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w500,
@@ -597,7 +594,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
           ),
           if (_isUploading)
             Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),
@@ -619,7 +616,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
   }
 
   Widget _buildProfileOptions(BuildContext context) {
-    final isOnline = context.watch<ConnectivityProvider>().isOnline;
     return Column(
       children: [
         _ProfileOption(
@@ -692,22 +688,14 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
           icon: Icons.lock_outline,
           title: 'Change Password',
           subtitle: 'Change your account password',
-          onTap: isOnline
-              ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ChangePasswordScreen(),
-                    ),
-                  );
-                }
-              : () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(
-                            'No internet connection. Please try again later.')),
-                  );
-                },
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ChangePasswordScreen(),
+              ),
+            );
+          },
         ),
       ],
     ).animate().fadeIn(delay: 200.ms).slideX();
@@ -768,7 +756,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withAlpha(26),
+                      color: Colors.red.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -853,8 +841,8 @@ class _ProfileOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isDestructive ? Colors.red : Color(0xFF184C55);
     final backgroundColor = isDestructive
-        ? Colors.red.withAlpha(26)
-        : const Color(0xFF184C55).withAlpha(26);
+        ? Colors.red.withValues(alpha: 0.12)
+        : const Color(0xFF184C55).withValues(alpha: 0.10);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -873,16 +861,12 @@ class _ProfileOption extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDestructive
-                      ? Theme.of(context).colorScheme.error.withOpacity(0.12)
-                      : Theme.of(context).colorScheme.primary.withOpacity(0.10),
+                  color: backgroundColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  color: isDestructive
-                      ? Theme.of(context).colorScheme.error
-                      : Theme.of(context).colorScheme.primary,
+                  color: color,
                   size: 24,
                 ),
               ),
@@ -907,7 +891,7 @@ class _ProfileOption extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                           ),
                     ),
                   ],
@@ -915,7 +899,10 @@ class _ProfileOption extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.4),
               ),
             ],
           ),

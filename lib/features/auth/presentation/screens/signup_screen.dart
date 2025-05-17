@@ -16,7 +16,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -51,7 +50,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
@@ -77,7 +75,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       color: Theme.of(context)
                           .colorScheme
                           .primary
-                          .withOpacity(0.12),
+                          .withValues(alpha: 0.12),
                       padding: const EdgeInsets.only(
                           top: 80, left: 32, right: 32, bottom: 120),
                       child: Row(
@@ -149,8 +147,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ?.copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onBackground
-                                      .withOpacity(0.7),
+                                      .onSurface
+                                      .withValues(alpha: 0.7),
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -187,8 +185,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ?.copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onBackground
-                                      .withOpacity(0.7),
+                                      .onSurface
+                                      .withValues(alpha: 0.7),
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -225,8 +223,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ?.copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onBackground
-                                      .withOpacity(0.7),
+                                      .onSurface
+                                      .withValues(alpha: 0.7),
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -264,8 +262,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ?.copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onBackground
-                                      .withOpacity(0.7),
+                                      .onSurface
+                                      .withValues(alpha: 0.7),
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -337,7 +335,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                       .textTheme
                                       .bodyMedium
                                       ?.copyWith(
-                                        color: Colors.black.withOpacity(0.5),
+                                        color:
+                                            Colors.black.withValues(alpha: 0.5),
                                       ),
                                 ),
                               ),
@@ -406,7 +405,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                     .textTheme
                                     .bodyMedium
                                     ?.copyWith(
-                                      color: Colors.black.withOpacity(0.6),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.6),
                                     ),
                               ),
                               GestureDetector(
@@ -453,48 +453,4 @@ class _TopAngleClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class _SocialButton extends StatelessWidget {
-  final Widget icon;
-  final String label;
-  final bool isDark;
-  final VoidCallback onTap;
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-    required this.onTap,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF232A38) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? Colors.white12 : Colors.black12,
-          ),
-        ),
-        child: Row(
-          children: [
-            icon,
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

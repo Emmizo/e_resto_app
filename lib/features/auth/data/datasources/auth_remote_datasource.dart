@@ -10,16 +10,13 @@ class AuthRemoteDatasource {
       {String? fcmToken}) async {
     try {
       fcmToken = await FirebaseMessaging.instance.getToken();
-      print('FCM Token (login): $fcmToken');
     } catch (e) {
-      print('Error fetching FCM token: $e');
       fcmToken = null;
     }
     final data = {'email': email, 'password': password};
     if (fcmToken != null) {
       data['fcm_token'] = fcmToken;
     }
-    print('Login data being sent: ' + data.toString());
     final response = await dio.post(
       ApiEndpoints.login,
       data: data,

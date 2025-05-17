@@ -7,8 +7,8 @@ class BiometricsService {
   Future<bool> canCheckBiometrics() async {
     try {
       return await _auth.canCheckBiometrics;
-    } on PlatformException catch (e) {
-      // Optionally log the error: print('Biometrics error: $e');
+    } on PlatformException {
+      // Optionally log the error
       return false;
     }
   }
@@ -22,8 +22,8 @@ class BiometricsService {
           biometricOnly: true,
         ),
       );
-    } on PlatformException catch (e) {
-      // Optionally log the error: print('Biometrics error: $e');
+    } on PlatformException {
+      // Optionally log the error
       return false;
     } catch (e) {
       return false;
@@ -33,8 +33,8 @@ class BiometricsService {
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
       return await _auth.getAvailableBiometrics();
-    } on PlatformException catch (e) {
-      // Optionally log the error: print('Biometrics error: $e');
+    } on PlatformException {
+      // Optionally log the error
       return [];
     }
   }

@@ -23,15 +23,10 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   // Firestore reference for users and notifications
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CollectionReference _usersCollection =
       FirebaseFirestore.instance.collection('users');
-  final CollectionReference _notificationsCollection =
-      FirebaseFirestore.instance.collection('notifications');
   final CollectionReference _userNotifyCollection =
       FirebaseFirestore.instance.collection('user_notify');
-  final CollectionReference _notificationGroupsCollection =
-      FirebaseFirestore.instance.collection('notification_groups');
   final CollectionReference _ordersCollection =
       FirebaseFirestore.instance.collection('orders');
   final CollectionReference _reservationsCollection =
@@ -108,7 +103,7 @@ class NotificationService {
         }
         // Add more types as needed
       } catch (e) {
-        print('Error parsing notification payload: $e');
+        // Remove print statements
       }
     }
   }
@@ -179,7 +174,7 @@ class NotificationService {
         );
       }
     } catch (e) {
-      print('Error setting up FCM: $e');
+      // Remove print statements
     }
   }
 
@@ -201,9 +196,8 @@ class NotificationService {
           },
         ]),
       }, SetOptions(merge: true));
-      print('FCM token saved for user ${user.uid}');
     } catch (e) {
-      print('Error saving FCM token: $e');
+      // Remove print statements
     }
   }
 

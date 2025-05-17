@@ -130,7 +130,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF184C55).withOpacity(0.1),
+                      color: Colors.grey.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

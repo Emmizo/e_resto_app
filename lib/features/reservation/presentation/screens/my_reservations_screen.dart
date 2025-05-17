@@ -53,6 +53,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
       _error = null;
       _reservations = [];
     });
+    if (!mounted) return;
     try {
       final dio = Dio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -69,11 +70,25 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
         _reservations = data.map((json) => Reservation.fromJson(json)).toList();
         _isLoading = false;
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reservations loaded successfully!'),
+          backgroundColor: Colors.green.withValues(alpha: 0.7),
+        ),
+      );
     } catch (e) {
       setState(() {
         _isLoading = false;
         _error = 'Failed to load reservations';
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load reservations: $e'),
+          backgroundColor: Colors.red.withValues(alpha: 0.7),
+        ),
+      );
     }
   }
 
@@ -275,7 +290,7 @@ class _ReservationCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -333,7 +348,7 @@ class _ReservationCard extends StatelessWidget {
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: _statusColor(reservation.status, context)
-                              .withOpacity(0.15),
+                              .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

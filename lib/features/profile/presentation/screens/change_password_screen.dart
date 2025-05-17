@@ -39,7 +39,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       final dio = Dio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
-      final response = await dio.post(
+      await dio.post(
         ApiEndpoints.changePassword,
         data: {
           'current_password': _currentPasswordController.text.trim(),
@@ -54,36 +54,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         _isLoading = false;
         _success = true;
       });
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.check_circle,
-                    color: Colors.green, size: 28),
-              ),
-              const SizedBox(width: 10),
-              const Text('Success'),
-            ],
-          ),
-          content: const Text('Password changed successfully!'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).maybePop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password changed successfully!'),
+          backgroundColor: Colors.green.withValues(alpha: 0.7),
         ),
       );
     } catch (e) {
@@ -104,33 +79,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         _isLoading = false;
         _error = errorMsg;
       });
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.error_outline,
-                    color: Colors.red, size: 28),
-              ),
-              const SizedBox(width: 10),
-              const Text('Error'),
-            ],
-          ),
-          content: Text(errorMsg),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to change password: $errorMsg'),
+          backgroundColor: Colors.red.withValues(alpha: 0.7),
         ),
       );
     }
@@ -190,8 +143,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 obscureText: true,
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Enter a new password';
-                  if (v.length < 8)
+                  if (v.length < 8) {
                     return 'Password must be at least 8 characters';
+                  }
                   return null;
                 },
                 style: Theme.of(context).textTheme.bodyLarge,
@@ -220,10 +174,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 controller: _confirmPasswordController,
                 obscureText: true,
                 validator: (v) {
-                  if (v == null || v.isEmpty)
+                  if (v == null || v.isEmpty) {
                     return 'Confirm your new password';
-                  if (v != _newPasswordController.text)
+                  }
+                  if (v != _newPasswordController.text) {
                     return 'Passwords do not match';
+                  }
                   return null;
                 },
                 style: Theme.of(context).textTheme.bodyLarge,
