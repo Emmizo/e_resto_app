@@ -56,6 +56,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _goToProfileTab() {
+    setState(() {
+      _currentIndex = 2; // Profile tab index
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -203,6 +209,35 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 ],
+              ),
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  final user = authProvider.user;
+                  final profilePic = user?.profilePicture;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: GestureDetector(
+                      onTap: _goToProfileTab,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 13,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage:
+                              (profilePic != null && profilePic.isNotEmpty)
+                                  ? NetworkImage(profilePic)
+                                  : null,
+                          child: (profilePic == null || profilePic.isEmpty)
+                              ? Icon(Icons.person, color: Colors.grey, size: 22)
+                              : null,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
