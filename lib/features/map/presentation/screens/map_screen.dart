@@ -23,6 +23,11 @@ class _MapScreenState extends State<MapScreen> {
   double _currentZoom = 13;
   late latlong2.LatLng _mapCenter;
 
+  // Live search additions
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  List<RestaurantModel> _filteredRestaurants = [];
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +40,37 @@ class _MapScreenState extends State<MapScreen> {
     _mapController = MapController();
     _mapCenter = initialLatLng;
     _initUserLocation();
-    _setRestaurantMarkers(widget.restaurants);
+    _filteredRestaurants = List.from(widget.restaurants);
+    _setRestaurantMarkers(_filteredRestaurants);
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim();
+      if (_searchQuery.isEmpty) {
+        _filteredRestaurants = List.from(widget.restaurants);
+      } else {
+        _filteredRestaurants = widget.restaurants
+            .where((r) =>
+                r.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+      }
+      _setRestaurantMarkers(_filteredRestaurants);
+      // If only one match, center map on it
+      if (_filteredRestaurants.length == 1) {
+        final r = _filteredRestaurants.first;
+        final lat = double.tryParse(r.latitude) ?? 0.0;
+        final lng = double.tryParse(r.longitude) ?? 0.0;
+        _mapController.move(latlong2.LatLng(lat, lng), _currentZoom);
+      }
+    });
   }
 
   Future<void> _initUserLocation() async {
@@ -47,6 +82,7 @@ class _MapScreenState extends State<MapScreen> {
       setState(() {
         _userLocation = latlong2.LatLng(position.latitude, position.longitude);
       });
+      _setRestaurantMarkers(_filteredRestaurants);
       // Center map on user location
       _mapController.move(_userLocation!, _currentZoom);
     } catch (e) {
@@ -55,25 +91,60 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _setRestaurantMarkers(List<RestaurantModel> restaurants) {
+    RestaurantModel? nearest;
+    if (_userLocation != null && restaurants.isNotEmpty) {
+      nearest = restaurants.reduce((a, b) {
+        final aDist = Geolocator.distanceBetween(
+          _userLocation!.latitude,
+          _userLocation!.longitude,
+          double.tryParse(a.latitude) ?? 0.0,
+          double.tryParse(a.longitude) ?? 0.0,
+        );
+        final bDist = Geolocator.distanceBetween(
+          _userLocation!.latitude,
+          _userLocation!.longitude,
+          double.tryParse(b.latitude) ?? 0.0,
+          double.tryParse(b.longitude) ?? 0.0,
+        );
+        return aDist < bDist ? a : b;
+      });
+    }
     _restaurantMarkers = restaurants
         .where((r) => r.latitude.isNotEmpty && r.longitude.isNotEmpty)
-        .map((restaurant) => Marker(
-              point: latlong2.LatLng(
-                double.tryParse(restaurant.latitude) ?? 0.0,
-                double.tryParse(restaurant.longitude) ?? 0.0,
-              ),
-              width: 48,
-              height: 48,
-              child: GestureDetector(
-                onTap: () => _showDistanceInfo(restaurant),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 40,
-                  height: 40,
+        .map((restaurant) {
+      final isNearest = nearest != null && restaurant.id == nearest.id;
+      return Marker(
+        point: latlong2.LatLng(
+          double.tryParse(restaurant.latitude) ?? 0.0,
+          double.tryParse(restaurant.longitude) ?? 0.0,
+        ),
+        width: 48,
+        height: 48,
+        child: isNearest
+            ? _BlinkingMarker(
+                restaurant: restaurant,
+                onTap: () => _showDistanceInfo(restaurant))
+            : Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () => _showDistanceInfo(restaurant),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white,
+                    backgroundImage: (restaurant.image != null &&
+                            restaurant.image!.isNotEmpty)
+                        ? NetworkImage(restaurant.image!)
+                        : null,
+                    child: (restaurant.image == null ||
+                            restaurant.image!.isEmpty)
+                        ? Icon(Icons.restaurant, color: Colors.teal, size: 24)
+                        : null,
+                  ),
                 ),
               ),
-            ))
-        .toList();
+      );
+    }).toList();
     setState(() {});
   }
 
@@ -253,25 +324,6 @@ class _MapScreenState extends State<MapScreen> {
             double.tryParse(widget.restaurants.first.longitude) ?? 0.0,
           )
         : const latlong2.LatLng(0, 0);
-    List<Marker> allMarkers = List.from(_restaurantMarkers);
-    if (_userLocation != null) {
-      allMarkers.add(
-        Marker(
-          point: _userLocation!,
-          width: 32,
-          height: 32,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            width: 24,
-            height: 24,
-          ),
-        ),
-      );
-    }
     return Scaffold(
       body: Stack(
         children: [
@@ -296,24 +348,6 @@ class _MapScreenState extends State<MapScreen> {
                 userAgentPackageName: 'com.example.e_resta_app',
               ),
               MarkerLayer(markers: _restaurantMarkers),
-              // User location marker (not clustered)
-              if (_userLocation != null)
-                MarkerLayer(markers: [
-                  Marker(
-                    point: _userLocation!,
-                    width: 32,
-                    height: 32,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                      ),
-                      width: 24,
-                      height: 24,
-                    ),
-                  ),
-                ]),
             ],
           ),
           // Top search bar overlay
@@ -337,6 +371,7 @@ class _MapScreenState extends State<MapScreen> {
                       ],
                     ),
                     child: TextField(
+                      controller: _searchController,
                       decoration: InputDecoration(
                         hintText: 'Search here...',
                         prefixIcon:
@@ -401,6 +436,73 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Add this widget at the bottom of the file
+class _BlinkingMarker extends StatefulWidget {
+  final RestaurantModel restaurant;
+  final VoidCallback onTap;
+  const _BlinkingMarker({required this.restaurant, required this.onTap});
+
+  @override
+  State<_BlinkingMarker> createState() => _BlinkingMarkerState();
+}
+
+class _BlinkingMarkerState extends State<_BlinkingMarker>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 1.0, end: 0.4).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final restaurant = widget.restaurant;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) => Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.red.withOpacity(_animation.value),
+                width: 5,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white,
+              backgroundImage:
+                  (restaurant.image != null && restaurant.image!.isNotEmpty)
+                      ? NetworkImage(restaurant.image!)
+                      : null,
+              child: (restaurant.image == null || restaurant.image!.isEmpty)
+                  ? Icon(Icons.restaurant, color: Colors.teal, size: 24)
+                  : null,
+            ),
+          ),
+        ),
       ),
     );
   }

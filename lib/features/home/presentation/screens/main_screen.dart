@@ -138,9 +138,34 @@ class _MainScreenState extends State<MainScreen> {
             actionsIconTheme:
                 IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
             leading: Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                onPressed: () => Scaffold.of(context).openDrawer(),
+              builder: (context) => Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  final user = authProvider.user;
+                  final profilePic = user?.profilePicture;
+                  return GestureDetector(
+                    onTap: () => Scaffold.of(context).openDrawer(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 13,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage:
+                              (profilePic != null && profilePic.isNotEmpty)
+                                  ? NetworkImage(profilePic)
+                                  : null,
+                          child: (profilePic == null || profilePic.isEmpty)
+                              ? Icon(Icons.person, color: Colors.grey, size: 22)
+                              : null,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             actions: [
@@ -209,35 +234,6 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 ],
-              ),
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, _) {
-                  final user = authProvider.user;
-                  final profilePic = user?.profilePicture;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: GestureDetector(
-                      onTap: _goToProfileTab,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: CircleAvatar(
-                          radius: 13,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage:
-                              (profilePic != null && profilePic.isNotEmpty)
-                                  ? NetworkImage(profilePic)
-                                  : null,
-                          child: (profilePic == null || profilePic.isEmpty)
-                              ? Icon(Icons.person, color: Colors.grey, size: 22)
-                              : null,
-                        ),
-                      ),
-                    ),
-                  );
-                },
               ),
             ],
           ),

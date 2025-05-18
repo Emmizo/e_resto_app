@@ -627,37 +627,61 @@ class HomeScreenState extends State<HomeScreen>
                       viewportFraction: 1.0,
                     ),
                     items: nearBanners.map((banner) {
-                      return Builder(
-                        builder: (context) => Container(
-                          height: 140,
-                          width: MediaQuery.of(context).size.width - 32,
-                          margin: EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            image: DecorationImage(
-                              image: NetworkImage(banner.imagePath),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Theme.of(context).colorScheme.primary,
-                                  Theme.of(context).colorScheme.secondary,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Banner image with fallback
+                            banner.imagePath.isNotEmpty
+                                ? Image.network(
+                                    banner.imagePath,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: 140,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Image.asset(
+                                      'assets/images/placeholder.png',
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: 140,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    'assets/images/placeholder.png',
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: 140,
+                                  ),
+                            // Gradient overlay
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.6),
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .secondary
+                                        .withOpacity(0.3),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Padding(
+                            // Text and button overlay
+                            Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12.0, vertical: 4.0),
                               child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     banner.title,
@@ -767,7 +791,7 @@ class HomeScreenState extends State<HomeScreen>
                                 ],
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       );
                     }).toList(),
@@ -793,13 +817,10 @@ class HomeScreenState extends State<HomeScreen>
                       viewportFraction: 1.0,
                     ),
                     items: nearRestaurants.map((restaurant) {
-                      return Builder(
-                        builder: (context) => Container(
-                          height: 140,
-                          width: MediaQuery.of(context).size.width - 32,
-                          margin: EdgeInsets.symmetric(horizontal: 16),
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
                             image: DecorationImage(
                               image: restaurant.image != null &&
                                       restaurant.image!.isNotEmpty
