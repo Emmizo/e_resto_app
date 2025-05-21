@@ -185,7 +185,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
     final name =
         user != null ? ('${user.firstName} ${user.lastName}') : 'Guest';

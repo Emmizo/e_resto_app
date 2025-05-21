@@ -356,7 +356,8 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _toggleFavorite(RestaurantModel restaurant) async {
-    final isOnline = context.watch<ConnectivityProvider>().isOnline;
+    final isOnline =
+        Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     final isCurrentlyFavorite = restaurant.isFavorite;
     setState(() {
       _favoriteLoading.add(restaurant.id);
