@@ -93,7 +93,10 @@ class CartProvider extends ChangeNotifier {
         !Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     if (_currentRestaurantId != null &&
         _currentRestaurantId != item.restaurantId) {
-      throw Exception('Cannot add items from different restaurants');
+      throw CartException(
+        'You cannot order from two restaurants at the same time. Please clear your cart to add items from this restaurant.',
+        type: CartErrorType.differentRestaurant,
+      );
     }
     final existingItemIndex = _items.indexWhere((i) => i.id == item.id);
     if (existingItemIndex >= 0) {
@@ -166,4 +169,16 @@ class CartProvider extends ChangeNotifier {
     await _saveCart();
     notifyListeners();
   }
+}
+
+enum CartErrorType { differentRestaurant, other }
+
+class CartException implements Exception {
+  final String message;
+  final CartErrorType type;
+
+  CartException(this.message, {this.type = CartErrorType.other});
+
+  @override
+  String toString() => message;
 }

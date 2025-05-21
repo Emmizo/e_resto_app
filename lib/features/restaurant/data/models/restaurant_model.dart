@@ -21,12 +21,12 @@ class MenuItemModel {
 
   factory MenuItemModel.fromJson(Map<String, dynamic> json) => MenuItemModel(
         id: json['id'],
-        name: json['name'],
-        description: json['description'],
-        price: json['price'],
-        image: json['image'],
-        category: json['category'],
-        dietaryInfo: json['dietary_info'],
+        name: json['name']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        price: json['price']?.toString() ?? '',
+        image: json['image']?.toString() ?? '',
+        category: json['category']?.toString() ?? '',
+        dietaryInfo: json['dietary_info']?.toString() ?? '',
         isAvailable: json['is_available'] is bool
             ? json['is_available']
             : json['is_available'] == 1,
@@ -102,15 +102,15 @@ class RestaurantModel {
   factory RestaurantModel.fromJson(Map<String, dynamic> json) =>
       RestaurantModel(
         id: json['id'],
-        name: json['name'],
-        description: json['description'],
-        address: json['address'],
-        longitude: json['longitude'],
-        latitude: json['latitude'],
-        phoneNumber: json['phone_number'],
-        email: json['email'],
-        website: json['website'],
-        openingHours: json['opening_hours'],
+        name: json['name']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        address: json['address']?.toString() ?? '',
+        longitude: json['longitude']?.toString() ?? '',
+        latitude: json['latitude']?.toString() ?? '',
+        phoneNumber: json['phone_number']?.toString() ?? '',
+        email: json['email']?.toString() ?? '',
+        website: json['website']?.toString(),
+        openingHours: json['opening_hours']?.toString() ?? '',
         cuisineId: (() {
           final val = json['cuisine_id'];
           if (val == null) return null;
@@ -121,14 +121,14 @@ class RestaurantModel {
           }
           return null;
         })(),
-        priceRange: json['price_range'],
-        image: json['image'],
-        ownerId: json['owner_id'],
+        priceRange: json['price_range']?.toString() ?? '',
+        image: json['image']?.toString() ?? '',
+        ownerId: json['owner_id'] ?? -1,
         isApproved: json['is_approved'] is bool
             ? json['is_approved']
             : json['is_approved'] == 1,
         status: json['status'] is bool ? json['status'] : json['status'] == 1,
-        menus: (json['menus'] as List)
+        menus: (json['menus'] as List? ?? [])
             .map((menu) => MenuModel.fromJson(menu))
             .toList(),
         averageRating: (json['average_rating'] is int)

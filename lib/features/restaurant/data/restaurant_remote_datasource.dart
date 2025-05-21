@@ -18,8 +18,12 @@ class RestaurantRemoteDatasource {
       );
 
       final data = response.data['data'] as List;
-      return data.map((json) => RestaurantModel.fromJson(json)).toList();
+      final restaurants =
+          data.map((json) => RestaurantModel.fromJson(json)).toList();
+
+      return restaurants;
     } catch (e) {
+    
       return [];
     }
   }

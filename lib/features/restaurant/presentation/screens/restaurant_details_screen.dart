@@ -425,8 +425,8 @@ class RestaurantDetailsScreen extends StatelessWidget {
                 child: CircleAvatar(
                   backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
-                    icon:
-                        const Icon(Icons.favorite_border, color: Colors.white),
+                    icon: const Icon(Icons.rate_review_outlined,
+                        color: Colors.white),
                     onPressed: () => _showReviewDialog(context),
                   ),
                 ),
@@ -552,11 +552,48 @@ class RestaurantDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Menu',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Menu',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                    ),
+                    if (restaurant.menus.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.restaurant_menu,
+                              size: 18,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${restaurant.menus.length} ${restaurant.menus.length == 1 ? 'Menu' : 'Menus'}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 if (restaurant.menus.isEmpty)
@@ -597,27 +634,101 @@ class RestaurantDetailsScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ),
+                  ).animate().fadeIn(),
                 for (final menu in restaurant.menus)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        menu.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      for (final item in menu.menuItems)
-                        _MenuItemCard(
-                          item: item,
-                          restaurantId: restaurant.id,
-                          restaurantName: restaurant.name,
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.restaurant_menu,
+                                color: Theme.of(context).primaryColor,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      menu.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                          ),
+                                    ),
+                                    if (menu.description.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        menu.description,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .primaryColor
+                                                  .withOpacity(0.8),
+                                            ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${menu.menuItems.length} items',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      const SizedBox(height: 16),
-                    ],
+                        const SizedBox(height: 16),
+                        for (final item in menu.menuItems)
+                          _MenuItemCard(
+                            item: item,
+                            restaurantId: restaurant.id,
+                            restaurantName: restaurant.name,
+                          ).animate().fadeIn(
+                                duration: const Duration(milliseconds: 300),
+                                delay: Duration(
+                                  milliseconds:
+                                      menu.menuItems.indexOf(item) * 100,
+                                ),
+                              ),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -633,10 +744,11 @@ class _MenuItemCard extends StatefulWidget {
   final MenuItemModel item;
   final int restaurantId;
   final String restaurantName;
-  const _MenuItemCard(
-      {required this.item,
-      required this.restaurantId,
-      required this.restaurantName});
+  const _MenuItemCard({
+    required this.item,
+    required this.restaurantId,
+    required this.restaurantName,
+  });
 
   @override
   State<_MenuItemCard> createState() => _MenuItemCardState();
@@ -705,64 +817,244 @@ class _MenuItemCardState extends State<_MenuItemCard> {
     }
   }
 
+  void _addToCart(BuildContext context, MenuItemModel item) async {
+    try {
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
+      await cartProvider.addItem(CartItem(
+        id: item.id.toString(),
+        name: item.name,
+        description: item.description,
+        price: double.tryParse(item.price) ?? 0.0,
+        imageUrl: item.image,
+        restaurantId: widget.restaurantId.toString(),
+        restaurantName: widget.restaurantName,
+      ));
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added ${item.name} to cart'),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      if (e is CartException && e.type == CartErrorType.differentRestaurant) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Clear Cart',
+              textColor: Colors.white,
+              onPressed: () {
+                if (!context.mounted) return;
+                Provider.of<CartProvider>(context, listen: false).clearCart();
+              },
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add item to cart'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: item.image.isNotEmpty
-            ? Image.network(
-                item.image.startsWith('http')
-                    ? item.image
-                    : 'http://localhost:8000/${item.image}',
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
-              )
-            : const Icon(Icons.fastfood),
-        title: Text(item.name),
-        subtitle: Text(item.description),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('₣${item.price}'),
-            IconButton(
-              icon: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(
-                      _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: Colors.red,
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _addToCart(context, item),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Item Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: item.image.isNotEmpty
+                    ? Image.network(
+                        item.image.startsWith('http')
+                            ? item.image
+                            : 'http://localhost:8000/${item.image}',
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey[200],
+                          child: Icon(Icons.fastfood,
+                              color: Colors.grey[400], size: 32),
+                        ),
+                      )
+                    : Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.fastfood,
+                            color: Colors.grey[400], size: 32),
+                      ),
+              ),
+              const SizedBox(width: 16),
+              // Item Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: _loading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Icon(
+                                  _isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: Colors.red,
+                                  size: 22,
+                                ),
+                          onPressed: _loading ? null : _toggleFavorite,
+                          tooltip: _isFavorite
+                              ? 'Remove from favorites'
+                              : 'Add to favorites',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
                     ),
-              onPressed: _loading ? null : _toggleFavorite,
-              tooltip: _isFavorite ? 'Unfavorite' : 'Favorite',
-            ),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () {
-                final cartProvider = context.read<CartProvider>();
-                cartProvider.addItem(CartItem(
-                  id: item.id.toString(),
-                  name: item.name,
-                  description: item.description,
-                  price: double.tryParse(item.price) ?? 0.0,
-                  imageUrl: item.image,
-                  restaurantId: widget.restaurantId.toString(),
-                  restaurantName: widget.restaurantName,
-                ));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Added ${item.name} to cart')),
-                );
-              },
-            ),
-          ],
+                    const SizedBox(height: 4),
+                    Text(
+                      item.description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    // Price and Add to Cart Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Price with currency
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '₣${item.price}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        // Add to Cart Button
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.add_shopping_cart,
+                                color: Colors.white, size: 20),
+                            onPressed: () => _addToCart(context, item),
+                            tooltip: 'Add to cart',
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (item.dietaryInfo.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green[200]!),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.eco, color: Colors.green[700], size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              item.dietaryInfo,
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: const Duration(milliseconds: 300));
   }
 }
 
