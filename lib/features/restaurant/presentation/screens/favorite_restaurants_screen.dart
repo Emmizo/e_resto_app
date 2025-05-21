@@ -2,14 +2,13 @@ import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart'
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
-import 'restaurant_details_screen.dart';
-import '../../data/models/restaurant_model.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -66,6 +65,8 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
+      // Debug log
+      print('Unfavorite restaurantId: $restaurantId, token: $token');
       await dio.post(
         ApiEndpoints.restaurantUnfavorite,
         data: {'restaurant_id': restaurantId},
@@ -80,10 +81,23 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
         const SnackBar(content: Text('Removed from favorites')),
       );
     } catch (e) {
+      String message = 'Failed to remove favorite';
+      if (e is DioException && e.response != null) {
+        // Try to extract a backend error message
+        final data = e.response?.data;
+        if (data is Map && data['message'] != null) {
+          message = data['message'].toString();
+        } else if (data is String) {
+          message = data;
+        } else {
+          message = e.toString();
+        }
+      } else {
+        message = e.toString();
+      }
+      print('Unfavorite error: $message');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Failed: ${e.toString()}'),
-            backgroundColor: Colors.red),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     }
   }
@@ -108,14 +122,52 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 18),
         itemBuilder: (context, index) {
           final item = _restaurants[index];
-          return _RestaurantCard(
-            item: item,
-            onRemove: () => _unfavoriteRestaurant(
-                item['id'] is int
-                    ? item['id']
-                    : int.tryParse(item['id'].toString()) ?? 0,
-                index),
-          ).animate(delay: (100 * index).ms).fadeIn();
+          final restaurant = item['restaurant'] ?? item;
+          final restaurantId = restaurant['id'];
+          return Slidable(
+            key: ValueKey(restaurantId),
+            endActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              extentRatio: 0.25,
+              children: [
+                SlidableAction(
+                  onPressed: (context) async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Remove from favorites?'),
+                        content: const Text(
+                            'Are you sure you want to remove this restaurant from your favorites?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Delete',
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      _unfavoriteRestaurant(restaurantId, index);
+                    }
+                  },
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete_outline,
+                  label: 'Delete',
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ],
+            ),
+            child: _RestaurantCard(
+              item: item,
+              onRemove: () => _unfavoriteRestaurant(restaurantId, index),
+            ).animate(delay: (100 * index).ms).fadeIn(),
+          );
         },
       );
     }
@@ -178,124 +230,100 @@ class _RestaurantCard extends StatelessWidget {
     final restaurant = item['restaurant'] ?? item;
     final averageRating = item['average_rating'] ?? 0;
     final reviewsCount = item['reviews_count'] ?? 0;
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RestaurantDetailsScreen(
-              restaurant: RestaurantModel.fromJson(restaurant),
-              cuisines: const [], // Pass real cuisines if available
-            ),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 8,
-        shadowColor: Colors.black.withValues(alpha: 0.10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Restaurant Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: restaurant['image'] != null &&
-                        restaurant['image'].toString().isNotEmpty
-                    ? Image.network(
-                        restaurant['image'],
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: 90,
-                          height: 90,
-                          color: Colors.grey[200],
-                          child:
-                              const Icon(Icons.restaurant, color: Colors.grey),
-                        ),
-                      )
-                    : Container(
-                        width: 90,
-                        height: 90,
+    return Card(
+      elevation: 12,
+      shadowColor: Colors.black.withOpacity(0.10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: restaurant['image'] != null &&
+                      restaurant['image'].toString().isNotEmpty
+                  ? Image.network(
+                      restaurant['image'],
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 64,
+                        height: 64,
                         color: Colors.grey[200],
                         child: const Icon(Icons.restaurant, color: Colors.grey),
                       ),
-              ),
-              const SizedBox(width: 18),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            restaurant['name'] ?? '',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.red, size: 26),
-                          tooltip: 'Remove from favorites',
-                          onPressed: onRemove,
-                        ),
-                      ],
+                    )
+                  : Container(
+                      width: 64,
+                      height: 64,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.restaurant, color: Colors.grey),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      restaurant['address'] ?? '',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 18),
-                        const SizedBox(width: 4),
-                        Text(
-                          averageRating.toStringAsFixed(1),
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
+            ),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    restaurant['name'] ?? '',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          letterSpacing: 0.1,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '($reviewsCount reviews)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 16, color: Colors.grey[500]),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          restaurant['address'] ?? '',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey[600],
                                     fontSize: 13,
                                   ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        averageRating.toStringAsFixed(1),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '($reviewsCount reviews)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

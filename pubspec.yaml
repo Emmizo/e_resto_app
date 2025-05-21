@@ -70,6 +70,7 @@ dependencies:
   latlong2: ^0.9.1
 
   path: any
+  flutter_slidable: ^4.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

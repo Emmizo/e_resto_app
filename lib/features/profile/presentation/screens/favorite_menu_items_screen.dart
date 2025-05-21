@@ -6,6 +6,7 @@ import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class FavoriteMenuItemsScreen extends StatefulWidget {
   const FavoriteMenuItemsScreen({super.key});
@@ -151,72 +152,34 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
           final menuItem = item['menu_item'];
           final menu = menuItem['menu'];
           final restaurant = menu != null ? menu['restaurant'] : null;
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              leading: menuItem['image'] != null &&
-                      menuItem['image'].toString().isNotEmpty
-                  ? Image.network(
-                      menuItem['image'].toString().startsWith('http')
-                          ? menuItem['image']
-                          : 'http://localhost:8000/${menuItem['image']}',
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                    )
-                  : const Icon(Icons.fastfood),
-              title: Text(menuItem['name'] ?? ''),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((menu != null && menu['name'] != null) ||
-                      (restaurant != null && restaurant['name'] != null))
-                    Row(
-                      children: [
-                        if (restaurant != null && restaurant['name'] != null)
-                          Flexible(
-                            child: Text(
-                              restaurant['name'],
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.teal,
-                                  fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+          return Slidable(
+            key: ValueKey(menuItem['id']),
+            endActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              extentRatio: 0.25,
+              children: [
+                SlidableAction(
+                  onPressed: (context) async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Remove from favorites?'),
+                        content: const Text(
+                            'Are you sure you want to remove this menu item from your favorites?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
                           ),
-                        if (menu != null && menu['name'] != null) ...[
-                          if (restaurant != null && restaurant['name'] != null)
-                            const Text(' • ',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 13)),
-                          Flexible(
-                            child: Text(
-                              menu['name'],
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.deepOrange,
-                                  fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Delete',
+                                style: TextStyle(color: Colors.red)),
                           ),
                         ],
-                      ],
-                    ),
-                  if ((menuItem['description'] ?? '').toString().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: Text(menuItem['description']),
-                    ),
-                ],
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('₣${menuItem['price']}'),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    tooltip: 'Remove from favorites',
-                    onPressed: () async {
+                      ),
+                    );
+                    if (confirm == true) {
                       final dio = DioService.getDio();
                       final authProvider =
                           Provider.of<AuthProvider>(context, listen: false);
@@ -243,9 +206,108 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                               backgroundColor: Colors.red),
                         );
                       }
-                    },
-                  ),
-                ],
+                    }
+                  },
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete_outline,
+                  label: 'Delete',
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ],
+            ),
+            child: Card(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                leading: menuItem['image'] != null &&
+                        menuItem['image'].toString().isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          menuItem['image'].toString().startsWith('http')
+                              ? menuItem['image']
+                              : 'http://localhost:8000/${menuItem['image']}',
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.fastfood, color: Colors.grey),
+                      ),
+                title: Text(menuItem['name'] ?? '',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if ((menu != null && menu['name'] != null) ||
+                        (restaurant != null && restaurant['name'] != null))
+                      Row(
+                        children: [
+                          if (restaurant != null && restaurant['name'] != null)
+                            Flexible(
+                              child: Text(
+                                restaurant['name'],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal,
+                                    fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          if (menu != null && menu['name'] != null) ...[
+                            if (restaurant != null &&
+                                restaurant['name'] != null)
+                              const Text(' • ',
+                                  style: TextStyle(
+                                      color: Colors.grey, fontSize: 13)),
+                            Flexible(
+                              child: Text(
+                                menu['name'],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.deepOrange,
+                                    fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    if ((menuItem['description'] ?? '').toString().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(menuItem['description'],
+                            style: Theme.of(context).textTheme.bodySmall),
+                      ),
+                  ],
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('₣${menuItem['price']}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
             ),
           );
