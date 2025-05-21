@@ -12,7 +12,7 @@ import GoogleSignIn
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     // Google Maps API Key
-    GMSServices.provideAPIKey("YOUR_GOOGLE_MAPS_API_KEY")
+    GMSServices.provideAPIKey("AIzaSyD1fGhQFakeKeyValue1234567890abcdefg")
 
     // Firebase initialization
     FirebaseApp.configure()

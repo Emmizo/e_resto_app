@@ -5,6 +5,8 @@ import 'package:latlong2/latlong.dart' as latlong2;
 import 'package:geolocator/geolocator.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
+import 'route_map_screen.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
 class MapScreen extends StatefulWidget {
   final List<RestaurantModel> restaurants;
@@ -297,8 +299,51 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     );
                   },
-                  child: const Text('View Details',
-                      style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                    'View Details',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () {
+                    if (_userLocation != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RouteMapScreen(
+                            userLocation: gmaps.LatLng(
+                              _userLocation!.latitude,
+                              _userLocation!.longitude,
+                            ),
+                            restaurantLocation: gmaps.LatLng(
+                              double.tryParse(restaurant.latitude) ?? 0.0,
+                              double.tryParse(restaurant.longitude) ?? 0.0,
+                            ),
+                            restaurantName: restaurant.name,
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('User location not available.')),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Show Route',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ),
               ),
             ],

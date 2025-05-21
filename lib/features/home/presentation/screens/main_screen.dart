@@ -56,11 +56,11 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _goToProfileTab() {
+  /* void _goToProfileTab() {
     setState(() {
       _currentIndex = 2; // Profile tab index
     });
-  }
+  } */
 
   @override
   void didChangeDependencies() {

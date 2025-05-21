@@ -513,9 +513,13 @@ class RestaurantDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () => _handleReservation(context),
-                    child: const Text('Reserve Table',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Reserve Table',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -529,9 +533,13 @@ class RestaurantDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () => _showDeliveryMethodDialog(context),
-                    child: const Text('Order Now',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Order Now',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
                   ),
                 ),
               ],
