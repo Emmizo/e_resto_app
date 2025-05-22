@@ -20,18 +20,24 @@ class MenuItemModel {
     required this.isAvailable,
   });
 
-  factory MenuItemModel.fromJson(Map<String, dynamic> json) => MenuItemModel(
-        id: json['id'],
-        name: json['name'],
-        description: json['description'] ?? '',
-        price: json['price'],
-        image: json['image'],
-        category: json['category'] ?? '',
-        dietaryInfo: json['dietary_info'] ?? '',
-        isAvailable: json['is_available'] is bool
-            ? json['is_available']
-            : json['is_available'] == 1,
-      );
+  factory MenuItemModel.fromJson(Map<String, dynamic> json) {
+    if (json['image'] == null) {
+      print(
+          'MenuItemModel.fromJson: image is null for menu_item_id: \\${json['id']}');
+    }
+    return MenuItemModel(
+      id: json['id'],
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      price: json['price']?.toString() ?? '',
+      image: json['image'] ?? '',
+      category: json['category'] ?? '',
+      dietaryInfo: json['dietary_info']?.toString() ?? '',
+      isAvailable: json['is_available'] is bool
+          ? json['is_available']
+          : json['is_available'] == 1,
+    );
+  }
 }
 
 class OrderItemModel {
@@ -71,13 +77,18 @@ class RestaurantModel {
     required this.image,
   });
 
-  factory RestaurantModel.fromJson(Map<String, dynamic> json) =>
-      RestaurantModel(
-        id: json['id'],
-        name: json['name'],
-        address: json['address'],
-        image: json['image'],
-      );
+  factory RestaurantModel.fromJson(Map<String, dynamic> json) {
+    if (json['image'] == null) {
+      print(
+          'RestaurantModel.fromJson: image is null for restaurant_id: \\${json['id']}');
+    }
+    return RestaurantModel(
+      id: json['id'],
+      name: json['name'] ?? '',
+      address: json['address'] ?? '',
+      image: json['image'] ?? '',
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -96,6 +107,7 @@ class OrderModel {
   final DateTime createdAt;
   final RestaurantModel restaurant;
   final String orderType;
+  final String paymentMethod;
 
   OrderModel({
     this.id,
@@ -106,6 +118,7 @@ class OrderModel {
     required this.createdAt,
     required this.restaurant,
     required this.orderType,
+    required this.paymentMethod,
   });
 
   Map<String, dynamic> toJson() => {
@@ -117,6 +130,7 @@ class OrderModel {
         'createdAt': createdAt.toIso8601String(),
         'restaurant': restaurant.toJson(),
         'orderType': orderType,
+        'paymentMethod': paymentMethod,
       };
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
@@ -133,5 +147,6 @@ class OrderModel {
         createdAt: DateTime.parse(json['created_at']),
         restaurant: RestaurantModel.fromJson(json['restaurant']),
         orderType: json['order_type'] ?? 'delivery',
+        paymentMethod: json['payment_method'] ?? '',
       );
 }

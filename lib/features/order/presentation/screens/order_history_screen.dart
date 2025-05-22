@@ -88,16 +88,52 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ],
               ),
               Text('Total: Frw${order.total}'),
+              Text('Placed: ${order.createdAt.toLocal()}'),
+              if (order.address.isNotEmpty)
+                Text('Delivery Address: ${order.address}'),
+              if (order.toJson()['special_instructions'] != null &&
+                  order.toJson()['special_instructions'].toString().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.note_alt_outlined, size: 18),
+                      SizedBox(width: 6),
+                      Expanded(
+                          child: Text(order.toJson()['special_instructions'])),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 12),
               const Text('Items:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              ...order.items.map((item) => ListTile(
-                    leading: Image.network(item['image'],
-                        width: 40, height: 40, fit: BoxFit.cover),
-                    title: Text(item['name']),
-                    subtitle: Text('Qty: ${item['quantity']}'),
-                    trailing: Text('₣${item['price']}'),
-                  )),
+              ...order.items.map((item) {
+                final menuItem = item['menu_item'] ?? {};
+                final dietaryInfo =
+                    item['dietary_info'] as List<dynamic>? ?? [];
+                final imageUrl = menuItem['image'];
+                return ListTile(
+                  leading: (imageUrl != null && imageUrl.toString().isNotEmpty)
+                      ? Image.network(imageUrl,
+                          width: 40, height: 40, fit: BoxFit.cover)
+                      : Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                  title: Text(menuItem['name'] ?? ''),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Qty: ${item['quantity']}'),
+                      if (dietaryInfo.isNotEmpty)
+                        Wrap(
+                          spacing: 4,
+                          children: dietaryInfo
+                              .map((tag) => Chip(label: Text(tag.toString())))
+                              .toList(),
+                        ),
+                    ],
+                  ),
+                  trailing: Text('₣${item['price']}'),
+                );
+              }),
             ],
           ),
         ),
@@ -116,12 +152,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     ? null
                     : () async {
                         for (final item in order.items) {
+                          final menuItem = item['menu_item'] ?? {};
                           await cartProvider.addItem(CartItem(
-                            id: item['id'],
-                            name: item['name'],
-                            description: item['description'],
-                            price: double.tryParse(item['price']) ?? 0,
-                            imageUrl: item['image'],
+                            id: item['id'].toString(),
+                            name: menuItem['name'] ?? '',
+                            description: menuItem['description'] ?? '',
+                            price:
+                                double.tryParse(item['price'].toString()) ?? 0,
+                            imageUrl: menuItem['image'] ?? '',
                             restaurantId: order.restaurant.id.toString(),
                             restaurantName: order.restaurant.name,
                             quantity: item['quantity'],
@@ -264,13 +302,13 @@ class _OrderTypeChip extends StatelessWidget {
   Color get _color {
     switch (orderType.toLowerCase()) {
       case 'dine_in':
-        return Colors.green;
+        return const Color.fromARGB(255, 202, 224, 244); // main color
       case 'takeaway':
-        return Colors.orange;
+        return const Color.fromARGB(255, 126, 133, 139); // main color
       case 'delivery':
-        return Colors.blue;
+        return const Color.fromARGB(255, 63, 66, 69); // main color
       default:
-        return Colors.grey;
+        return const Color(0xFFBDBDBD); // grey
     }
   }
 
@@ -293,15 +331,15 @@ class _OrderStatusChip extends StatelessWidget {
   Color get _color {
     switch (status.toLowerCase()) {
       case 'pending':
-        return Colors.orange;
+        return const Color(0xFFFFC107); // amber
       case 'confirmed':
-        return Colors.blue;
+        return const Color(0xFF1E88E5); // main color
       case 'completed':
-        return Colors.green;
+        return const Color(0xFF43A047); // green
       case 'cancelled':
-        return Colors.red;
+        return const Color(0xFFBDBDBD); // grey
       default:
-        return Colors.grey;
+        return const Color(0xFFBDBDBD); // grey
     }
   }
 

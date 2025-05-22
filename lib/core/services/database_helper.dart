@@ -21,8 +21,9 @@ class DatabaseHelper {
     final path = join(documentsDirectory.path, 'eresta_app.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -112,5 +113,16 @@ class DatabaseHelper {
         lastError TEXT
       )
     ''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add missing columns to orders table if they do not exist
+      await db.execute('ALTER TABLE orders ADD COLUMN total_amount REAL;');
+      await db.execute('ALTER TABLE orders ADD COLUMN delivery_address TEXT;');
+      await db.execute('ALTER TABLE orders ADD COLUMN restaurant_id INTEGER;');
+      await db.execute('ALTER TABLE orders ADD COLUMN payment_method TEXT;');
+      await db.execute('ALTER TABLE orders ADD COLUMN created_at TEXT;');
+    }
   }
 }
