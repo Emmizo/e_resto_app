@@ -798,8 +798,11 @@ class HomeScreenState extends State<HomeScreen>
                                                       'No internet connection. Please try again later.')),
                                             );
                                           },
-                                    child: const Text('Order now',
-                                        style: TextStyle(fontSize: 13)),
+                                    child: const Text(
+                                      'Visit us',
+                                      style: TextStyle(
+                                          fontSize: 13, color: Colors.white),
+                                    ),
                                   ),
                                 ],
                               ),
