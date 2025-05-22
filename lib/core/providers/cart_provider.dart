@@ -14,6 +14,7 @@ class CartItem {
   final String restaurantId;
   final String restaurantName;
   int quantity;
+  final List<String>? dietaryInfo;
 
   CartItem({
     required this.id,
@@ -24,6 +25,7 @@ class CartItem {
     required this.restaurantId,
     required this.restaurantName,
     this.quantity = 1,
+    this.dietaryInfo,
   });
 
   Map<String, dynamic> toJson() {
@@ -36,6 +38,7 @@ class CartItem {
       'restaurantId': restaurantId,
       'restaurantName': restaurantName,
       'quantity': quantity,
+      if (dietaryInfo != null) 'dietaryInfo': dietaryInfo,
     };
   }
 
@@ -49,6 +52,9 @@ class CartItem {
       restaurantId: json['restaurantId'],
       restaurantName: json['restaurantName'],
       quantity: json['quantity'],
+      dietaryInfo: json['dietaryInfo'] != null
+          ? List<String>.from(json['dietaryInfo'])
+          : null,
     );
   }
 

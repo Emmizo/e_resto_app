@@ -580,9 +580,8 @@ class HomeScreenState extends State<HomeScreen>
               )
             else
               (() {
-                // Filter banners for restaurants within 5km
                 if (_userLat == null || _userLng == null) {
-                  return SizedBox(height: 140); // Or show a message if you want
+                  return const SizedBox.shrink();
                 }
                 final List<PromoBanner> nearBanners =
                     _promoBanners.where((banner) {
@@ -619,6 +618,19 @@ class HomeScreenState extends State<HomeScreen>
                   );
                   return dist < 5000;
                 }).toList();
+                final List<RestaurantModel> nearRestaurants =
+                    restaurants.where((r) {
+                  final dist = Geolocator.distanceBetween(
+                    _userLat!,
+                    _userLng!,
+                    double.tryParse(r.latitude) ?? 0.0,
+                    double.tryParse(r.longitude) ?? 0.0,
+                  );
+                  return dist <= 1000;
+                }).toList();
+                if (nearBanners.isEmpty && nearRestaurants.isEmpty) {
+                  return const SizedBox.shrink();
+                }
                 if (nearBanners.isNotEmpty) {
                   return CarouselSlider(
                     options: CarouselOptions(
@@ -798,17 +810,6 @@ class HomeScreenState extends State<HomeScreen>
                     }).toList(),
                   );
                 }
-                // If no banners, show restaurants within 1km as a slider in the same design
-                final List<RestaurantModel> nearRestaurants =
-                    restaurants.where((r) {
-                  final dist = Geolocator.distanceBetween(
-                    _userLat!,
-                    _userLng!,
-                    double.tryParse(r.latitude) ?? 0.0,
-                    double.tryParse(r.longitude) ?? 0.0,
-                  );
-                  return dist <= 1000;
-                }).toList();
                 if (nearRestaurants.isNotEmpty) {
                   return CarouselSlider(
                     options: CarouselOptions(
@@ -937,16 +938,7 @@ class HomeScreenState extends State<HomeScreen>
                     }).toList(),
                   );
                 }
-                // If no restaurants within 1km, show placeholder
-                return SizedBox(
-                  height: 140,
-                  child: Center(
-                    child: Text(
-                      'No nearby banners or restaurants found.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                );
+                return const SizedBox.shrink();
               })(),
             const SizedBox(height: 24),
             // Category Selector

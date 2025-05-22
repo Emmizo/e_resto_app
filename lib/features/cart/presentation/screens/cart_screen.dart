@@ -77,6 +77,80 @@ class _CartItemCard extends StatelessWidget {
 
   const _CartItemCard({required this.item});
 
+  void _editDietaryInfo(BuildContext context) async {
+    final List<String> allTags = item.dietaryInfo ?? [];
+    if (allTags.isEmpty) return;
+    List<String> selected = List<String>.from(item.dietaryInfo ?? []);
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Edit Dietary Info'),
+              content: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: allTags.map((tag) {
+                  final isSelected = selected.contains(tag);
+                  return FilterChip(
+                    label: Text(tag),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      setState(() {
+                        if (val) {
+                          selected.add(tag);
+                        } else {
+                          selected.remove(tag);
+                        }
+                      });
+                    },
+                    selectedColor: Colors.green[100],
+                    checkmarkColor: Colors.green[800],
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: selected.isEmpty
+                      ? null
+                      : () => Navigator.pop(context, selected),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (result != null &&
+        result.isNotEmpty &&
+        result
+            .toSet()
+            .difference((item.dietaryInfo ?? []).toSet())
+            .isNotEmpty) {
+      // Update dietary info in cart
+      final cartProvider = context.read<CartProvider>();
+      final updatedItem = CartItem(
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        restaurantId: item.restaurantId,
+        restaurantName: item.restaurantName,
+        quantity: item.quantity,
+        dietaryInfo: result,
+      );
+      cartProvider.removeItem(item.id);
+      cartProvider.addItem(updatedItem);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -118,6 +192,37 @@ class _CartItemCard extends StatelessWidget {
                           color: Colors.grey[600],
                         ),
                   ),
+                  if (item.dietaryInfo != null &&
+                      item.dietaryInfo!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: item.dietaryInfo!
+                                .map((tag) => Chip(
+                                      label: Text(tag,
+                                          style: TextStyle(fontSize: 12)),
+                                      backgroundColor: Colors.green[50],
+                                      labelStyle:
+                                          TextStyle(color: Colors.green[800]),
+                                      avatar: Icon(Icons.eco,
+                                          color: Colors.green[400], size: 16),
+                                    ))
+                                .toList(),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit,
+                              size: 18, color: Colors.green),
+                          tooltip: 'Edit dietary info',
+                          onPressed: () => _editDietaryInfo(context),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

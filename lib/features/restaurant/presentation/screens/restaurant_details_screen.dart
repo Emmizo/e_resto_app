@@ -12,15 +12,51 @@ import 'package:e_resta_app/core/widgets/error_state_widget.dart';
 import 'package:e_resta_app/core/utils/error_utils.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
+import 'dart:convert';
 
-class RestaurantDetailsScreen extends StatelessWidget {
+class RestaurantDetailsScreen extends StatefulWidget {
   final RestaurantModel restaurant;
   final List<CuisineCategory> cuisines;
   const RestaurantDetailsScreen(
       {super.key, required this.restaurant, required this.cuisines});
 
+  @override
+  State<RestaurantDetailsScreen> createState() =>
+      _RestaurantDetailsScreenState();
+}
+
+class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
+  Set<int> _favoriteMenuItemIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFavoriteMenuItemIds();
+  }
+
+  Future<void> _fetchFavoriteMenuItemIds() async {
+    try {
+      final dio = DioService.getDio();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      final response = await dio.get(
+        ApiEndpoints.menuFavorites,
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      final favorites = response.data['data'] as List;
+      setState(() {
+        _favoriteMenuItemIds = favorites
+            .where((fav) => fav['status'] == true)
+            .map<int>((fav) => fav['menu_item_id'] as int)
+            .toSet();
+      });
+    } catch (_) {}
+  }
+
   String getCuisineName(int? id) {
-    final CuisineCategory cuisine = cuisines.firstWhere(
+    final CuisineCategory cuisine = widget.cuisines.firstWhere(
       (c) => c.id == id,
       orElse: () => CuisineCategory(id: null, name: 'Unknown'),
     );
@@ -32,8 +68,8 @@ class RestaurantDetailsScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => ReservationScreen(
-          restaurantName: restaurant.name,
-          restaurantId: restaurant.id,
+          restaurantName: widget.restaurant.name,
+          restaurantId: widget.restaurant.id,
         ),
       ),
     );
@@ -147,7 +183,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (restaurant.menus.isEmpty)
+                    if (widget.restaurant.menus.isEmpty)
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -197,7 +233,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
                           ],
                         ),
                       ).animate().fadeIn(),
-                    for (final menu in restaurant.menus)
+                    for (final menu in widget.restaurant.menus)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -209,12 +245,23 @@ class RestaurantDetailsScreen extends StatelessWidget {
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
-                          for (final item in menu.menuItems)
-                            _MenuItemCard(
-                              item: item,
-                              restaurantId: restaurant.id,
-                              restaurantName: restaurant.name,
-                            ),
+                          ...(() {
+                            final items =
+                                List<MenuItemModel>.from(menu.menuItems);
+                            items.sort((a, b) {
+                              final aFav = _favoriteMenuItemIds.contains(a.id);
+                              final bFav = _favoriteMenuItemIds.contains(b.id);
+                              if (aFav == bFav) return 0;
+                              return aFav ? -1 : 1;
+                            });
+                            return items
+                                .map((item) => _MenuItemCard(
+                                      item: item,
+                                      restaurantId: widget.restaurant.id,
+                                      restaurantName: widget.restaurant.name,
+                                    ))
+                                .toList();
+                          })(),
                           const SizedBox(height: 16),
                         ],
                       ),
@@ -340,7 +387,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
       final token = authProvider.token;
       final dio = DioService.getDio();
       final data = {
-        'restaurant_id': restaurant.id,
+        'restaurant_id': widget.restaurant.id,
         'rating': rating,
         'comment': comment,
       };
@@ -384,6 +431,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
     // For demo: static time and distance (replace with real logic if needed)
     const String time = '26 min';
     const String distance = '0.6 mi';
+    final restaurant = widget.restaurant;
     return Scaffold(
       body: ListView(
         children: [
@@ -757,6 +805,7 @@ class _MenuItemCard extends StatefulWidget {
 class _MenuItemCardState extends State<_MenuItemCard> {
   bool _isFavorite = false;
   bool _loading = false;
+  final Set<int> _favoriteMenuItemIds = {};
 
   @override
   void initState() {
@@ -776,9 +825,10 @@ class _MenuItemCardState extends State<_MenuItemCard> {
         }),
       );
       final favorites = response.data['data'] as List;
-
+      // Check if this menu item is in favorites and status is true
       setState(() {
-        _isFavorite = favorites.any((fav) => fav['id'] == widget.item.id);
+        _isFavorite = favorites.any((fav) =>
+            fav['menu_item_id'] == widget.item.id && fav['status'] == true);
       });
     } catch (_) {}
   }
@@ -791,24 +841,29 @@ class _MenuItemCardState extends State<_MenuItemCard> {
     final endpoint =
         _isFavorite ? ApiEndpoints.menuUnfavorite : ApiEndpoints.menuFavorite;
     try {
-      await dio.post(
+      final response = await dio.post(
         endpoint,
         data: {'menu_item_id': widget.item.id},
         options: Options(headers: {
           if (token != null) 'Authorization': 'Bearer $token',
         }),
       );
-      setState(() => _isFavorite = !_isFavorite);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              _isFavorite ? 'Added to favorites' : 'Removed from favorites'),
-        ),
-      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() => _isFavorite = !_isFavorite);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                _isFavorite ? 'Added to favorites' : 'Removed from favorites'),
+          ),
+        );
+      } else {
+        throw Exception('Failed: ${response.statusMessage}');
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed: ${e.toString()}'),
+          content: Text('Failed to update favorite: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -817,10 +872,106 @@ class _MenuItemCardState extends State<_MenuItemCard> {
     }
   }
 
-  void _addToCart(BuildContext context, MenuItemModel item) async {
+  void _addToCartWithDietarySelection(
+      BuildContext context, MenuItemModel item) async {
+    if (item.dietaryInfo.isEmpty) {
+      _addToCart(context, item);
+      return;
+    }
+    Map<String, dynamic>? info;
+    try {
+      info = json.decode(item.dietaryInfo);
+    } catch (_) {}
+    if (info == null || info.isEmpty) {
+      _addToCart(context, item);
+      return;
+    }
+    final List<String> tags = [];
+    if (info['contains'] is List) {
+      tags.addAll((info['contains'] as List).map((e) => e.toString()));
+    }
+    if (info['suitable_for'] is List) {
+      tags.addAll((info['suitable_for'] as List).map((e) => e.toString()));
+    }
+    if (tags.isEmpty) {
+      _addToCart(context, item);
+      return;
+    }
+    List<String> selected = [];
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Dietary Info'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Please select at least one dietary tag:'),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: tags.map((tag) {
+                      final isSelected = selected.contains(tag);
+                      return FilterChip(
+                        label: Text(tag),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          setState(() {
+                            if (val) {
+                              selected.add(tag);
+                            } else {
+                              selected.remove(tag);
+                            }
+                          });
+                        },
+                        selectedColor: Colors.green[100],
+                        checkmarkColor: Colors.green[800],
+                      );
+                    }).toList(),
+                  ),
+                  if (selected.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text('You must select at least one.',
+                          style:
+                              TextStyle(color: Colors.red[700], fontSize: 12)),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: selected.isEmpty
+                      ? null
+                      : () {
+                          Navigator.pop(context, selected);
+                        },
+                  child: const Text('Add to Cart'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((result) {
+      if (result is List<String> && result.isNotEmpty) {
+        _addToCart(context, widget.item, selectedDietary: result);
+      }
+    });
+  }
+
+  void _addToCart(BuildContext context, MenuItemModel item,
+      {List<String>? selectedDietary}) async {
     try {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
-
       await cartProvider.addItem(CartItem(
         id: item.id.toString(),
         name: item.name,
@@ -829,10 +980,9 @@ class _MenuItemCardState extends State<_MenuItemCard> {
         imageUrl: item.image,
         restaurantId: widget.restaurantId.toString(),
         restaurantName: widget.restaurantName,
+        dietaryInfo: selectedDietary,
       ));
-
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Added ${item.name} to cart'),
@@ -843,7 +993,6 @@ class _MenuItemCardState extends State<_MenuItemCard> {
       );
     } catch (e) {
       if (!context.mounted) return;
-
       if (e is CartException && e.type == CartErrorType.differentRestaurant) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -887,7 +1036,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => _addToCart(context, item),
+        onTap: () => _addToCartWithDietarySelection(context, item),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -1012,7 +1161,8 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                           child: IconButton(
                             icon: const Icon(Icons.add_shopping_cart,
                                 color: Colors.white, size: 20),
-                            onPressed: () => _addToCart(context, item),
+                            onPressed: () =>
+                                _addToCartWithDietarySelection(context, item),
                             tooltip: 'Add to cart',
                             padding: const EdgeInsets.all(8),
                             constraints: const BoxConstraints(),
@@ -1022,30 +1172,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                     ),
                     if (item.dietaryInfo.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.green[200]!),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.eco, color: Colors.green[700], size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              item.dietaryInfo,
-                              style: TextStyle(
-                                color: Colors.green[700],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _DietaryInfoWidget(dietaryInfo: item.dietaryInfo),
                     ],
                   ],
                 ),
@@ -1055,6 +1182,49 @@ class _MenuItemCardState extends State<_MenuItemCard> {
         ),
       ),
     ).animate().fadeIn(duration: const Duration(milliseconds: 300));
+  }
+}
+
+class _DietaryInfoWidget extends StatelessWidget {
+  final String dietaryInfo;
+  const _DietaryInfoWidget({required this.dietaryInfo});
+
+  @override
+  Widget build(BuildContext context) {
+    Map<String, dynamic>? info;
+    try {
+      info = json.decode(dietaryInfo);
+    } catch (_) {}
+
+    if (info == null || info.isEmpty) return const SizedBox.shrink();
+
+    List<Widget> chips = [];
+    if (info['contains'] is List) {
+      chips.addAll((info['contains'] as List).map((e) => Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Chip(
+              label: Text(e.toString()),
+              backgroundColor: Colors.red[50],
+              labelStyle: TextStyle(color: Colors.red[800], fontSize: 12),
+              avatar: Icon(Icons.warning, color: Colors.red[400], size: 16),
+            ),
+          )));
+    }
+    if (info['suitable_for'] is List) {
+      chips.addAll((info['suitable_for'] as List).map((e) => Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Chip(
+              label: Text(e.toString()),
+              backgroundColor: Colors.green[50],
+              labelStyle: TextStyle(color: Colors.green[800], fontSize: 12),
+              avatar: Icon(Icons.eco, color: Colors.green[400], size: 16),
+            ),
+          )));
+    }
+
+    return Wrap(
+      children: chips,
+    );
   }
 }
 
