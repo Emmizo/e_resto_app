@@ -29,6 +29,7 @@ class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   final GlobalKey<HomeScreenState> _homeScreenKey =
       GlobalKey<HomeScreenState>();
+  bool _isRetrying = false;
 
   @override
   void initState() {
@@ -691,12 +692,30 @@ class _MainScreenState extends State<MainScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                         ),
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        label: const Text('Retry',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        onPressed: () {
-                          context.read<ConnectivityProvider>().checkNow();
-                        },
+                        icon: _isRetrying
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Theme.of(context).colorScheme.onError),
+                                ),
+                              )
+                            : const Icon(Icons.refresh, color: Colors.white),
+                        label: Text(
+                          _isRetrying ? 'Checking...' : 'Retry',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: _isRetrying
+                            ? null
+                            : () async {
+                                setState(() => _isRetrying = true);
+                                await context
+                                    .read<ConnectivityProvider>()
+                                    .checkNow();
+                                setState(() => _isRetrying = false);
+                              },
                       ),
                     ],
                   ),

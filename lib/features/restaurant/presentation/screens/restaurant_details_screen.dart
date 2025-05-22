@@ -259,6 +259,8 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                                       item: item,
                                       restaurantId: widget.restaurant.id,
                                       restaurantName: widget.restaurant.name,
+                                      restaurantAddress:
+                                          widget.restaurant.address,
                                     ))
                                 .toList();
                           })(),
@@ -768,6 +770,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                             item: item,
                             restaurantId: restaurant.id,
                             restaurantName: restaurant.name,
+                            restaurantAddress: restaurant.address,
                           ).animate().fadeIn(
                                 duration: const Duration(milliseconds: 300),
                                 delay: Duration(
@@ -792,10 +795,12 @@ class _MenuItemCard extends StatefulWidget {
   final MenuItemModel item;
   final int restaurantId;
   final String restaurantName;
+  final String restaurantAddress;
   const _MenuItemCard({
     required this.item,
     required this.restaurantId,
     required this.restaurantName,
+    required this.restaurantAddress,
   });
 
   @override
@@ -917,20 +922,57 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                     runSpacing: 8,
                     children: tags.map((tag) {
                       final isSelected = selected.contains(tag);
-                      return FilterChip(
-                        label: Text(tag),
-                        selected: isSelected,
-                        onSelected: (val) {
-                          setState(() {
-                            if (val) {
-                              selected.add(tag);
-                            } else {
-                              selected.remove(tag);
-                            }
-                          });
-                        },
-                        selectedColor: Colors.green[100],
-                        checkmarkColor: Colors.green[800],
+                      // Determine type for icon/color
+                      final isContains = info != null &&
+                          info['contains'] is List &&
+                          (info['contains'] as List).contains(tag);
+                      final isSuitable = info != null &&
+                          info['suitable_for'] is List &&
+                          (info['suitable_for'] as List).contains(tag);
+                      Icon? chipIcon;
+                      Color? selectedColor;
+                      if (isContains) {
+                        chipIcon = const Icon(Icons.warning,
+                            color: Colors.red, size: 16);
+                        selectedColor = Colors.red[100];
+                      } else if (isSuitable) {
+                        chipIcon = const Icon(Icons.eco,
+                            color: Colors.green, size: 16);
+                        selectedColor = Colors.green[100];
+                      }
+                      // Optional: tag descriptions
+                      final tagDescriptions = {
+                        'gluten': 'Contains gluten',
+                        'dairy': 'Contains dairy',
+                        'eggs': 'Contains eggs',
+                        'vegan': 'Suitable for vegans',
+                        'vegetarian': 'Suitable for vegetarians',
+                      };
+                      final tagDesc = tagDescriptions[tag];
+                      return Tooltip(
+                        message: tagDesc ?? '',
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
+                          child: FilterChip(
+                            label: Text(tag),
+                            avatar: chipIcon,
+                            selected: isSelected,
+                            onSelected: (val) {
+                              setState(() {
+                                if (val) {
+                                  selected.add(tag);
+                                } else {
+                                  selected.remove(tag);
+                                }
+                              });
+                            },
+                            selectedColor: selectedColor,
+                            checkmarkColor: isContains
+                                ? Colors.red[800]
+                                : Colors.green[800],
+                          ),
+                        ),
                       );
                     }).toList(),
                   ),
@@ -980,6 +1022,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
         imageUrl: item.image,
         restaurantId: widget.restaurantId.toString(),
         restaurantName: widget.restaurantName,
+        restaurantAddress: widget.restaurantAddress,
         dietaryInfo: selectedDietary,
       ));
       if (!context.mounted) return;

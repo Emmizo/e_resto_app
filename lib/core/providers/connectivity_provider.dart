@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:e_resta_app/core/services/database_helper.dart';
+import 'package:e_resta_app/core/providers/action_queue_provider.dart';
 
 class ConnectivityProvider extends ChangeNotifier {
   final Connectivity _connectivity;
@@ -53,6 +54,8 @@ class ConnectivityProvider extends ChangeNotifier {
       if (online && wasOffline) {
         // Just came back online, process action queue
         await _processActionQueue();
+        // Refresh ActionQueueProvider badge globally
+        await ActionQueueProvider.refreshAll();
       }
     }
   }

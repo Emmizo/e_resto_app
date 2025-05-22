@@ -13,6 +13,7 @@ class CartItem {
   final String imageUrl;
   final String restaurantId;
   final String restaurantName;
+  final String restaurantAddress;
   int quantity;
   final List<String>? dietaryInfo;
 
@@ -24,6 +25,7 @@ class CartItem {
     required this.imageUrl,
     required this.restaurantId,
     required this.restaurantName,
+    required this.restaurantAddress,
     this.quantity = 1,
     this.dietaryInfo,
   });
@@ -37,6 +39,7 @@ class CartItem {
       'imageUrl': imageUrl,
       'restaurantId': restaurantId,
       'restaurantName': restaurantName,
+      'restaurantAddress': restaurantAddress,
       'quantity': quantity,
       if (dietaryInfo != null) 'dietaryInfo': dietaryInfo,
     };
@@ -51,6 +54,7 @@ class CartItem {
       imageUrl: json['imageUrl'],
       restaurantId: json['restaurantId'],
       restaurantName: json['restaurantName'],
+      restaurantAddress: json['restaurantAddress'] ?? '',
       quantity: json['quantity'],
       dietaryInfo: json['dietaryInfo'] != null
           ? List<String>.from(json['dietaryInfo'])

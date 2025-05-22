@@ -143,6 +143,7 @@ class _CartItemCard extends StatelessWidget {
         imageUrl: item.imageUrl,
         restaurantId: item.restaurantId,
         restaurantName: item.restaurantName,
+        restaurantAddress: item.restaurantAddress,
         quantity: item.quantity,
         dietaryInfo: result,
       );
@@ -393,6 +394,8 @@ class _CartSummaryState extends State<_CartSummary> {
               child: ElevatedButton(
                 onPressed: () => _showPaymentOptions(context),
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text('Proceed to Checkout'),
@@ -474,17 +477,20 @@ class _OrderDetailsStep extends StatelessWidget {
   final String? errorMessage;
   final String? addressError;
   final String? phoneError;
-  const _OrderDetailsStep(
-      {required this.orderType,
-      required this.addressController,
-      required this.phoneController,
-      required this.emailController,
-      required this.instructionsController,
-      required this.tipController,
-      required this.onOrderTypeChanged,
-      this.errorMessage,
-      this.addressError,
-      this.phoneError});
+  final List<CartItem> cartItems;
+  const _OrderDetailsStep({
+    required this.orderType,
+    required this.addressController,
+    required this.phoneController,
+    required this.emailController,
+    required this.instructionsController,
+    required this.tipController,
+    required this.onOrderTypeChanged,
+    this.errorMessage,
+    this.addressError,
+    this.phoneError,
+    required this.cartItems,
+  });
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -504,35 +510,79 @@ class _OrderDetailsStep extends StatelessWidget {
           },
         ),
         const SizedBox(height: 12),
-        if (orderType == 'delivery')
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: addressController,
-                decoration: InputDecoration(
-                  labelText: 'Delivery Address',
-                  prefixIcon: const Icon(Icons.location_on_outlined),
-                  suffixIcon: addressError != null
-                      ? const Icon(Icons.error, color: Colors.red)
-                      : null,
-                  filled: true,
-                  fillColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  errorText: addressError,
-                ),
+        TextField(
+          controller: addressController,
+          decoration: InputDecoration(
+            labelText: orderType == 'delivery'
+                ? 'Delivery Address'
+                : 'Restaurant Address',
+            hintText: orderType == 'delivery'
+                ? 'Enter your delivery address'
+                : 'Restaurant address will appear here',
+            prefixIcon: const Icon(Icons.location_on_outlined),
+            suffixIcon: addressError != null
+                ? const Icon(Icons.error, color: Colors.red)
+                : null,
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
               ),
-              if (addressError != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 2),
-                  child: Text(addressError!,
-                      style: TextStyle(color: Colors.red, fontSize: 12)),
-                ),
-            ],
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: 1.2,
+              ),
+            ),
+            errorText: addressError,
           ),
-        if (orderType == 'delivery') const SizedBox(height: 12),
+          enabled: true,
+        ),
+        if (orderType == 'delivery' && addressController.text.isEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.orange, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'No default address found. Please add one in your profile.',
+                    style: TextStyle(color: Colors.orange[800], fontSize: 13),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context)
+                        .pushNamed('/profile'); // Adjust route as needed
+                  },
+                  child: const Text('Go to Profile'),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -547,8 +597,34 @@ class _OrderDetailsStep extends StatelessWidget {
                 filled: true,
                 fillColor:
                     Theme.of(context).colorScheme.surfaceContainerHighest,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 1.2,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 1.2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.red,
+                    width: 1.2,
+                  ),
+                ),
                 errorText: phoneError,
               ),
               keyboardType: TextInputType.phone,
@@ -569,7 +645,34 @@ class _OrderDetailsStep extends StatelessWidget {
             prefixIcon: const Icon(Icons.email_outlined),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: 1.2,
+              ),
+            ),
           ),
           keyboardType: TextInputType.emailAddress,
         ),
@@ -581,7 +684,34 @@ class _OrderDetailsStep extends StatelessWidget {
             prefixIcon: const Icon(Icons.note_alt_outlined),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: 1.2,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -592,10 +722,61 @@ class _OrderDetailsStep extends StatelessWidget {
             prefixIcon: const Icon(Icons.attach_money),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: 1.2,
+              ),
+            ),
           ),
           keyboardType: TextInputType.number,
         ),
+        if (orderType != 'delivery' && addressController.text.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0, left: 4.0, right: 4.0),
+            child: Row(
+              children: [
+                Icon(Icons.restaurant, color: Colors.teal, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    // Use the restaurant name from the first cart item
+                    (cartItems.isNotEmpty &&
+                            cartItems.first.restaurantName.isNotEmpty)
+                        ? cartItems.first.restaurantName
+                        : 'Restaurant',
+                    style: TextStyle(
+                        color: Colors.teal[800],
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -663,8 +844,27 @@ class _PaymentStep extends StatelessWidget {
               prefixIcon: const Icon(Icons.credit_card),
               filled: true,
               fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              ),
             ),
             keyboardType: TextInputType.number,
             maxLength: 19,
@@ -681,8 +881,27 @@ class _PaymentStep extends StatelessWidget {
               hintText: '08/25',
               filled: true,
               fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              ),
             ),
             keyboardType: TextInputType.datetime,
             maxLength: 5,
@@ -695,8 +914,27 @@ class _PaymentStep extends StatelessWidget {
               hintText: '123',
               filled: true,
               fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              ),
             ),
             keyboardType: TextInputType.number,
             obscureText: true,
@@ -712,8 +950,27 @@ class _PaymentStep extends StatelessWidget {
               prefixIcon: const Icon(Icons.phone_android),
               filled: true,
               fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              ),
             ),
             keyboardType: TextInputType.phone,
             maxLength: 10,
@@ -726,7 +983,7 @@ class _PaymentStep extends StatelessWidget {
 // Step 3: Review & Confirm
 class _ReviewStep extends StatelessWidget {
   final double cartTotal;
-  final List cartItems;
+  final List<CartItem> cartItems;
   final String orderType;
   final String address;
   final String phone;
@@ -768,7 +1025,7 @@ class _ReviewStep extends StatelessWidget {
               const SizedBox(height: 10),
               ...cartItems.map<Widget>((item) => ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: item.imageUrl != null && item.imageUrl.isNotEmpty
+                    leading: item.imageUrl.isNotEmpty
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(item.imageUrl,
@@ -817,14 +1074,24 @@ class _ReviewStep extends StatelessWidget {
                       .titleSmall
                       ?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              if (orderType == 'delivery')
+              if (orderType != 'delivery' && cartItems.isNotEmpty) ...[
+                Row(children: [
+                  Icon(Icons.restaurant, size: 18),
+                  const SizedBox(width: 6),
+                  Text(cartItems.first.restaurantName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                ]),
                 Row(children: [
                   Icon(Icons.location_on_outlined, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                       child: Text(address,
-                          style: Theme.of(context).textTheme.bodyMedium))
+                          style: Theme.of(context).textTheme.bodyMedium)),
                 ]),
+              ],
               Row(children: [
                 Icon(Icons.phone, size: 18),
                 const SizedBox(width: 6),
@@ -953,6 +1220,8 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
   late TextEditingController instructionsController;
   late TextEditingController tipController;
 
+  String orderType = 'delivery';
+
   @override
   void initState() {
     super.initState();
@@ -1043,21 +1312,62 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                         FadeTransition(opacity: anim, child: child),
                     child: step == 0
                         ? _OrderDetailsStep(
-                            orderType: 'delivery',
+                            orderType: orderType,
                             addressController: addressController,
                             phoneController: phoneController,
                             emailController: emailController,
                             instructionsController: instructionsController,
                             tipController: tipController,
-                            onOrderTypeChanged: (_) {},
+                            onOrderTypeChanged: (val) async {
+                              setState(() => orderType = val);
+                              final addressProvider =
+                                  Provider.of<AddressProvider>(context,
+                                      listen: false);
+                              final authProvider = Provider.of<AuthProvider>(
+                                  context,
+                                  listen: false);
+                              final defaultAddress =
+                                  addressProvider.defaultAddress;
+                              if (val == 'delivery') {
+                                print('AddressProvider defaultAddress: ' +
+                                    defaultAddress.toString());
+                                final user = authProvider.user;
+                                if (defaultAddress != null &&
+                                    defaultAddress.fullAddress.isNotEmpty) {
+                                  addressController.text =
+                                      defaultAddress.fullAddress;
+                                  print('Autofilling with default address: ' +
+                                      defaultAddress.fullAddress);
+                                } else if (user != null &&
+                                    (user.address?.isNotEmpty ?? false)) {
+                                  addressController.text = user.address ?? '';
+                                  print('Autofilling with user.address: ' +
+                                      (user.address ?? ''));
+                                } else {
+                                  addressController.text = '';
+                                  print('No default address found.');
+                                }
+                              } else {
+                                if (widget.cartItems.isNotEmpty) {
+                                  final firstItem = widget.cartItems.first;
+                                  print('restaurantAddress: ' +
+                                      firstItem.restaurantAddress);
+                                  addressController.text =
+                                      firstItem.restaurantAddress;
+                                } else {
+                                  addressController.text = '';
+                                }
+                              }
+                            },
                             errorMessage: errorMessage,
                             addressError: addressError,
                             phoneError: phoneError,
+                            cartItems: cartItems.cast<CartItem>(),
                           )
                         : _ReviewStep(
                             cartTotal: cartTotal,
-                            cartItems: cartItems,
-                            orderType: 'delivery',
+                            cartItems: cartItems.cast<CartItem>(),
+                            orderType: orderType,
                             address: addressController.text,
                             phone: phoneController.text,
                             email: emailController.text,
@@ -1157,7 +1467,7 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                                   firstItem.restaurantId) ??
                                               0,
                                           name: firstItem.restaurantName,
-                                          address: '',
+                                          address: firstItem.restaurantAddress,
                                           image: '',
                                         );
                                         await OrderService.placeOrder(
@@ -1169,7 +1479,7 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                           paymentMethod: 'Pay Later',
                                           instructions:
                                               instructionsController.text,
-                                          orderType: 'delivery',
+                                          orderType: orderType,
                                           dietaryInfo:
                                               _collectDietaryInfo(cartItems),
                                         );
@@ -1380,11 +1690,51 @@ class _PayNowDialogState extends State<PayNowDialog> {
                             emailController: emailController,
                             instructionsController: instructionsController,
                             tipController: tipController,
-                            onOrderTypeChanged: (val) =>
-                                setState(() => orderType = val),
+                            onOrderTypeChanged: (val) async {
+                              setState(() => orderType = val);
+                              final addressProvider =
+                                  Provider.of<AddressProvider>(context,
+                                      listen: false);
+                              final authProvider = Provider.of<AuthProvider>(
+                                  context,
+                                  listen: false);
+                              final defaultAddress =
+                                  addressProvider.defaultAddress;
+                              if (val == 'delivery') {
+                                print('AddressProvider defaultAddress: ' +
+                                    defaultAddress.toString());
+                                final user = authProvider.user;
+                                if (defaultAddress != null &&
+                                    defaultAddress.fullAddress.isNotEmpty) {
+                                  addressController.text =
+                                      defaultAddress.fullAddress;
+                                  print('Autofilling with default address: ' +
+                                      defaultAddress.fullAddress);
+                                } else if (user != null &&
+                                    (user.address?.isNotEmpty ?? false)) {
+                                  addressController.text = user.address ?? '';
+                                  print('Autofilling with user.address: ' +
+                                      (user.address ?? ''));
+                                } else {
+                                  addressController.text = '';
+                                  print('No default address found.');
+                                }
+                              } else {
+                                if (widget.cartItems.isNotEmpty) {
+                                  final firstItem = widget.cartItems.first;
+                                  print('restaurantAddress: ' +
+                                      firstItem.restaurantAddress);
+                                  addressController.text =
+                                      firstItem.restaurantAddress;
+                                } else {
+                                  addressController.text = '';
+                                }
+                              }
+                            },
                             errorMessage: errorMessage,
                             addressError: addressError,
                             phoneError: phoneError,
+                            cartItems: cartItems.cast<CartItem>(),
                           )
                         : step == 1
                             ? _PaymentStep(
@@ -1399,7 +1749,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
                               )
                             : _ReviewStep(
                                 cartTotal: cartTotal,
-                                cartItems: cartItems,
+                                cartItems: cartItems.cast<CartItem>(),
                                 orderType: orderType,
                                 address: addressController.text,
                                 phone: phoneController.text,
@@ -1555,7 +1905,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
                                                   firstItem.restaurantId) ??
                                               0,
                                           name: firstItem.restaurantName,
-                                          address: '',
+                                          address: firstItem.restaurantAddress,
                                           image: '',
                                         );
                                         await OrderService.placeOrder(
