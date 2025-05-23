@@ -15,6 +15,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:e_resta_app/core/services/action_queue_helper.dart';
 import 'package:e_resta_app/core/providers/action_queue_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
+import 'dart:io';
 
 class CuisineCategory {
   final int? id; // null for 'All'
@@ -217,21 +218,33 @@ class HomeScreenState extends State<HomeScreen>
       _restaurantError = null;
     });
     try {
-      final datasource = RestaurantRemoteDatasource(Dio());
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
-      final restaurants = await datasource.fetchRestaurants(token: token);
+      final response = await DioService.getDio().get(
+        ApiEndpoints.restaurants,
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
 
-      // Cache to SQLite
-      final db = await DatabaseHelper().db;
-      final batch = db.batch();
-      batch.delete('restaurants');
-      for (final r in restaurants) {
-        batch.insert('restaurants', r.toJson(),
-            conflictAlgorithm: ConflictAlgorithm.replace);
-      }
-      await batch.commit(noResult: true);
+      final List<dynamic> data = response.data['data'];
 
+      final restaurants = data
+          .map((json) {
+            try {
+              return RestaurantModel.fromJson(json);
+            } catch (e) {
+              return null;
+            }
+          })
+          .where((r) => r != null)
+          .cast<RestaurantModel>()
+          .toList();
+
+      if (restaurants.isEmpty) {
+      } else {}
       setState(() {
         this.restaurants = restaurants;
         _filteredRestaurants = restaurants;
@@ -239,24 +252,10 @@ class HomeScreenState extends State<HomeScreen>
       });
       _applyFiltersAndSearch();
     } catch (e) {
-      // Try to load from SQLite
-      try {
-        final db = await DatabaseHelper().db;
-        final maps = await db.query('restaurants');
-        final cached = maps.map((m) => RestaurantModel.fromJson(m)).toList();
-        setState(() {
-          restaurants = cached;
-          _filteredRestaurants = cached;
-          _isRestaurantLoading = false;
-          _restaurantError = 'Showing offline data.';
-        });
-        _applyFiltersAndSearch();
-      } catch (e2) {
-        setState(() {
-          _isRestaurantLoading = false;
-          _restaurantError = e.toString();
-        });
-      }
+      setState(() {
+        _isRestaurantLoading = false;
+        _restaurantError = e.toString();
+      });
     }
   }
 
@@ -676,23 +675,31 @@ class HomeScreenState extends State<HomeScreen>
                         children: [
                           banner.imagePath.isNotEmpty
                               ? Image.network(
-                                  banner.imagePath,
+                                  fixImageUrl(banner.imagePath),
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                   height: 180,
                                   errorBuilder: (context, error, stackTrace) =>
-                                      Image.asset(
-                                    'assets/images/placeholder.png',
-                                    fit: BoxFit.cover,
+                                      Container(
                                     width: double.infinity,
                                     height: 180,
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.local_offer,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 )
-                              : Image.asset(
-                                  'assets/images/placeholder.png',
-                                  fit: BoxFit.cover,
+                              : Container(
                                   width: double.infinity,
                                   height: 180,
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.local_offer,
+                                    size: 64,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                           // Stronger gradient overlay at bottom
                           Align(
@@ -1067,6 +1074,9 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
     final categories = widget.categories;
     final onFavoriteToggle = widget.onFavoriteToggle;
     final distance = _distanceToUser(context, restaurant);
+    // Debug print for distance
+    print('Distance for \\${restaurant.name}: \\${distance}');
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -1107,7 +1117,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                       child: restaurant.image != null &&
                               restaurant.image!.isNotEmpty
                           ? Image.network(
-                              restaurant.image!,
+                              fixImageUrl(restaurant.image!),
                               width: double.infinity,
                               height: 90,
                               fit: BoxFit.cover,
@@ -1149,37 +1159,37 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                             ),
                     ),
                     // Distance chip
-                    if (distance != null)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.85),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            '${(distance / 1000).toStringAsFixed(2)} km',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: distance != null ? Colors.green : Colors.grey,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
                             ),
+                          ],
+                        ),
+                        child: Text(
+                          distance != null
+                              ? (distance < 1000
+                                  ? '${distance.toStringAsFixed(0)} m'
+                                  : '${(distance / 1000).toStringAsFixed(2)} km')
+                              : 'N/A',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
                           ),
                         ),
                       ),
+                    ),
                     // Rating badge
                     Positioned(
                       top: 8,
@@ -1229,27 +1239,27 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                // Cuisine chip
+                // Cuisine chip (always visible)
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  margin: const EdgeInsets.only(bottom: 2),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .secondary
-                        .withOpacity(0.12),
+                    color: Colors
+                        .red, // TEMP: make chip background red for visibility
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    categories
-                        .firstWhere(
-                          (cat) => cat.id == restaurant.cuisineId,
-                          orElse: () =>
-                              CuisineCategory(id: null, name: 'Unknown'),
-                        )
-                        .name,
+                    restaurant.cuisineName ??
+                        (categories
+                            .firstWhere(
+                              (cat) => cat.id == restaurant.cuisineId,
+                              orElse: () =>
+                                  CuisineCategory(id: null, name: 'Unknown'),
+                            )
+                            .name),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.secondary,
+                          color: Colors.white, // TEMP: white text for contrast
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
@@ -1397,7 +1407,7 @@ class AllRestaurantsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            cuisine.name,
+                            restaurant.cuisineName ?? cuisine.name,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -1430,7 +1440,9 @@ class AllRestaurantsScreen extends StatelessWidget {
                                   double.tryParse(restaurant.longitude) ?? 0.0,
                                 );
                                 return Text(
-                                  '${(dist / 1000).toStringAsFixed(2)} km away',
+                                  dist < 1000
+                                      ? '${dist.toStringAsFixed(0)} m away'
+                                      : '${(dist / 1000).toStringAsFixed(2)} km away',
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -1455,4 +1467,11 @@ class AllRestaurantsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+String fixImageUrl(String url) {
+  if (Platform.isAndroid) {
+    return url.replaceFirst('localhost', '10.0.2.2');
+  }
+  return url;
 }

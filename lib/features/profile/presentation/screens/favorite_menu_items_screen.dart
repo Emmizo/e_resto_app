@@ -7,6 +7,7 @@ import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'dart:io';
 
 class FavoriteMenuItemsScreen extends StatefulWidget {
   const FavoriteMenuItemsScreen({super.key});
@@ -229,9 +230,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          menuItem['image'].toString().startsWith('http')
-                              ? menuItem['image']
-                              : 'http://localhost:8000/${menuItem['image']}',
+                          fixImageUrl(menuItem['image'].toString()),
                           width: 56,
                           height: 56,
                           fit: BoxFit.cover,
@@ -314,5 +313,12 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
         },
       );
     }
+  }
+
+  String fixImageUrl(String url) {
+    if (Platform.isAndroid) {
+      return url.replaceFirst('localhost', '10.0.2.2');
+    }
+    return url;
   }
 }

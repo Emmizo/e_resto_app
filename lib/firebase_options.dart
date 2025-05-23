@@ -21,10 +21,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
@@ -87,5 +84,13 @@ class DefaultFirebaseOptions {
     iosClientId:
         '322982009700-g0i9o9k95pk44lgd0otghmf7n2jia8hb.apps.googleusercontent.com',
     iosBundleId: 'com.example.eRestaApp',
+  );
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCgma96unqeJCMqpb-xwIEnYHuddy0Wkzs',
+    appId: '1:322982009700:android:7d016e37400c4364593871',
+    messagingSenderId: '322982009700',
+    projectId: 'resto-finder-d4214',
+    storageBucket: 'resto-finder-d4214.firebasestorage.app',
+    // ...other fields as needed
   );
 }

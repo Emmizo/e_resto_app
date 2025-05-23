@@ -7,6 +7,7 @@ import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/core/services/database_helper.dart';
 import 'package:e_resta_app/core/providers/connectivity_provider.dart';
+import 'dart:io';
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -301,7 +302,7 @@ class _ReservationCard extends StatelessWidget {
               child: reservation.restaurant.image != null &&
                       reservation.restaurant.image!.isNotEmpty
                   ? Image.network(
-                      reservation.restaurant.image!,
+                      fixImageUrl(reservation.restaurant.image!),
                       width: 72,
                       height: 72,
                       fit: BoxFit.cover,
@@ -546,4 +547,11 @@ class Restaurant {
       image: json['image'],
     );
   }
+}
+
+String fixImageUrl(String url) {
+  if (Platform.isAndroid) {
+    return url.replaceFirst('localhost', '10.0.2.2');
+  }
+  return url;
 }

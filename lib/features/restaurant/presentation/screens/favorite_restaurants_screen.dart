@@ -9,6 +9,7 @@ import 'package:e_resta_app/core/utils/error_utils.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'dart:io';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -245,7 +246,7 @@ class _RestaurantCard extends StatelessWidget {
               child: restaurant['image'] != null &&
                       restaurant['image'].toString().isNotEmpty
                   ? Image.network(
-                      restaurant['image'],
+                      fixImageUrl(restaurant['image']),
                       width: 64,
                       height: 64,
                       fit: BoxFit.cover,
@@ -320,6 +321,39 @@ class _RestaurantCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  if (restaurant['cuisine'] != null)
+                    Row(
+                      children: [
+                        Icon(Icons.local_dining,
+                            size: 16, color: Colors.orange),
+                        const SizedBox(width: 4),
+                        Text(
+                          restaurant['cuisine'],
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey[700],
+                                    fontSize: 13,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  if (restaurant['distance'] != null)
+                    Row(
+                      children: [
+                        Icon(Icons.directions_walk,
+                            size: 16, color: Colors.blueGrey),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${restaurant['distance'].toStringAsFixed(2)} km',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey[700],
+                                    fontSize: 13,
+                                  ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -328,4 +362,11 @@ class _RestaurantCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String fixImageUrl(String url) {
+  if (Platform.isAndroid) {
+    return url.replaceFirst('localhost', '10.0.2.2');
+  }
+  return url;
 }

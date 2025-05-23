@@ -7,6 +7,14 @@ import '../../../restaurant/data/models/restaurant_model.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 import 'route_map_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'dart:io';
+
+String fixImageUrl(String url) {
+  if (Platform.isAndroid) {
+    return url.replaceFirst('localhost', '10.0.2.2');
+  }
+  return url;
+}
 
 class MapScreen extends StatefulWidget {
   final List<RestaurantModel> restaurants;
@@ -136,7 +144,7 @@ class _MapScreenState extends State<MapScreen> {
                     backgroundColor: Colors.white,
                     backgroundImage: (restaurant.image != null &&
                             restaurant.image!.isNotEmpty)
-                        ? NetworkImage(restaurant.image!)
+                        ? NetworkImage(fixImageUrl(restaurant.image!))
                         : null,
                     child: (restaurant.image == null ||
                             restaurant.image!.isEmpty)
@@ -171,11 +179,14 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _showDistanceInfo(RestaurantModel restaurant) async {
+    if (!mounted) return;
     try {
       Position position = await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
       );
+      if (!mounted) return;
+
       double userLat = position.latitude;
       double userLng = position.longitude;
       double restLat = double.tryParse(restaurant.latitude) ?? 0.0;
@@ -187,6 +198,8 @@ class _MapScreenState extends State<MapScreen> {
       int walkingMinutes = (distanceMeters / 83.33).round();
       // Driving: ~40 km/h (divide meters by 666.67 for minutes)
       int drivingMinutes = (distanceMeters / 666.67).round();
+
+      if (!mounted) return;
       showModalBottomSheet(
         context: context,
         shape: const RoundedRectangleBorder(
@@ -214,10 +227,36 @@ class _MapScreenState extends State<MapScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.network(
-                      restaurant.image!,
+                      fixImageUrl(restaurant.image!),
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 80,
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.restaurant,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (restaurant.image == null || restaurant.image!.isEmpty)
+                Center(
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.restaurant,
+                      size: 40,
+                      color: Colors.grey,
                     ),
                   ),
                 ),
@@ -540,7 +579,7 @@ class _BlinkingMarkerState extends State<_BlinkingMarker>
               backgroundColor: Colors.white,
               backgroundImage:
                   (restaurant.image != null && restaurant.image!.isNotEmpty)
-                      ? NetworkImage(restaurant.image!)
+                      ? NetworkImage(fixImageUrl(restaurant.image!))
                       : null,
               child: (restaurant.image == null || restaurant.image!.isEmpty)
                   ? Icon(Icons.restaurant, color: Colors.teal, size: 24)

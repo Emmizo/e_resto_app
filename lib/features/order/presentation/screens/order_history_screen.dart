@@ -6,6 +6,7 @@ import '../../../order/data/models/order_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import 'package:e_resta_app/core/providers/cart_provider.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
+import 'dart:io';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -147,7 +148,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: (imageUrl != null &&
                                     imageUrl.toString().isNotEmpty)
-                                ? Image.network(imageUrl,
+                                ? Image.network(fixImageUrl(imageUrl),
                                     width: 44, height: 44, fit: BoxFit.cover)
                                 : Container(
                                     width: 44,
@@ -257,8 +258,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 imageUrl: menuItem['image'] ?? '',
                                 restaurantId: order.restaurant.id.toString(),
                                 restaurantName: order.restaurant.name,
-                                restaurantAddress:
-                                    order.restaurant.address,
+                                restaurantAddress: order.restaurant.address,
                                 quantity: item['quantity'],
                               ));
                             }
@@ -382,7 +382,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                         child: order.restaurant.image.isNotEmpty
                                             ? Image.network(
-                                                order.restaurant.image,
+                                                fixImageUrl(
+                                                    order.restaurant.image),
                                                 width: 54,
                                                 height: 54,
                                                 fit: BoxFit.cover,
@@ -552,4 +553,11 @@ class _OrderStatusChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String fixImageUrl(String url) {
+  if (Platform.isAndroid) {
+    return url.replaceFirst('localhost', '10.0.2.2');
+  }
+  return url;
 }

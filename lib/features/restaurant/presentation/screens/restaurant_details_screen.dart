@@ -13,6 +13,7 @@ import 'package:e_resta_app/core/utils/error_utils.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import 'package:e_resta_app/core/services/dio_service.dart';
 import 'dart:convert';
+import 'dart:io';
 
 class RestaurantDetailsScreen extends StatefulWidget {
   final RestaurantModel restaurant;
@@ -446,16 +447,17 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     const String distance = '0.6 mi';
     final restaurant = widget.restaurant;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          // Large image
           Stack(
             children: [
               Hero(
                 tag: 'restaurant_image_${restaurant.id}',
                 child: restaurant.image != null && restaurant.image!.isNotEmpty
                     ? Image.network(
-                        restaurant.image!,
+                        fixImageUrl(restaurant.image!),
                         height: 280,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -473,7 +475,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 top: MediaQuery.of(context).padding.top + 12,
                 left: 12,
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.4),
+                  backgroundColor: Colors.black.withOpacity(0.4),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
@@ -484,7 +486,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 top: MediaQuery.of(context).padding.top + 12,
                 right: 12,
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.4),
+                  backgroundColor: Colors.black.withOpacity(0.4),
                   child: IconButton(
                     icon: const Icon(Icons.star, color: Colors.white),
                     onPressed: () => _showReviewDialog(context),
@@ -1100,9 +1102,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                 borderRadius: BorderRadius.circular(12),
                 child: item.image.isNotEmpty
                     ? Image.network(
-                        item.image.startsWith('http')
-                            ? item.image
-                            : 'http://localhost:8000/${item.image}',
+                        fixImageUrl(item.image),
                         width: 100,
                         height: 100,
                         fit: BoxFit.cover,
@@ -1403,4 +1403,11 @@ class _DeliveryMethodDialog extends StatelessWidget {
       ),
     );
   }
+}
+
+String fixImageUrl(String url) {
+  if (Platform.isAndroid) {
+    return url.replaceFirst('localhost', '10.0.2.2');
+  }
+  return url;
 }
