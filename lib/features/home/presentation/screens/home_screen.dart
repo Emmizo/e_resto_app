@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
-import '../../../restaurant/data/restaurant_remote_datasource.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 import 'dart:async';
 import 'package:carousel_slider/carousel_slider.dart';
