@@ -243,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
                           ),
-                          hintText: 'your email',
+                          hintText: 'Please enter your email',
                           hintStyle:
                               Theme.of(context).inputDecorationTheme.hintStyle,
                           contentPadding: const EdgeInsets.symmetric(
@@ -309,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
                           ),
-                          hintText: 'Password',
+                          hintText: 'Please enter your password',
                           hintStyle:
                               Theme.of(context).inputDecorationTheme.hintStyle,
                           contentPadding: const EdgeInsets.symmetric(

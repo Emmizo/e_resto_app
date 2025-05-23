@@ -294,25 +294,26 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     );
   }
 
-  void _showReviewDialog(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  void _showReviewDialog(BuildContext parentContext) {
+    final authProvider =
+        Provider.of<AuthProvider>(parentContext, listen: false);
     final token = authProvider.token;
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(parentContext).showSnackBar(
         const SnackBar(
           content: Text('You must be logged in to review a restaurant.'),
           backgroundColor: Colors.red,
         ),
       );
       Future.delayed(const Duration(milliseconds: 500), () {
-        Navigator.of(context).pushReplacementNamed('/login');
+        Navigator.of(parentContext).pushReplacementNamed('/login');
       });
       return;
     }
     double rating = 5.0;
     final commentController = TextEditingController();
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: const Text('Rate & Review'),
@@ -372,7 +373,8 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
-                await _submitReview(context, rating, commentController.text);
+                await _submitReview(
+                    parentContext, rating, commentController.text);
               },
               child: const Text('Submit'),
             ),
@@ -383,9 +385,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   }
 
   Future<void> _submitReview(
-      BuildContext context, double rating, String comment) async {
+      BuildContext parentContext, double rating, String comment) async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider =
+          Provider.of<AuthProvider>(parentContext, listen: false);
       final token = authProvider.token;
       final dio = DioService.getDio();
       final data = {
@@ -393,6 +396,8 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         'rating': rating,
         'comment': comment,
       };
+      print('Submitting review:');
+      print(data);
       final response = await dio.post(
         '${ApiConfig.baseUrl}/reviews',
         data: data,
@@ -403,8 +408,11 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
           },
         ),
       );
+      print('Review submission response:');
+      print(response.data);
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(parentContext).showSnackBar(
           const SnackBar(
               content: Text('Thank you for your review!'),
               backgroundColor: Colors.green),
@@ -413,15 +421,18 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         throw Exception('Failed to submit review: \\${response.statusMessage}');
       }
     } catch (e) {
+      print('Review submission error:');
+      print(e);
+      if (!mounted) return;
       final parsed = parseDioError(e);
       showDialog(
-        context: context,
+        context: parentContext,
         builder: (context) => ErrorStateWidget(
           message: parsed.message,
           code: parsed.code,
           onRetry: () {
             Navigator.pop(context);
-            _submitReview(context, rating, comment);
+            _submitReview(parentContext, rating, comment);
           },
         ),
       );
@@ -475,8 +486,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 child: CircleAvatar(
                   backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
-                    icon: const Icon(Icons.rate_review_outlined,
-                        color: Colors.white),
+                    icon: const Icon(Icons.star, color: Colors.white),
                     onPressed: () => _showReviewDialog(context),
                   ),
                 ),

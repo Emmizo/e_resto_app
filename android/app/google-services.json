@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:322982009700:android:7d016e37400c4364593871",
         "android_client_info": {
-          "package_name": "com.resto.finder"
+          "package_name": "com.example.e_resta_app"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "322982009700-62fsnkdtocm7ng74ljo6kb6bkrn7a7e0.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.resto.finder",
+            "package_name": "com.example.e_resta_app",
             "certificate_hash": "c7610ca8d83548bdf695955b455da6ee8e7a8bc4"
           }
         },
@@ -39,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "322982009700-s8k4evd445oelsrcrptskdb5pkg96d43.apps.googleusercontent.com",
+              "client_id": "322982009700-g0i9o9k95pk44lgd0otghmf7n2jia8hb.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.resto.finder"
+                "bundle_id": "com.example.eRestaApp"
               }
             }
           ]

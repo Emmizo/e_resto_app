@@ -239,7 +239,6 @@ class HomeScreenState extends State<HomeScreen>
       });
       _applyFiltersAndSearch();
     } catch (e) {
-      debugPrint('Error fetching restaurants: \\${e.toString()}');
       // Try to load from SQLite
       try {
         final db = await DatabaseHelper().db;
@@ -290,6 +289,7 @@ class HomeScreenState extends State<HomeScreen>
         double bDist = _distanceTo(b) ?? double.infinity;
         return aDist.compareTo(bDist);
       });
+
       // Apply category filter if not "All"
       if (_selectedCategoryIndex > 0) {
         final selectedCategory = _categories[_selectedCategoryIndex];
@@ -348,11 +348,17 @@ class HomeScreenState extends State<HomeScreen>
 
   double? _distanceTo(RestaurantModel restaurant) {
     if (_userLat == null || _userLng == null) return null;
+    final lat = double.tryParse(restaurant.latitude);
+    final lng = double.tryParse(restaurant.longitude);
+    if (lat == null || lng == null) return null;
+    // Ignore (0,0) coordinates
+    if ((lat == 0.0 && lng == 0.0)) return null;
     return Geolocator.distanceBetween(
-        _userLat!,
-        _userLng!,
-        double.tryParse(restaurant.latitude) ?? 0.0,
-        double.tryParse(restaurant.longitude) ?? 0.0);
+      _userLat!,
+      _userLng!,
+      lat,
+      lng,
+    );
   }
 
   Future<void> _toggleFavorite(RestaurantModel restaurant) async {
@@ -580,9 +586,15 @@ class HomeScreenState extends State<HomeScreen>
               )
             else
               (() {
+                // If there are no banners at all, remove the section
+                if (_promoBanners.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                // If location is not available, remove the section
                 if (_userLat == null || _userLng == null) {
                   return const SizedBox.shrink();
                 }
+                // If location is available, filter by distance (5 km)
                 final List<PromoBanner> nearBanners =
                     _promoBanners.where((banner) {
                   final restaurant = restaurants.firstWhere(
@@ -610,338 +622,194 @@ class HomeScreenState extends State<HomeScreen>
                     ),
                   );
                   if (restaurant.id == -1) return false;
+                  final lat = double.tryParse(restaurant.latitude);
+                  final lng = double.tryParse(restaurant.longitude);
+                  if (lat == null || lng == null) return false;
                   final dist = Geolocator.distanceBetween(
                     _userLat!,
                     _userLng!,
-                    double.tryParse(restaurant.latitude) ?? 0.0,
-                    double.tryParse(restaurant.longitude) ?? 0.0,
+                    lat,
+                    lng,
                   );
+
                   return dist < 5000;
                 }).toList();
-                final List<RestaurantModel> nearRestaurants =
-                    restaurants.where((r) {
-                  final dist = Geolocator.distanceBetween(
-                    _userLat!,
-                    _userLng!,
-                    double.tryParse(r.latitude) ?? 0.0,
-                    double.tryParse(r.longitude) ?? 0.0,
-                  );
-                  return dist <= 1000;
-                }).toList();
-                if (nearBanners.isEmpty && nearRestaurants.isEmpty) {
+                if (nearBanners.isEmpty) {
                   return const SizedBox.shrink();
                 }
-                if (nearBanners.isNotEmpty) {
-                  return CarouselSlider(
-                    options: CarouselOptions(
-                      height: 140,
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      viewportFraction: 1.0,
-                    ),
-                    items: nearBanners.map((banner) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Banner image with fallback
-                            banner.imagePath.isNotEmpty
-                                ? Image.network(
-                                    banner.imagePath,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: 140,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Image.asset(
-                                      'assets/images/placeholder.png',
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: 140,
-                                    ),
-                                  )
-                                : Image.asset(
+                return CarouselSlider(
+                  options: CarouselOptions(
+                    height: 180,
+                    autoPlay: true,
+                    enlargeCenterPage: true,
+                    viewportFraction: 1.0,
+                  ),
+                  items: nearBanners.map((banner) {
+                    final promoRestaurant = restaurants.firstWhere(
+                      (r) => r.id == banner.restaurantId,
+                      orElse: () => RestaurantModel(
+                        id: -1,
+                        name: '',
+                        description: '',
+                        address: '',
+                        longitude: '',
+                        latitude: '',
+                        phoneNumber: '',
+                        email: '',
+                        website: null,
+                        openingHours: '',
+                        cuisineId: null,
+                        priceRange: '',
+                        image: null,
+                        ownerId: -1,
+                        isApproved: false,
+                        status: false,
+                        menus: [],
+                        averageRating: 0.0,
+                        isFavorite: false,
+                      ),
+                    );
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          banner.imagePath.isNotEmpty
+                              ? Image.network(
+                                  banner.imagePath,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: 180,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Image.asset(
                                     'assets/images/placeholder.png',
                                     fit: BoxFit.cover,
                                     width: double.infinity,
-                                    height: 140,
+                                    height: 180,
                                   ),
-                            // Gradient overlay
-                            Container(
+                                )
+                              : Image.asset(
+                                  'assets/images/placeholder.png',
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: 180,
+                                ),
+                          // Stronger gradient overlay at bottom
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              height: 90,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withOpacity(0.6),
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .secondary
-                                        .withOpacity(0.3),
+                                    Colors.black.withOpacity(0.85),
+                                    Colors.transparent
                                   ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
                               ),
-                            ),
-                            // Text and button overlay
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12.0, vertical: 4.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    banner.title,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    banner.description,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    banner.restaurantName,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: const Size(80, 32),
-                                      backgroundColor: const Color(0xFFFF7F3F),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed: context
-                                            .watch<ConnectivityProvider>()
-                                            .isOnline
-                                        ? () {
-                                            final promoRestaurant =
-                                                restaurants.firstWhere(
-                                              (r) =>
-                                                  r.id == banner.restaurantId,
-                                              orElse: () => RestaurantModel(
-                                                id: -1,
-                                                name: '',
-                                                description: '',
-                                                address: '',
-                                                longitude: '',
-                                                latitude: '',
-                                                phoneNumber: '',
-                                                email: '',
-                                                website: null,
-                                                openingHours: '',
-                                                cuisineId: null,
-                                                priceRange: '',
-                                                image: null,
-                                                ownerId: -1,
-                                                isApproved: false,
-                                                status: false,
-                                                menus: [],
-                                                averageRating: 0.0,
-                                                isFavorite: false,
-                                              ),
-                                            );
-                                            if (promoRestaurant.id ==
-                                                banner.restaurantId) {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      RestaurantDetailsScreen(
-                                                    restaurant: promoRestaurant,
-                                                    cuisines: _categories,
-                                                  ),
-                                                ),
-                                              );
-                                            } else {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                    content: Text(
-                                                        'Restaurant not found.')),
-                                              );
-                                            }
-                                          }
-                                        : () {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(
-                                                      'No internet connection. Please try again later.')),
-                                            );
-                                          },
-                                    child: const Text(
-                                      'Visit us',
-                                      style: TextStyle(
-                                          fontSize: 13, color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  );
-                }
-                if (nearRestaurants.isNotEmpty) {
-                  return CarouselSlider(
-                    options: CarouselOptions(
-                      height: 140,
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      viewportFraction: 1.0,
-                    ),
-                    items: nearRestaurants.map((restaurant) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: restaurant.image != null &&
-                                      restaurant.image!.isNotEmpty
-                                  ? NetworkImage(restaurant.image!)
-                                  : const AssetImage(
-                                          'assets/images/placeholder.png')
-                                      as ImageProvider,
-                              fit: BoxFit.cover,
                             ),
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Theme.of(context).colorScheme.primary,
-                                  Theme.of(context).colorScheme.secondary,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12.0, vertical: 4.0),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    restaurant.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                        ),
+                          // Text and button
+                          Padding(
+                            padding: const EdgeInsets.all(18.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  banner.title,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    shadows: [
+                                      Shadow(
+                                          blurRadius: 6,
+                                          color: Colors.black,
+                                          offset: Offset(0, 2))
+                                    ],
                                   ),
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    restaurant.address,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 2),
+                                Flexible(
+                                  child: Text(
+                                    banner.description,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.92),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      shadows: [
+                                        Shadow(
+                                            blurRadius: 6,
+                                            color: Colors.black,
+                                            offset: Offset(0, 2))
+                                      ],
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _categories
-                                        .firstWhere(
-                                          (cat) =>
-                                              cat.id == restaurant.cuisineId,
-                                          orElse: () => CuisineCategory(
-                                              id: null, name: 'Unknown'),
-                                        )
-                                        .name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  banner.restaurantName,
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    shadows: [
+                                      Shadow(
+                                          blurRadius: 6,
+                                          color: Colors.black,
+                                          offset: Offset(0, 2))
+                                    ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  ElevatedButton(
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 10),
+                                Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      minimumSize: const Size(80, 32),
-                                      backgroundColor: const Color(0xFFFF7F3F),
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
+                                      elevation: 4,
+                                      shadowColor: Colors.black45,
                                     ),
-                                    onPressed: context
-                                            .watch<ConnectivityProvider>()
-                                            .isOnline
+                                    onPressed: promoRestaurant.id != -1
                                         ? () {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     RestaurantDetailsScreen(
-                                                  restaurant: restaurant,
+                                                  restaurant: promoRestaurant,
                                                   cuisines: _categories,
                                                 ),
                                               ),
                                             );
                                           }
-                                        : () {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(
-                                                      'No internet connection. Please try again later.')),
-                                            );
-                                          },
-                                    child: const Text('Order now',
-                                        style: TextStyle(fontSize: 13)),
+                                        : null,
+                                    child: const Text('Visit Us',
+                                        style: TextStyle(color: Colors.white)),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                }
-                return const SizedBox.shrink();
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
               })(),
             const SizedBox(height: 24),
             // Category Selector
@@ -956,11 +824,11 @@ class HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 70,
+              height: 80,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
+                separatorBuilder: (_, __) => const SizedBox(width: 20),
                 itemBuilder: (context, index) {
                   final cat = _categories[index];
                   final isSelected = _selectedCategoryIndex == index;
@@ -973,19 +841,36 @@ class HomeScreenState extends State<HomeScreen>
                     },
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.surface,
-                          radius: 24,
+                        AnimatedContainer(
+                          duration: Duration(milliseconds: 200),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.18),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          padding: const EdgeInsets.all(12),
                           child: Icon(
                             Icons.fastfood,
                             color: isSelected
                                 ? Theme.of(context).colorScheme.onPrimary
                                 : Theme.of(context).colorScheme.primary,
+                            size: 28,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           cat.name,
                           style:
@@ -1181,6 +1066,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
     final restaurant = widget.restaurant;
     final categories = widget.categories;
     final onFavoriteToggle = widget.onFavoriteToggle;
+    final distance = _distanceToUser(context, restaurant);
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -1214,50 +1100,123 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: restaurant.image != null &&
-                            restaurant.image!.isNotEmpty
-                        ? Image.network(
-                            restaurant.image!,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                color: Colors.grey[200],
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes !=
-                                            null
-                                        ? loadingProgress
-                                                .cumulativeBytesLoaded /
-                                            (loadingProgress
-                                                    .expectedTotalBytes ??
-                                                1)
-                                        : null,
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: restaurant.image != null &&
+                              restaurant.image!.isNotEmpty
+                          ? Image.network(
+                              restaurant.image!,
+                              width: double.infinity,
+                              height: 90,
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  (loadingProgress
+                                                          .expectedTotalBytes ??
+                                                      1)
+                                              : null,
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: 90,
+                                child: const Icon(Icons.restaurant,
+                                    color: Colors.grey, size: 40),
+                              ),
+                            )
+                          : Container(
                               color: Colors.grey[200],
                               width: double.infinity,
+                              height: 90,
                               child: const Icon(Icons.restaurant,
                                   color: Colors.grey, size: 40),
                             ),
-                          )
-                        : Container(
-                            color: Colors.grey[200],
-                            width: double.infinity,
-                            child: const Icon(Icons.restaurant,
-                                color: Colors.grey, size: 40),
+                    ),
+                    // Distance chip
+                    if (distance != null)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.85),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
-                  ),
+                          child: Text(
+                            '${(distance / 1000).toStringAsFixed(2)} km',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Rating badge
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.amber[700],
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.star, color: Colors.white, size: 13),
+                            SizedBox(width: 2),
+                            Text(
+                              restaurant.averageRating.toStringAsFixed(1),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Divider(height: 1, color: Theme.of(context).dividerColor),
                 const SizedBox(height: 4),
                 Text(
@@ -1270,21 +1229,33 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  categories
-                      .firstWhere(
-                        (cat) => cat.id == restaurant.cuisineId,
-                        orElse: () =>
-                            CuisineCategory(id: null, name: 'Unknown'),
-                      )
-                      .name,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // Cuisine chip
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    categories
+                        .firstWhere(
+                          (cat) => cat.id == restaurant.cuisineId,
+                          orElse: () =>
+                              CuisineCategory(id: null, name: 'Unknown'),
+                        )
+                        .name,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -1301,24 +1272,8 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                 ),
                 const SizedBox(height: 6),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.star,
-                            color: Theme.of(context).colorScheme.secondary,
-                            size: 16),
-                        const SizedBox(width: 3),
-                        Text(
-                          restaurant.averageRating.toStringAsFixed(1),
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                        ),
-                      ],
-                    ),
                     IconButton(
                       icon: Icon(
                         restaurant.isFavorite
@@ -1340,6 +1295,23 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
           ),
         ),
       ),
+    );
+  }
+
+  double? _distanceToUser(BuildContext context, RestaurantModel restaurant) {
+    final homeState = context.findAncestorStateOfType<HomeScreenState>();
+    if (homeState == null ||
+        homeState._userLat == null ||
+        homeState._userLng == null) return null;
+    final lat = double.tryParse(restaurant.latitude);
+    final lng = double.tryParse(restaurant.longitude);
+    if (lat == null || lng == null) return null;
+    if ((lat == 0.0 && lng == 0.0)) return null;
+    return Geolocator.distanceBetween(
+      homeState._userLat!,
+      homeState._userLng!,
+      lat,
+      lng,
     );
   }
 }
