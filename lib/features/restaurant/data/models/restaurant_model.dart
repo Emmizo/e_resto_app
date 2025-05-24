@@ -106,11 +106,11 @@ class RestaurantModel {
         super();
 
   String? get cuisineName {
-    if (_cuisineNameFromJson != null && _cuisineNameFromJson!.isNotEmpty) {
+    if (_cuisineNameFromJson != null && _cuisineNameFromJson.isNotEmpty) {
       return _cuisineNameFromJson;
     }
-    if (_cuisineObjFromJson != null && _cuisineObjFromJson!['name'] != null) {
-      return _cuisineObjFromJson!['name'].toString();
+    if (_cuisineObjFromJson != null && _cuisineObjFromJson['name'] != null) {
+      return _cuisineObjFromJson['name'].toString();
     }
     return null;
   }

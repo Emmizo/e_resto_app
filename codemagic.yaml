@@ -1,0 +1,28 @@
+workflows:
+  flutter-app:
+    name: Flutter App Workflow
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      android: true
+      vars:
+        GOLDEN_PATH: test/goldens/goldens/
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Run unit and widget tests
+        script: |
+          flutter test
+      - name: Run integration tests
+        script: |
+          flutter test integration_test/
+      - name: Run Gherkin BDD tests
+        script: |
+          flutter pub run flutter_gherkin:test_driver/app.dart
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+      - test/goldens/goldens/*.png 
