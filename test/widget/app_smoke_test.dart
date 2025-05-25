@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
@@ -7,14 +9,59 @@ import 'package:e_resta_app/features/auth/presentation/screens/login_screen.dart
 import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 import 'package:e_resta_app/core/providers/theme_provider.dart';
-import 'package:firebase_core/firebase_core.dart';
-import '../test_helpers/firebase_mocks.dart';
 import 'app_smoke_test.mocks.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../test_helpers/geolocator_mocks.dart';
+
+void _setupFirebaseCoreMock() {
+  MethodChannel('plugins.flutter.io/firebase_core').setMockMethodCallHandler(
+    (MethodCall methodCall) async {
+      if (methodCall.method == 'initializeCore') {
+        return [
+          {
+            'name': '[DEFAULT]',
+            'options': {
+              'apiKey': 'fake',
+              'appId': 'fake',
+              'messagingSenderId': 'fake',
+              'projectId': 'fake',
+            },
+            'pluginConstants': {},
+          }
+        ];
+      }
+      if (methodCall.method == 'initializeApp') {
+        return {
+          'name': '[DEFAULT]',
+          'options': {
+            'apiKey': 'fake',
+            'appId': 'fake',
+            'messagingSenderId': 'fake',
+            'projectId': 'fake',
+          },
+          'pluginConstants': {},
+        };
+      }
+      return null;
+    },
+  );
+  // Mock other common Firebase plugin channels
+  MethodChannel('plugins.flutter.io/firebase_auth')
+      .setMockMethodCallHandler((_) async => null);
+  MethodChannel('plugins.flutter.io/cloud_firestore')
+      .setMockMethodCallHandler((_) async => null);
+  MethodChannel('plugins.flutter.io/firebase_messaging')
+      .setMockMethodCallHandler((_) async => null);
+  MethodChannel('plugins.flutter.io/firebase_storage')
+      .setMockMethodCallHandler((_) async => null);
+  MethodChannel('plugins.flutter.io/firebase_analytics')
+      .setMockMethodCallHandler((_) async => null);
+}
 
 void main() {
-  setupFirebaseCoreMocks();
   TestWidgetsFlutterBinding.ensureInitialized();
-
+  _setupFirebaseCoreMock();
+  setupMockGeolocator();
   setUpAll(() async {
     await Firebase.initializeApp();
   });

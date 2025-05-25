@@ -95,6 +95,9 @@ dev_dependencies:
   
   sqflite_common: any
   connectivity_plus_platform_interface: any
+  geolocator_platform_interface: any
+  http: any
+ 
 flutter:
 
   # The following line ensures that the Material Icons font is

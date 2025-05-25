@@ -17,4 +17,8 @@ void main() {
       expect(add(-2, -3), -5);
     });
   });
+
+  test('sample test runs', () {
+    expect(2 + 2, 4);
+  });
 }
