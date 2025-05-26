@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/restaurant/data/models/restaurant_model.dart';
 import 'package:dio/dio.dart';
 import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import 'package:flutter/material.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -34,7 +35,7 @@ class NotificationService {
 
   NotificationService._internal();
 
-  Future<void> initialize() async {
+  Future<void> initialize(BuildContext context) async {
     await _requestPermission();
     await _initLocalNotifications();
     await _setupFCM();

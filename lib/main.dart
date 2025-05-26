@@ -106,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _navigateToHome() async {
     try {
       // Start NotificationService initialization in the background
-      NotificationService().initialize();
+      NotificationService().initialize(context);
       await Future.delayed(const Duration(seconds: 2));
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final isLoggedIn =

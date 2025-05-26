@@ -199,42 +199,24 @@ class _MainScreenState extends State<MainScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
                       );
                     },
                   ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Consumer<ActionQueueProvider>(
-                      builder: (context, queue, child) {
-                        if (queue.pendingCount == 0) return SizedBox.shrink();
-                        return Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            queue.pendingCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                 ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Notifications'),
+                      content: const Text('No new notifications.'),
+                    ),
+                  );
+                },
               ),
             ],
           ),

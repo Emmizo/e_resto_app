@@ -139,17 +139,26 @@ class _MapScreenState extends State<MapScreen> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(24),
                   onTap: () => _showDistanceInfo(restaurant),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white,
-                    backgroundImage: (restaurant.image != null &&
-                            restaurant.image!.isNotEmpty)
-                        ? NetworkImage(fixImageUrl(restaurant.image!))
-                        : null,
-                    child: (restaurant.image == null ||
-                            restaurant.image!.isEmpty)
-                        ? Icon(Icons.restaurant, color: Colors.teal, size: 24)
-                        : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Color(0xFF184C55),
+                        width: 4,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.white,
+                      backgroundImage: (restaurant.image != null &&
+                              restaurant.image!.isNotEmpty)
+                          ? NetworkImage(fixImageUrl(restaurant.image!))
+                          : null,
+                      child: (restaurant.image == null ||
+                              restaurant.image!.isEmpty)
+                          ? Icon(Icons.restaurant, color: Colors.teal, size: 24)
+                          : null,
+                    ),
                   ),
                 ),
               ),
