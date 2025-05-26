@@ -22,7 +22,7 @@ void main() {
       mockDbHelper = MockDatabaseHelper();
       mockConnectivity = MockConnectivity();
       when(mockConnectivity.checkConnectivity())
-          .thenAnswer((_) async => ConnectivityResult.wifi);
+          .thenAnswer((_) async => [ConnectivityResult.wifi]);
       when(mockConnectivity.onConnectivityChanged)
           .thenAnswer((_) => const Stream.empty());
       when(mockDbHelper.db).thenAnswer((_) async => _FakeDb());
@@ -44,7 +44,7 @@ void main() {
 
     test('uses injected Dio for connectivity check', () async {
       when(mockConnectivity.checkConnectivity())
-          .thenAnswer((_) async => ConnectivityResult.wifi);
+          .thenAnswer((_) async => [ConnectivityResult.wifi]);
       when(mockDio.get(any, options: anyNamed('options')))
           .thenAnswer((_) async => Response(
                 requestOptions: RequestOptions(path: '/test'),

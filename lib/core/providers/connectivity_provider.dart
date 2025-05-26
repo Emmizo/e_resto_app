@@ -12,7 +12,7 @@ class ConnectivityProvider extends ChangeNotifier {
   final Dio dio;
   final DatabaseHelper dbHelper;
 
-  late StreamSubscription<ConnectivityResult> _subscription;
+  late StreamSubscription<List<ConnectivityResult>> _subscription;
   bool _isOnline = true;
 
   bool get isOnline => _isOnline;
@@ -28,9 +28,17 @@ class ConnectivityProvider extends ChangeNotifier {
   }
 
   void _init() async {
-    final result = await _connectivity.checkConnectivity();
-    await _updateStatus(result);
-    _subscription = _connectivity.onConnectivityChanged.listen(_updateStatus);
+    final results = await _connectivity.checkConnectivity();
+    final listResults =
+        results is List<ConnectivityResult> ? results : <ConnectivityResult>[];
+    final firstResult =
+        listResults.isNotEmpty ? listResults.first : ConnectivityResult.none;
+    await _updateStatus(firstResult);
+    _subscription = _connectivity.onConnectivityChanged.listen((results) async {
+      final firstResult =
+          results.isNotEmpty ? results.first : ConnectivityResult.none;
+      await _updateStatus(firstResult);
+    });
   }
 
   Future<void> _updateStatus(ConnectivityResult result) async {
@@ -121,8 +129,10 @@ class ConnectivityProvider extends ChangeNotifier {
   }
 
   Future<void> checkNow() async {
-    final result = await _connectivity.checkConnectivity();
-    await _updateStatus(result);
+    final results = await _connectivity.checkConnectivity();
+    final firstResult =
+        results.isNotEmpty ? results.first : ConnectivityResult.none;
+    await _updateStatus(firstResult);
   }
 
   @override

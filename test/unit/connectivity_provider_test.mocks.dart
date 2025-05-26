@@ -877,20 +877,20 @@ class MockConnectivity extends _i1.Mock implements _i12.Connectivity {
   }
 
   @override
-  _i9.Stream<_i13.ConnectivityResult> get onConnectivityChanged =>
+  _i9.Stream<List<_i13.ConnectivityResult>> get onConnectivityChanged =>
       (super.noSuchMethod(
         Invocation.getter(#onConnectivityChanged),
-        returnValue: _i9.Stream<_i13.ConnectivityResult>.empty(),
-      ) as _i9.Stream<_i13.ConnectivityResult>);
+        returnValue: _i9.Stream<List<_i13.ConnectivityResult>>.empty(),
+      ) as _i9.Stream<List<_i13.ConnectivityResult>>);
 
   @override
-  _i9.Future<_i13.ConnectivityResult> checkConnectivity() =>
+  _i9.Future<List<_i13.ConnectivityResult>> checkConnectivity() =>
       (super.noSuchMethod(
         Invocation.method(
           #checkConnectivity,
           [],
         ),
-        returnValue: _i9.Future<_i13.ConnectivityResult>.value(
-            _i13.ConnectivityResult.bluetooth),
-      ) as _i9.Future<_i13.ConnectivityResult>);
+        returnValue: _i9.Future<List<_i13.ConnectivityResult>>.value(
+            <_i13.ConnectivityResult>[]),
+      ) as _i9.Future<List<_i13.ConnectivityResult>>);
 }

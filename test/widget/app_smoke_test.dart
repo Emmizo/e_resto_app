@@ -3,18 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
-import 'package:e_resta_app/main.dart';
+import 'package:e_resta_app/app.dart';
 import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 import 'package:e_resta_app/features/auth/presentation/screens/login_screen.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 import 'package:e_resta_app/core/providers/theme_provider.dart';
 import 'app_smoke_test.mocks.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../test_helpers/geolocator_mocks.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:e_resta_app/core/providers/connectivity_provider.dart';
 
 void _setupFirebaseCoreMock() {
-  MethodChannel('plugins.flutter.io/firebase_core').setMockMethodCallHandler(
+  final binaryMessenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/firebase_core'),
     (MethodCall methodCall) async {
       if (methodCall.method == 'initializeCore') {
         return [
@@ -46,21 +50,52 @@ void _setupFirebaseCoreMock() {
     },
   );
   // Mock other common Firebase plugin channels
-  MethodChannel('plugins.flutter.io/firebase_auth')
-      .setMockMethodCallHandler((_) async => null);
-  MethodChannel('plugins.flutter.io/cloud_firestore')
-      .setMockMethodCallHandler((_) async => null);
-  MethodChannel('plugins.flutter.io/firebase_messaging')
-      .setMockMethodCallHandler((_) async => null);
-  MethodChannel('plugins.flutter.io/firebase_storage')
-      .setMockMethodCallHandler((_) async => null);
-  MethodChannel('plugins.flutter.io/firebase_analytics')
-      .setMockMethodCallHandler((_) async => null);
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/firebase_auth'),
+    (_) async => null,
+  );
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/cloud_firestore'),
+    (_) async => null,
+  );
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/firebase_messaging'),
+    (_) async => null,
+  );
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/firebase_storage'),
+    (_) async => null,
+  );
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/firebase_analytics'),
+    (_) async => null,
+  );
+}
+
+void _setupFirebaseMessagingMock() {
+  final binaryMessenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  binaryMessenger.setMockMethodCallHandler(
+    MethodChannel('plugins.flutter.io/firebase_messaging'),
+    (MethodCall methodCall) async {
+      if (methodCall.method == 'getToken') {
+        return 'test-fcm-token';
+      }
+      return null;
+    },
+  );
+}
+
+class MockConnectivity extends Mock implements Connectivity {}
+
+class MockConnectivityProvider extends ConnectivityProvider {
+  MockConnectivityProvider() : super(connectivity: MockConnectivity());
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _setupFirebaseCoreMock();
+  _setupFirebaseMessagingMock();
   setupMockGeolocator();
   setUpAll(() async {
     await Firebase.initializeApp();
@@ -98,9 +133,11 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
+            // ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
             ChangeNotifierProvider<ThemeProvider>(
                 create: (_) => ThemeProvider(mockPrefs)),
+            // ChangeNotifierProvider<ConnectivityProvider>(
+            //     create: (_) => MockConnectivityProvider()),
           ],
           child: MyApp(prefs: mockPrefs),
         ),
@@ -123,9 +160,11 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
+            // ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
             ChangeNotifierProvider<ThemeProvider>(
                 create: (_) => ThemeProvider(mockPrefs)),
+            // ChangeNotifierProvider<ConnectivityProvider>(
+            //     create: (_) => MockConnectivityProvider()),
           ],
           child: MyApp(prefs: mockPrefs),
         ),
