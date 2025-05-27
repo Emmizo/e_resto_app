@@ -195,6 +195,8 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                             if (token != null) 'Authorization': 'Bearer $token',
                           }),
                         );
+                        await Future.delayed(Duration.zero);
+                        if (!mounted) return;
                         setState(() {
                           _favoriteMenuItems.removeAt(index);
                         });

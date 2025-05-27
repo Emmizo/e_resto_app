@@ -107,6 +107,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               final provider =
                   Provider.of<AddressProvider>(context, listen: false);
               await provider.deleteAddress(address.id, context);
+              await Future.delayed(Duration.zero);
+              if (!mounted) return;
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(

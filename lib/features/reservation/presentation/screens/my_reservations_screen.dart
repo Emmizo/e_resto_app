@@ -230,6 +230,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
                   'payload': '{"id": ${reservation.id}}',
                   'createdAt': DateTime.now().toIso8601String(),
                 });
+                await Future.delayed(Duration.zero);
+                if (!mounted) return;
                 setState(() {
                   _reservations.removeWhere((r) => r.id == reservation.id);
                 });

@@ -45,18 +45,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           },
         ),
       );
-      final orders = (response.data['data'] as List)
-          .map((json) => OrderModel.fromJson(json))
-          .toList();
-      orders.sort((a, b) {
-        final aCancelled = a.status.toLowerCase() == 'cancelled';
-        final bCancelled = b.status.toLowerCase() == 'cancelled';
-        if (aCancelled == bCancelled) return 0;
-        if (aCancelled) return 1;
-        return -1;
-      });
+      if (!mounted) return;
       setState(() {
-        _orders = orders;
+        _orders = (response.data['data'] as List)
+            .map((json) => OrderModel.fromJson(json))
+            .toList();
+        _orders.sort((a, b) {
+          final aCancelled = a.status.toLowerCase() == 'cancelled';
+          final bCancelled = b.status.toLowerCase() == 'cancelled';
+          if (aCancelled && !bCancelled) return 1;
+          if (!aCancelled && bCancelled) return -1;
+          return -1;
+        });
         _isLoading = false;
       });
       if (!mounted) return;
@@ -270,12 +270,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 restaurantAddress: order.restaurant.address,
                                 quantity: item['quantity'],
                               ));
+                              await Future.delayed(Duration.zero);
+                              if (!mounted) return;
+                              Navigator.pop(context);
+                              await Future.delayed(Duration.zero);
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Order added to cart!')),
+                              );
                             }
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Order added to cart!')),
-                            );
                           },
                     label: const Text('Reorder'),
                   ),

@@ -161,7 +161,8 @@ class _MainScreenState extends State<MainScreen> {
                                   ? NetworkImage(profilePic)
                                   : null,
                           child: (profilePic == null || profilePic.isEmpty)
-                              ? const Icon(Icons.person, color: Colors.grey, size: 22)
+                              ? const Icon(Icons.person,
+                                  color: Colors.grey, size: 22)
                               : null,
                         ),
                       ),
@@ -526,7 +527,26 @@ class _MainScreenState extends State<MainScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                               ),
-                              onPressed: () => Navigator.pop(context, true),
+                              onPressed: () async {
+                                final authProvider = Provider.of<AuthProvider>(
+                                    context,
+                                    listen: false);
+                                await authProvider.logout();
+                                await Future.delayed(Duration.zero);
+                                if (!mounted) return;
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.clear();
+                                await Future.delayed(Duration.zero);
+                                if (!mounted) return;
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const LoginScreen()),
+                                  (route) => false,
+                                );
+                              },
                               child: const Text('Logout'),
                             ),
                           ],
@@ -536,8 +556,12 @@ class _MainScreenState extends State<MainScreen> {
                         final authProvider =
                             Provider.of<AuthProvider>(context, listen: false);
                         await authProvider.logout();
+                        await Future.delayed(Duration.zero);
+                        if (!mounted) return;
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.clear();
+                        await Future.delayed(Duration.zero);
+                        if (!mounted) return;
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
@@ -694,6 +718,8 @@ class _MainScreenState extends State<MainScreen> {
                                 await context
                                     .read<ConnectivityProvider>()
                                     .checkNow();
+                                await Future.delayed(Duration.zero);
+                                if (!mounted) return;
                                 setState(() => _isRetrying = false);
                               },
                       ),
@@ -754,8 +780,7 @@ class _ModernListTile extends StatelessWidget {
               trailing: trailing != null
                   ? Icon(trailing, size: 18, color: Colors.grey[400])
                   : null,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
               minLeadingWidth: 0,

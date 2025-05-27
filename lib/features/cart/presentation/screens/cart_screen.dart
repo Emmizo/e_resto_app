@@ -480,6 +480,7 @@ class _OrderDetailsStep extends StatelessWidget {
   final String? addressError;
   final String? phoneError;
   final List<CartItem> cartItems;
+  final bool acceptsDelivery;
   const _OrderDetailsStep({
     required this.orderType,
     required this.addressController,
@@ -492,6 +493,7 @@ class _OrderDetailsStep extends StatelessWidget {
     this.addressError,
     this.phoneError,
     required this.cartItems,
+    required this.acceptsDelivery,
   });
   @override
   Widget build(BuildContext context) {
@@ -502,10 +504,12 @@ class _OrderDetailsStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           value: orderType,
           decoration: const InputDecoration(labelText: 'Order Type'),
-          items: const [
-            DropdownMenuItem(value: 'dine_in', child: Text('Dine In')),
-            DropdownMenuItem(value: 'takeaway', child: Text('Takeaway')),
-            DropdownMenuItem(value: 'delivery', child: Text('Delivery')),
+          items: [
+            const DropdownMenuItem(value: 'dine_in', child: Text('Dine In')),
+            const DropdownMenuItem(value: 'takeaway', child: Text('Takeaway')),
+            if (acceptsDelivery)
+              const DropdownMenuItem(
+                  value: 'delivery', child: Text('Delivery')),
           ],
           onChanged: (value) {
             if (value != null) onOrderTypeChanged(value);
@@ -1327,6 +1331,9 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                   listen: false);
                               final defaultAddress =
                                   addressProvider.defaultAddress;
+                              await Future.delayed(
+                                  Duration.zero); // ensure async gap
+                              if (!mounted) return;
                               if (val == 'delivery') {
                                 final user = authProvider.user;
                                 if (defaultAddress != null &&
@@ -1353,6 +1360,7 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                             addressError: addressError,
                             phoneError: phoneError,
                             cartItems: cartItems.cast<CartItem>(),
+                            acceptsDelivery: true,
                           )
                         : _ReviewStep(
                             cartTotal: cartTotal,
@@ -1431,6 +1439,9 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                   ? null
                                   : () async {
                                       setState(() => isLoading = true);
+                                      await Future.delayed(
+                                          Duration.zero); // ensure async gap
+                                      if (!mounted) return;
                                       try {
                                         final items = cartItems.map((item) {
                                           final map = item.toJson()
@@ -1458,6 +1469,8 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                           name: firstItem.restaurantName,
                                           address: firstItem.restaurantAddress,
                                           image: '',
+                                          acceptsReservations: 0,
+                                          acceptsDelivery: 0,
                                         );
                                         await OrderService.placeOrder(
                                           context: context,
@@ -1472,6 +1485,8 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                           dietaryInfo:
                                               _collectDietaryInfo(cartItems),
                                         );
+                                        await Future.delayed(
+                                            Duration.zero); // async gap
                                         if (!context.mounted) return;
                                         cartProvider.clearCart();
                                         if (!context.mounted) return;
@@ -1716,6 +1731,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
                             addressError: addressError,
                             phoneError: phoneError,
                             cartItems: cartItems.cast<CartItem>(),
+                            acceptsDelivery: true,
                           )
                         : step == 1
                             ? _PaymentStep(
@@ -1888,6 +1904,8 @@ class _PayNowDialogState extends State<PayNowDialog> {
                                           name: firstItem.restaurantName,
                                           address: firstItem.restaurantAddress,
                                           image: '',
+                                          acceptsReservations: 0,
+                                          acceptsDelivery: 0,
                                         );
                                         await OrderService.placeOrder(
                                           context: context,
@@ -1902,6 +1920,8 @@ class _PayNowDialogState extends State<PayNowDialog> {
                                           dietaryInfo:
                                               _collectDietaryInfo(cartItems),
                                         );
+                                        await Future.delayed(
+                                            Duration.zero); // async gap
                                         if (!context.mounted) return;
                                         cartProvider.clearCart();
                                         if (!context.mounted) return;

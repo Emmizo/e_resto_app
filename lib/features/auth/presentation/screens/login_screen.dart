@@ -359,6 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: () async {
                               final bool authenticated =
                                   await _biometricsService.authenticate();
+                              if (!mounted) return;
                               if (authenticated) {
                                 _submit();
                               } else {

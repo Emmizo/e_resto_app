@@ -219,12 +219,13 @@ class _ReservationScreenState extends State<ReservationScreen> {
         if (!isOnline) {
           // Queue the reservation in SQLite
           final db = await DatabaseHelper().db;
+          await Future.delayed(Duration.zero);
+          if (!mounted) return;
           await db.insert('action_queue', {
             'actionType': 'make_reservation',
             'payload': jsonEncode(data),
             'createdAt': DateTime.now().toIso8601String(),
           });
-          if (!mounted) return;
           await showDialog(
             context: ctx,
             builder: (context) => AlertDialog(
@@ -279,9 +280,10 @@ class _ReservationScreenState extends State<ReservationScreen> {
             },
           ),
         );
+        await Future.delayed(Duration.zero);
+        if (!mounted) return;
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          if (!mounted) return;
           await showDialog(
             context: ctx,
             builder: (context) => AlertDialog(

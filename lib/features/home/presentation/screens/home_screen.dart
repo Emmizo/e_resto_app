@@ -235,6 +235,10 @@ class HomeScreenState extends State<HomeScreen>
             try {
               return RestaurantModel.fromJson(json);
             } catch (e) {
+              print('Restaurant parse error: ' +
+                  e.toString() +
+                  ', data: ' +
+                  json.toString());
               return null;
             }
           })
@@ -420,6 +424,7 @@ class HomeScreenState extends State<HomeScreen>
           if (token != null) 'Authorization': 'Bearer $token',
         }),
       );
+      if (!mounted) return;
       setState(() {
         // Update the favorite status in both lists
         restaurants = restaurants.map((r) {
@@ -490,6 +495,7 @@ class HomeScreenState extends State<HomeScreen>
       try {
         final db = await DatabaseHelper().db;
         final maps = await db.query('banners');
+        if (!mounted) return;
         final cached = maps
             .map((m) => PromoBanner(
                   id: m['id'] as int,
@@ -621,6 +627,8 @@ class HomeScreenState extends State<HomeScreen>
                       menus: [],
                       averageRating: 0.0,
                       isFavorite: false,
+                      acceptsReservations: 0,
+                      acceptsDelivery: 0,
                     ),
                   );
                   if (restaurant.id == -1) return false;
@@ -668,6 +676,8 @@ class HomeScreenState extends State<HomeScreen>
                         menus: [],
                         averageRating: 0.0,
                         isFavorite: false,
+                        acceptsReservations: 0,
+                        acceptsDelivery: 0,
                       ),
                     );
                     return ClipRRect(

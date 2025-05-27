@@ -54,6 +54,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString(_profileImageKey);
     if (path != null && path.isNotEmpty) {
+      if (!mounted) return;
       setState(() {
         _profileImage = File(path);
       });
@@ -72,6 +73,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         }),
       );
       final data = response.data['data'] as List;
+      if (!mounted) return;
       setState(() {
         _stats = data
             .map((e) => {
@@ -81,6 +83,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
             .toList();
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _stats = [];
       });
@@ -124,6 +127,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
       ],
     );
     if (cropped == null) return;
+    if (!mounted) return;
     setState(() {
       _profileImage = File(cropped.path);
     });
@@ -145,6 +149,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         imageFile,
         token: authProvider.token,
       );
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Try to get the new profile picture URL from the response
         String? newUrl;
@@ -176,10 +181,12 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
           }
         }
       }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMsg)),
       );
     } finally {
+      if (!mounted) return;
       setState(() {
         _isUploading = false;
       });
@@ -971,31 +978,37 @@ class _EditProfileFormState extends State<_EditProfileForm> {
       final profileDatasource = ProfileRemoteDatasource(Dio());
       final response =
           await profileDatasource.updateProfile(token: token, data: data);
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         final respData = response.data;
         if (respData['status'] == 'success') {
           // Optionally update user in provider
           final updated = respData['data'];
           authProvider.setUser(UserModel.fromJson(updated));
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated successfully!')),
           );
           Navigator.pop(context);
         } else {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(respData['message'] ?? 'Update failed')),
           );
         }
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed: ${response.statusMessage}')),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     } finally {
+      if (!mounted) return;
       setState(() => _isSubmitting = false);
     }
   }

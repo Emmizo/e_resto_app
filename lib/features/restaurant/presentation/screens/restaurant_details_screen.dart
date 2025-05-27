@@ -105,16 +105,18 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 _showMenu(context, 'Takeaway');
               },
             ),
-            const SizedBox(height: 8),
-            _DeliveryMethodDialog(
-              icon: Icons.delivery_dining,
-              title: 'Delivery',
-              subtitle: 'Get it delivered to you',
-              onTap: () {
-                Navigator.pop(context);
-                _showMenu(context, 'Delivery');
-              },
-            ),
+            if (widget.restaurant.acceptsDelivery == 1) ...[
+              const SizedBox(height: 8),
+              _DeliveryMethodDialog(
+                icon: Icons.delivery_dining,
+                title: 'Delivery',
+                subtitle: 'Get it delivered to you',
+                onTap: () {
+                  Navigator.pop(context);
+                  _showMenu(context, 'Delivery');
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -409,6 +411,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
           },
         ),
       );
+      await Future.delayed(Duration.zero);
       if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(parentContext).showSnackBar(
@@ -562,26 +565,28 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF227C9D),
-                      minimumSize: const Size.fromHeight(54),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                if (widget.restaurant.acceptsReservations == 1)
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF227C9D),
+                        minimumSize: const Size.fromHeight(54),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () => _handleReservation(context),
+                      child: const Text(
+                        'Reserve Table',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                       ),
                     ),
-                    onPressed: () => _handleReservation(context),
-                    child: const Text(
-                      'Reserve Table',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                if (widget.restaurant.acceptsReservations == 1)
+                  const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(

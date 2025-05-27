@@ -65,12 +65,16 @@ class RestaurantModel {
   final String name;
   final String address;
   final String image;
+  final int acceptsReservations;
+  final int acceptsDelivery;
 
   RestaurantModel({
     required this.id,
     required this.name,
     required this.address,
     required this.image,
+    required this.acceptsReservations,
+    required this.acceptsDelivery,
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) {
@@ -79,6 +83,8 @@ class RestaurantModel {
       name: json['name'] ?? '',
       address: json['address'] ?? '',
       image: json['image'] ?? '',
+      acceptsReservations: json['accepts_reservations'] ?? 0,
+      acceptsDelivery: json['accepts_delivery'] ?? 0,
     );
   }
 
@@ -87,6 +93,8 @@ class RestaurantModel {
         'name': name,
         'address': address,
         'image': image,
+        'accepts_reservations': acceptsReservations,
+        'accepts_delivery': acceptsDelivery,
       };
 }
 

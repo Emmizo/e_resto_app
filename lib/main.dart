@@ -108,6 +108,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // Start NotificationService initialization in the background
       NotificationService().initialize(context);
       await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final isLoggedIn =
           authProvider.user != null && authProvider.token != null;

@@ -32,6 +32,7 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
     final url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${widget.userLocation.latitude},${widget.userLocation.longitude}&destination=${widget.restaurantLocation.latitude},${widget.restaurantLocation.longitude}&key=$_apiKey';
     final response = await http.get(Uri.parse(url));
+    if (!mounted) return;
     final data = json.decode(response.body);
     if (data['status'] == 'OK') {
       final points = data['routes'][0]['overview_polyline']['points'];

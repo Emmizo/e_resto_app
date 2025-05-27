@@ -14,7 +14,7 @@ class ConnectivityProvider extends ChangeNotifier {
   final Dio dio;
   final DatabaseHelper dbHelper;
 
-  late StreamSubscription<List<ConnectivityResult>> _subscription;
+  late StreamSubscription<dynamic> _subscription;
   bool _isOnline = true;
 
   bool get isOnline => _isOnline;
@@ -30,16 +30,31 @@ class ConnectivityProvider extends ChangeNotifier {
   }
 
   void _init() async {
-    final results = await _connectivity.checkConnectivity();
-    final listResults =
-        results is List<ConnectivityResult> ? results : <ConnectivityResult>[];
-    final firstResult =
-        listResults.isNotEmpty ? listResults.first : ConnectivityResult.none;
-    await _updateStatus(firstResult);
+    final dynamic resultDynamic = await _connectivity.checkConnectivity();
+    ConnectivityResult status;
+    if (resultDynamic is ConnectivityResult) {
+      status = resultDynamic;
+    } else if (resultDynamic is List &&
+        resultDynamic.isNotEmpty &&
+        resultDynamic.first is ConnectivityResult) {
+      status = resultDynamic.first as ConnectivityResult;
+    } else {
+      status = ConnectivityResult.none;
+    }
+    await _updateStatus(status);
     _subscription = _connectivity.onConnectivityChanged.listen((results) async {
-      final firstResult =
-          results.isNotEmpty ? results.first : ConnectivityResult.none;
-      await _updateStatus(firstResult);
+      final dynamic resultsDynamic = results;
+      ConnectivityResult streamStatus;
+      if (resultsDynamic is ConnectivityResult) {
+        streamStatus = resultsDynamic;
+      } else if (resultsDynamic is List &&
+          resultsDynamic.isNotEmpty &&
+          resultsDynamic.first is ConnectivityResult) {
+        streamStatus = resultsDynamic.first as ConnectivityResult;
+      } else {
+        streamStatus = ConnectivityResult.none;
+      }
+      await _updateStatus(streamStatus);
     });
   }
 
@@ -131,10 +146,18 @@ class ConnectivityProvider extends ChangeNotifier {
   }
 
   Future<void> checkNow() async {
-    final results = await _connectivity.checkConnectivity();
-    final firstResult =
-        results.isNotEmpty ? results.first : ConnectivityResult.none;
-    await _updateStatus(firstResult);
+    final dynamic resultDynamic2 = await _connectivity.checkConnectivity();
+    ConnectivityResult status;
+    if (resultDynamic2 is ConnectivityResult) {
+      status = resultDynamic2;
+    } else if (resultDynamic2 is List &&
+        resultDynamic2.isNotEmpty &&
+        resultDynamic2.first is ConnectivityResult) {
+      status = resultDynamic2.first as ConnectivityResult;
+    } else {
+      status = ConnectivityResult.none;
+    }
+    await _updateStatus(status);
   }
 
   @override

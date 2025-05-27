@@ -78,6 +78,8 @@ class RestaurantModel {
   final bool isFavorite;
   final String? _cuisineNameFromJson;
   final Map<String, dynamic>? _cuisineObjFromJson;
+  final int? acceptsReservations;
+  final int? acceptsDelivery;
 
   RestaurantModel({
     required this.id,
@@ -99,6 +101,8 @@ class RestaurantModel {
     required this.menus,
     required this.averageRating,
     required this.isFavorite,
+    required this.acceptsReservations,
+    required this.acceptsDelivery,
     String? cuisineNameFromJson,
     Map<String, dynamic>? cuisineObjFromJson,
   })  : _cuisineNameFromJson = cuisineNameFromJson,
@@ -154,6 +158,16 @@ class RestaurantModel {
                 : double.tryParse(json['average_rating']?.toString() ?? '0') ??
                     0.0,
         isFavorite: json['is_favorite'] == true || json['is_favorite'] == 1,
+        acceptsReservations: (json['accepts_reservations'] == true)
+            ? 1
+            : (json['accepts_reservations'] == false)
+                ? 0
+                : (json['accepts_reservations'] ?? 0),
+        acceptsDelivery: (json['accepts_delivery'] == true)
+            ? 1
+            : (json['accepts_delivery'] == false)
+                ? 0
+                : (json['accepts_delivery'] ?? 0),
         cuisineNameFromJson: json['cuisine_name']?.toString(),
         cuisineObjFromJson:
             json['cuisine'] is Map<String, dynamic> ? json['cuisine'] : null,
@@ -161,6 +175,8 @@ class RestaurantModel {
 
   RestaurantModel copyWith({
     bool? isFavorite,
+    int? acceptsReservations,
+    int? acceptsDelivery,
   }) {
     return RestaurantModel(
       id: id,
@@ -182,6 +198,8 @@ class RestaurantModel {
       menus: menus,
       averageRating: averageRating,
       isFavorite: isFavorite ?? this.isFavorite,
+      acceptsReservations: acceptsReservations ?? this.acceptsReservations,
+      acceptsDelivery: acceptsDelivery ?? this.acceptsDelivery,
       cuisineNameFromJson: _cuisineNameFromJson,
       cuisineObjFromJson: _cuisineObjFromJson,
     );
@@ -206,6 +224,8 @@ class RestaurantModel {
         'status': status ? 1 : 0,
         'averageRating': averageRating,
         'isFavorite': isFavorite ? 1 : 0,
+        'accepts_reservations': acceptsReservations ?? 0,
+        'accepts_delivery': acceptsDelivery ?? 0,
         'cuisine_name': _cuisineNameFromJson,
         'cuisine': _cuisineObjFromJson,
       };
