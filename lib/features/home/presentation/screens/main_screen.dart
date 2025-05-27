@@ -528,16 +528,14 @@ class _MainScreenState extends State<MainScreen> {
                                 backgroundColor: Colors.red,
                               ),
                               onPressed: () async {
-                                final authProvider = Provider.of<AuthProvider>(
-                                    context,
-                                    listen: false);
-                                await authProvider.logout();
-                                await Future.delayed(Duration.zero);
+                                await Provider.of<AuthProvider>(context,
+                                        listen: false)
+                                    .logout();
                                 if (!mounted) return;
                                 final prefs =
                                     await SharedPreferences.getInstance();
+                                if (!mounted) return;
                                 await prefs.clear();
-                                await Future.delayed(Duration.zero);
                                 if (!mounted) return;
                                 Navigator.pushAndRemoveUntil(
                                   context,
@@ -552,16 +550,13 @@ class _MainScreenState extends State<MainScreen> {
                           ],
                         ),
                       );
-                      if (!mounted) return;
                       if (confirmed == true) {
-                        final authProvider =
-                            Provider.of<AuthProvider>(context, listen: false);
-                        await authProvider.logout();
-                        await Future.delayed(Duration.zero);
+                        await Provider.of<AuthProvider>(context, listen: false)
+                            .logout();
                         if (!mounted) return;
                         final prefs = await SharedPreferences.getInstance();
+                        if (!mounted) return;
                         await prefs.clear();
-                        await Future.delayed(Duration.zero);
                         if (!mounted) return;
                         Navigator.pushAndRemoveUntil(
                           context,
