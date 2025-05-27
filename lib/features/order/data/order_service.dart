@@ -110,7 +110,7 @@ class OrderService {
       await db.update(
         'orders',
         {'status': 'failed'},
-        where: 'created_at = ?',
+        where: 'createdAt = ?',
         whereArgs: [now.toIso8601String()],
       );
       // Optionally queue for retry

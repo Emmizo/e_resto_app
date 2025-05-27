@@ -8,6 +8,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/providers/cart_provider.dart';
 import '../../../../core/services/dio_service.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
+import '../../../cart/presentation/screens/cart_screen.dart';
 import '../../../order/data/models/order_model.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -255,6 +256,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     onPressed: isDifferentRestaurant
                         ? null
                         : () async {
+                            // Add items to cart
                             for (final item in order.items) {
                               final menuItem = item['menu_item'] ?? {};
                               await cartProvider.addItem(CartItem(
@@ -269,15 +271,23 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 restaurantName: order.restaurant.name,
                                 restaurantAddress: order.restaurant.address,
                                 quantity: item['quantity'],
+                                dietaryInfo:
+                                    (item['dietary_info'] as List<dynamic>?)
+                                        ?.cast<String>(),
                               ));
-                              await Future.delayed(Duration.zero);
-                              if (!mounted) return;
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Order added to cart!')),
-                              );
                             }
+                            if (!mounted) return;
+                            Navigator.pop(context); // Close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Order added to cart!')),
+                            );
+                            // Navigate to cart screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const CartScreen()),
+                            );
                           },
                     label: const Text('Reorder'),
                   ),
