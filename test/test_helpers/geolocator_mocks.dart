@@ -20,7 +20,6 @@ class MockGeolocatorPlatform extends Mock
         headingAccuracy: 1.0,
         speed: 0.0,
         speedAccuracy: 0.0,
-        floor: null,
         isMocked: true,
       ));
     }

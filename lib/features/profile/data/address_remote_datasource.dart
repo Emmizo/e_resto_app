@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../presentation/screens/saved_addresses_screen.dart';
 
 class AddressRemoteDatasource {

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../../core/providers/cart_provider.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/features/profile/data/address_provider.dart';
 import 'package:flutter/services.dart';
-import 'package:e_resta_app/features/order/data/order_service.dart';
-import 'package:e_resta_app/features/order/data/models/order_model.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../core/providers/cart_provider.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
+import '../../../order/data/models/order_model.dart';
+import '../../../order/data/order_service.dart';
+import '../../../profile/data/address_provider.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -80,7 +81,7 @@ class _CartItemCard extends StatelessWidget {
   void _editDietaryInfo(BuildContext context) async {
     final List<String> allTags = item.dietaryInfo ?? [];
     if (allTags.isEmpty) return;
-    List<String> selected = List<String>.from(item.dietaryInfo ?? []);
+    final List<String> selected = List<String>.from(item.dietaryInfo ?? []);
     final result = await showDialog<List<String>>(
       context: context,
       builder: (context) {
@@ -127,6 +128,7 @@ class _CartItemCard extends StatelessWidget {
         );
       },
     );
+    if (!context.mounted) return;
     if (result != null &&
         result.isNotEmpty &&
         result
@@ -205,7 +207,7 @@ class _CartItemCard extends StatelessWidget {
                             children: item.dietaryInfo!
                                 .map((tag) => Chip(
                                       label: Text(tag,
-                                          style: TextStyle(fontSize: 12)),
+                                          style: const TextStyle(fontSize: 12)),
                                       backgroundColor: Colors.green[50],
                                       labelStyle:
                                           TextStyle(color: Colors.green[800]),
@@ -548,7 +550,7 @@ class _OrderDetailsStep extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.2,
               ),
@@ -562,7 +564,7 @@ class _OrderDetailsStep extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.orange, size: 18),
+                const Icon(Icons.info_outline, color: Colors.orange, size: 18),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -620,7 +622,7 @@ class _OrderDetailsStep extends StatelessWidget {
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
+                  borderSide: const BorderSide(
                     color: Colors.red,
                     width: 1.2,
                   ),
@@ -633,7 +635,7 @@ class _OrderDetailsStep extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 12, top: 2),
                 child: Text(phoneError!,
-                    style: TextStyle(color: Colors.red, fontSize: 12)),
+                    style: const TextStyle(color: Colors.red, fontSize: 12)),
               ),
           ],
         ),
@@ -668,7 +670,7 @@ class _OrderDetailsStep extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.2,
               ),
@@ -707,7 +709,7 @@ class _OrderDetailsStep extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.2,
               ),
@@ -745,7 +747,7 @@ class _OrderDetailsStep extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.2,
               ),
@@ -758,7 +760,7 @@ class _OrderDetailsStep extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4.0, left: 4.0, right: 4.0),
             child: Row(
               children: [
-                Icon(Icons.restaurant, color: Colors.teal, size: 18),
+                const Icon(Icons.restaurant, color: Colors.teal, size: 18),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -809,22 +811,22 @@ class _PaymentStep extends StatelessWidget {
           value: paymentMethod,
           decoration: const InputDecoration(labelText: 'Payment Method'),
           items: [
-            DropdownMenuItem(
+            const DropdownMenuItem(
               value: 'visa',
               child: Row(
                 children: [
                   Icon(Icons.credit_card, color: Colors.blue),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text('Visa Card'),
                 ],
               ),
             ),
-            DropdownMenuItem(
+            const DropdownMenuItem(
               value: 'mobile_money',
               child: Row(
                 children: [
                   Icon(Icons.phone_android, color: Colors.green),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text('Mobile Money'),
                 ],
               ),
@@ -1076,7 +1078,7 @@ class _ReviewStep extends StatelessWidget {
               const SizedBox(height: 8),
               if (orderType != 'delivery' && cartItems.isNotEmpty) ...[
                 Row(children: [
-                  Icon(Icons.restaurant, size: 18),
+                  const Icon(Icons.restaurant, size: 18),
                   const SizedBox(width: 6),
                   Text(cartItems.first.restaurantName,
                       style: Theme.of(context)
@@ -1085,7 +1087,7 @@ class _ReviewStep extends StatelessWidget {
                           ?.copyWith(fontWeight: FontWeight.bold)),
                 ]),
                 Row(children: [
-                  Icon(Icons.location_on_outlined, size: 18),
+                  const Icon(Icons.location_on_outlined, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                       child: Text(address,
@@ -1093,7 +1095,7 @@ class _ReviewStep extends StatelessWidget {
                 ]),
               ],
               Row(children: [
-                Icon(Icons.phone, size: 18),
+                const Icon(Icons.phone, size: 18),
                 const SizedBox(width: 6),
                 Expanded(
                     child: Text(phone,
@@ -1101,7 +1103,7 @@ class _ReviewStep extends StatelessWidget {
               ]),
               if (email.isNotEmpty)
                 Row(children: [
-                  Icon(Icons.email_outlined, size: 18),
+                  const Icon(Icons.email_outlined, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                       child: Text(email,
@@ -1109,7 +1111,7 @@ class _ReviewStep extends StatelessWidget {
                 ]),
               if (instructions.isNotEmpty)
                 Row(children: [
-                  Icon(Icons.note_alt_outlined, size: 18),
+                  const Icon(Icons.note_alt_outlined, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                       child: Text(instructions,
@@ -1117,7 +1119,7 @@ class _ReviewStep extends StatelessWidget {
                 ]),
               if (tip.isNotEmpty)
                 Row(children: [
-                  Icon(Icons.attach_money, size: 18),
+                  const Icon(Icons.attach_money, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                       child: Text('Tip: $tip',
@@ -1251,7 +1253,6 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
 
   @override
   Widget build(BuildContext context) {
-    print('PayLaterDialog build, step=$step');
     final cartTotal = widget.cartTotal;
     final cartItems = widget.cartItems;
     final cartProvider = widget.cartProvider;
@@ -1300,9 +1301,7 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                       _StepperCircle(
                           isActive: step == 1,
                           icon: Icons.check_circle,
-                          label: 'Review',
-                          isValid: false,
-                          isInvalid: false),
+                          label: 'Review'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1329,29 +1328,20 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                               final defaultAddress =
                                   addressProvider.defaultAddress;
                               if (val == 'delivery') {
-                                print('AddressProvider defaultAddress: ' +
-                                    defaultAddress.toString());
                                 final user = authProvider.user;
                                 if (defaultAddress != null &&
                                     defaultAddress.fullAddress.isNotEmpty) {
                                   addressController.text =
                                       defaultAddress.fullAddress;
-                                  print('Autofilling with default address: ' +
-                                      defaultAddress.fullAddress);
                                 } else if (user != null &&
                                     (user.address?.isNotEmpty ?? false)) {
                                   addressController.text = user.address ?? '';
-                                  print('Autofilling with user.address: ' +
-                                      (user.address ?? ''));
                                 } else {
                                   addressController.text = '';
-                                  print('No default address found.');
                                 }
                               } else {
                                 if (widget.cartItems.isNotEmpty) {
                                   final firstItem = widget.cartItems.first;
-                                  print('restaurantAddress: ' +
-                                      firstItem.restaurantAddress);
                                   addressController.text =
                                       firstItem.restaurantAddress;
                                 } else {
@@ -1413,7 +1403,6 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                   valid = false;
                                 }
                                 if (valid) {
-                                  print('Advancing to review step');
                                   setState(() {
                                     orderStepCompleted = true;
                                     step++;
@@ -1483,8 +1472,11 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                           dietaryInfo:
                                               _collectDietaryInfo(cartItems),
                                         );
+                                        if (!context.mounted) return;
                                         cartProvider.clearCart();
+                                        if (!context.mounted) return;
                                         Navigator.pop(context);
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(parentContext)
                                             .showSnackBar(
                                           const SnackBar(
@@ -1672,9 +1664,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
                       _StepperCircle(
                           isActive: step == 2,
                           icon: Icons.check_circle,
-                          label: 'Review',
-                          isValid: false,
-                          isInvalid: false),
+                          label: 'Review'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1701,29 +1691,20 @@ class _PayNowDialogState extends State<PayNowDialog> {
                               final defaultAddress =
                                   addressProvider.defaultAddress;
                               if (val == 'delivery') {
-                                print('AddressProvider defaultAddress: ' +
-                                    defaultAddress.toString());
                                 final user = authProvider.user;
                                 if (defaultAddress != null &&
                                     defaultAddress.fullAddress.isNotEmpty) {
                                   addressController.text =
                                       defaultAddress.fullAddress;
-                                  print('Autofilling with default address: ' +
-                                      defaultAddress.fullAddress);
                                 } else if (user != null &&
                                     (user.address?.isNotEmpty ?? false)) {
                                   addressController.text = user.address ?? '';
-                                  print('Autofilling with user.address: ' +
-                                      (user.address ?? ''));
                                 } else {
                                   addressController.text = '';
-                                  print('No default address found.');
                                 }
                               } else {
                                 if (widget.cartItems.isNotEmpty) {
                                   final firstItem = widget.cartItems.first;
-                                  print('restaurantAddress: ' +
-                                      firstItem.restaurantAddress);
                                   addressController.text =
                                       firstItem.restaurantAddress;
                                 } else {
@@ -1921,8 +1902,11 @@ class _PayNowDialogState extends State<PayNowDialog> {
                                           dietaryInfo:
                                               _collectDietaryInfo(cartItems),
                                         );
+                                        if (!context.mounted) return;
                                         cartProvider.clearCart();
+                                        if (!context.mounted) return;
                                         Navigator.pop(context);
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(parentContext)
                                             .showSnackBar(
                                           const SnackBar(

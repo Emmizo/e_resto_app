@@ -1,20 +1,22 @@
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:dio/dio.dart';
-import '../../../restaurant/data/models/restaurant_model.dart';
-import 'dart:async';
-import 'package:carousel_slider/carousel_slider.dart';
-import '../../../../core/providers/connectivity_provider.dart';
-import '../../../../core/services/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:e_resta_app/core/services/action_queue_helper.dart';
-import 'package:e_resta_app/core/providers/action_queue_provider.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
-import 'dart:io';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/providers/action_queue_provider.dart';
+import '../../../../core/providers/connectivity_provider.dart';
+import '../../../../core/services/action_queue_helper.dart';
+import '../../../../core/services/database_helper.dart';
+import '../../../../core/services/dio_service.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
+import '../../../restaurant/data/models/restaurant_model.dart';
+import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 
 class CuisineCategory {
   final int? id; // null for 'All'
@@ -77,7 +79,7 @@ class HomeScreenState extends State<HomeScreen>
   List<RestaurantModel> _filteredRestaurants = [];
   bool _isRestaurantLoading = true;
   String? _restaurantError;
-  List<CuisineCategory> _categories = [CuisineCategory(id: null, name: 'All')];
+  List<CuisineCategory> _categories = [CuisineCategory(name: 'All')];
   final Set<int> _favoriteLoading = {};
   double? _userLat;
   double? _userLng;
@@ -158,10 +160,7 @@ class HomeScreenState extends State<HomeScreen>
       await batch.commit(noResult: true);
 
       setState(() {
-        _categories = [
-          CuisineCategory(id: null, name: 'All'),
-          ...cuisineCategories
-        ];
+        _categories = [CuisineCategory(name: 'All'), ...cuisineCategories];
         _tabController?.dispose();
         _tabController = TabController(length: _categories.length, vsync: this);
         _tabController?.addListener(() {
@@ -181,8 +180,9 @@ class HomeScreenState extends State<HomeScreen>
             .map((m) =>
                 CuisineCategory(id: m['id'] as int?, name: m['name'] as String))
             .toList();
+        if (!mounted) return;
         setState(() {
-          _categories = [CuisineCategory(id: null, name: 'All'), ...cached];
+          _categories = [CuisineCategory(name: 'All'), ...cached];
         });
         _tabController?.dispose();
         _tabController = TabController(length: _categories.length, vsync: this);
@@ -244,6 +244,7 @@ class HomeScreenState extends State<HomeScreen>
 
       if (restaurants.isEmpty) {
       } else {}
+      if (!mounted) return;
       setState(() {
         this.restaurants = restaurants;
         _filteredRestaurants = restaurants;
@@ -251,6 +252,7 @@ class HomeScreenState extends State<HomeScreen>
       });
       _applyFiltersAndSearch();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isRestaurantLoading = false;
         _restaurantError = e.toString();
@@ -270,7 +272,7 @@ class HomeScreenState extends State<HomeScreen>
               final cuisineName = _categories
                   .firstWhere(
                     (cat) => cat.id == restaurant.cuisineId,
-                    orElse: () => CuisineCategory(id: null, name: ''),
+                    orElse: () => CuisineCategory(name: ''),
                   )
                   .name;
               return restaurant.name
@@ -283,8 +285,8 @@ class HomeScreenState extends State<HomeScreen>
             }).toList();
       // Always sort filtered list by distance
       _filteredRestaurants.sort((a, b) {
-        double aDist = _distanceTo(a) ?? double.infinity;
-        double bDist = _distanceTo(b) ?? double.infinity;
+        final double aDist = _distanceTo(a) ?? double.infinity;
+        final double bDist = _distanceTo(b) ?? double.infinity;
         return aDist.compareTo(bDist);
       });
 
@@ -296,8 +298,8 @@ class HomeScreenState extends State<HomeScreen>
             .toList();
         // Sort again after category filter
         _filteredRestaurants.sort((a, b) {
-          double aDist = _distanceTo(a) ?? double.infinity;
-          double bDist = _distanceTo(b) ?? double.infinity;
+          final double aDist = _distanceTo(a) ?? double.infinity;
+          final double bDist = _distanceTo(b) ?? double.infinity;
           return aDist.compareTo(bDist);
         });
       }
@@ -306,8 +308,11 @@ class HomeScreenState extends State<HomeScreen>
 
   Future<void> _getUserLocationAndSort() async {
     try {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+      final Position position = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      if (!mounted) return;
       setState(() {
         _userLat = position.latitude;
         _userLng = position.longitude;
@@ -315,19 +320,18 @@ class HomeScreenState extends State<HomeScreen>
       _sortRestaurantsByDistance();
     } catch (e) {
       // If location fails, just use the original order
-      debugPrint('Failed to get user location: $e');
     }
   }
 
   void _sortRestaurantsByDistance() {
     if (_userLat == null || _userLng == null) return;
     restaurants.sort((a, b) {
-      double aDist = Geolocator.distanceBetween(
+      final double aDist = Geolocator.distanceBetween(
           _userLat!,
           _userLng!,
           double.tryParse(a.latitude) ?? 0.0,
           double.tryParse(a.longitude) ?? 0.0);
-      double bDist = Geolocator.distanceBetween(
+      final double bDist = Geolocator.distanceBetween(
           _userLat!,
           _userLng!,
           double.tryParse(b.latitude) ?? 0.0,
@@ -350,7 +354,7 @@ class HomeScreenState extends State<HomeScreen>
     final lng = double.tryParse(restaurant.longitude);
     if (lat == null || lng == null) return null;
     // Ignore (0,0) coordinates
-    if ((lat == 0.0 && lng == 0.0)) return null;
+    if (lat == 0.0 && lng == 0.0) return null;
     return Geolocator.distanceBetween(
       _userLat!,
       _userLng!,
@@ -476,7 +480,7 @@ class HomeScreenState extends State<HomeScreen>
             conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);
-
+      if (!mounted) return;
       setState(() {
         _promoBanners = banners;
         _isPromoLoading = false;
@@ -499,11 +503,13 @@ class HomeScreenState extends State<HomeScreen>
                   restaurantName: m['restaurantName'] as String,
                 ))
             .toList();
+        if (!mounted) return;
         setState(() {
           _promoBanners = cached;
           _isPromoLoading = false;
         });
       } catch (e2) {
+        if (!mounted) return;
         setState(() => _isPromoLoading = false);
       }
     }
@@ -513,14 +519,14 @@ class HomeScreenState extends State<HomeScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Location Permission'),
+        title: const Text('Location Permission'),
         content: Text(permanently
             ? 'Location permission is permanently denied. Please enable it in Settings to use location features.'
             : 'Location permission is required to show nearby restaurants.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
           if (permanently)
             TextButton(
@@ -528,7 +534,7 @@ class HomeScreenState extends State<HomeScreen>
                 Geolocator.openAppSettings();
                 Navigator.pop(context);
               },
-              child: Text('Open Settings'),
+              child: const Text('Open Settings'),
             ),
         ],
       ),
@@ -541,7 +547,7 @@ class HomeScreenState extends State<HomeScreen>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
           children: [
             // Top Bar
             Padding(
@@ -557,8 +563,7 @@ class HomeScreenState extends State<HomeScreen>
                   filled: true,
                   fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
                       Theme.of(context).cardColor,
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -578,7 +583,7 @@ class HomeScreenState extends State<HomeScreen>
             const SizedBox(height: 20),
             // Promo Banner
             if (_isPromoLoading)
-              SizedBox(
+              const SizedBox(
                 height: 140,
                 child: Center(child: CircularProgressIndicator()),
               )
@@ -606,7 +611,6 @@ class HomeScreenState extends State<HomeScreen>
                       latitude: '',
                       phoneNumber: '',
                       email: '',
-                      website: null,
                       openingHours: '',
                       cuisineId: null,
                       priceRange: '',
@@ -654,7 +658,6 @@ class HomeScreenState extends State<HomeScreen>
                         latitude: '',
                         phoneNumber: '',
                         email: '',
-                        website: null,
                         openingHours: '',
                         cuisineId: null,
                         priceRange: '',
@@ -708,7 +711,7 @@ class HomeScreenState extends State<HomeScreen>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.black.withOpacity(0.85),
+                                    Colors.black.withValues(alpha: 0.85),
                                     Colors.transparent
                                   ],
                                   begin: Alignment.bottomCenter,
@@ -727,57 +730,52 @@ class HomeScreenState extends State<HomeScreen>
                               children: [
                                 Text(
                                   banner.title,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                     shadows: [
                                       Shadow(
-                                          blurRadius: 6,
-                                          color: Colors.black,
-                                          offset: Offset(0, 2))
+                                          blurRadius: 6, offset: Offset(0, 2))
                                     ],
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Flexible(
                                   child: Text(
                                     banner.description,
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.92),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.92),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w400,
                                       shadows: [
-                                        Shadow(
-                                            blurRadius: 6,
-                                            color: Colors.black,
-                                            offset: Offset(0, 2))
+                                        const Shadow(
+                                            blurRadius: 6, offset: Offset(0, 2))
                                       ],
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   banner.restaurantName,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     shadows: [
                                       Shadow(
-                                          blurRadius: 6,
-                                          color: Colors.black,
-                                          offset: Offset(0, 2))
+                                          blurRadius: 6, offset: Offset(0, 2))
                                     ],
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 Align(
                                   alignment: Alignment.bottomRight,
                                   child: ElevatedButton(
@@ -848,7 +846,7 @@ class HomeScreenState extends State<HomeScreen>
                     child: Column(
                       children: [
                         AnimatedContainer(
-                          duration: Duration(milliseconds: 200),
+                          duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? Theme.of(context).colorScheme.primary
@@ -860,9 +858,9 @@ class HomeScreenState extends State<HomeScreen>
                                       color: Theme.of(context)
                                           .colorScheme
                                           .primary
-                                          .withOpacity(0.18),
+                                          .withValues(alpha: 0.18),
                                       blurRadius: 8,
-                                      offset: Offset(0, 2),
+                                      offset: const Offset(0, 2),
                                     ),
                                   ]
                                 : [],
@@ -928,7 +926,7 @@ class HomeScreenState extends State<HomeScreen>
                           }
                         : () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                   content: Text(
                                       'No internet connection. Please try again later.')),
                             );
@@ -1074,7 +1072,6 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
     final onFavoriteToggle = widget.onFavoriteToggle;
     final distance = _distanceToUser(context, restaurant);
     // Debug print for distance
-    print('Distance for \\${restaurant.name}: \\${distance}');
 
     return GestureDetector(
       onTapDown: _onTapDown,
@@ -1168,7 +1165,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                           color: distance != null ? Colors.green : Colors.grey,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
-                            BoxShadow(
+                            const BoxShadow(
                               color: Colors.black26,
                               blurRadius: 4,
                               offset: Offset(0, 2),
@@ -1181,7 +1178,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                                   ? '${distance.toStringAsFixed(0)} m'
                                   : '${(distance / 1000).toStringAsFixed(2)} km')
                               : 'N/A',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
@@ -1200,7 +1197,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                           color: Colors.amber[700],
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(
+                            const BoxShadow(
                               color: Colors.black26,
                               blurRadius: 4,
                               offset: Offset(0, 2),
@@ -1209,11 +1206,12 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.star, color: Colors.white, size: 13),
-                            SizedBox(width: 2),
+                            const Icon(Icons.star,
+                                color: Colors.white, size: 13),
+                            const SizedBox(width: 2),
                             Text(
                               restaurant.averageRating.toStringAsFixed(1),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11,
@@ -1253,8 +1251,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                         (categories
                             .firstWhere(
                               (cat) => cat.id == restaurant.cuisineId,
-                              orElse: () =>
-                                  CuisineCategory(id: null, name: 'Unknown'),
+                              orElse: () => CuisineCategory(name: 'Unknown'),
                             )
                             .name),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1295,7 +1292,7 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
                       tooltip:
                           restaurant.isFavorite ? 'Unfavorite' : 'Favorite',
                       padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
@@ -1311,11 +1308,13 @@ class _ApiRestaurantCardState extends State<_ApiRestaurantCard> {
     final homeState = context.findAncestorStateOfType<HomeScreenState>();
     if (homeState == null ||
         homeState._userLat == null ||
-        homeState._userLng == null) return null;
+        homeState._userLng == null) {
+      return null;
+    }
     final lat = double.tryParse(restaurant.latitude);
     final lng = double.tryParse(restaurant.longitude);
     if (lat == null || lng == null) return null;
-    if ((lat == 0.0 && lng == 0.0)) return null;
+    if (lat == 0.0 && lng == 0.0) return null;
     return Geolocator.distanceBetween(
       homeState._userLat!,
       homeState._userLng!,
@@ -1350,7 +1349,7 @@ class AllRestaurantsScreen extends StatelessWidget {
           final restaurant = restaurants[index];
           final cuisine = categories.firstWhere(
             (cat) => cat.id == restaurant.cuisineId,
-            orElse: () => CuisineCategory(id: null, name: 'Unknown'),
+            orElse: () => CuisineCategory(name: 'Unknown'),
           );
           return Card(
             elevation: 3,

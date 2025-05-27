@@ -14,8 +14,8 @@ class ErrorStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String displayMessage = message ?? 'Something went wrong';
-    String codeText = code != null ? 'Error $code' : 'Error';
+    final String displayMessage = message ?? 'Something went wrong';
+    final String codeText = code != null ? 'Error $code' : 'Error';
 
     return Center(
       child: Padding(

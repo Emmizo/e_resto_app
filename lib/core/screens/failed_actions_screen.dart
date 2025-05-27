@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:e_resta_app/core/services/database_helper.dart';
+import '../services/database_helper.dart';
 
 class FailedActionsScreen extends StatefulWidget {
   const FailedActionsScreen({super.key});

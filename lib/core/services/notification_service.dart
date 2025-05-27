@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../features/restaurant/data/models/restaurant_model.dart';
-import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:flutter/material.dart';
+import '../constants/api_endpoints.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -71,11 +71,7 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+        DarwinInitializationSettings();
     const InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
@@ -141,7 +137,7 @@ class NotificationService {
       while (token == null && fcmAttempts < 3) {
         try {
           token = await _firebaseMessaging.getToken();
-          print('FCM Token: ' + (token ?? 'null'));
+          // print('FCM Token: ${token ?? 'null'}');
           if (token == null) {
             await Future.delayed(const Duration(seconds: 2));
             fcmAttempts++;
@@ -210,28 +206,25 @@ class NotificationService {
   }) async {
     final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     const String sound = 'notification_sound';
-    final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'smart_task_channel',
       'Smart Task Notifications',
       importance: Importance.max,
       priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
       enableLights: true,
-      color: const Color.fromARGB(255, 255, 0, 0),
-      ledColor: const Color.fromARGB(255, 255, 0, 0),
+      color: Color.fromARGB(255, 255, 0, 0),
+      ledColor: Color.fromARGB(255, 255, 0, 0),
       ledOnMs: 1000,
       ledOffMs: 500,
-      playSound: true,
       sound: RawResourceAndroidNotificationSound(sound),
     );
-    final iOSPlatformChannelSpecifics = DarwinNotificationDetails(
+    const iOSPlatformChannelSpecifics = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
       sound: 'default',
     );
-    final platformChannelSpecifics = NotificationDetails(
+    const platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: iOSPlatformChannelSpecifics,
     );

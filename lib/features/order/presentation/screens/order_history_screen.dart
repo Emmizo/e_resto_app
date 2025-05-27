@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/providers/cart_provider.dart';
+import '../../../../core/services/dio_service.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../order/data/models/order_model.dart';
-import '../../../../core/constants/api_endpoints.dart';
-import 'package:e_resta_app/core/providers/cart_provider.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
-import 'dart:io';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -46,6 +48,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       final orders = (response.data['data'] as List)
           .map((json) => OrderModel.fromJson(json))
           .toList();
+      orders.sort((a, b) {
+        final aCancelled = a.status.toLowerCase() == 'cancelled';
+        final bCancelled = b.status.toLowerCase() == 'cancelled';
+        if (aCancelled == bCancelled) return 0;
+        if (aCancelled) return 1;
+        return -1;
+      });
       setState(() {
         _orders = orders;
         _isLoading = false;
@@ -119,8 +128,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Row(
                       children: [
-                        Icon(Icons.note_alt_outlined, size: 18),
-                        SizedBox(width: 6),
+                        const Icon(Icons.note_alt_outlined, size: 18),
+                        const SizedBox(width: 6),
                         Expanded(
                             child:
                                 Text(order.toJson()['special_instructions'])),
@@ -360,12 +369,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         final order = _orders[index];
                         final isCompleted =
                             order.status.toLowerCase() == 'completed';
+                        final isCancelled =
+                            order.status.toLowerCase() == 'cancelled';
                         return Card(
                           elevation: isCompleted ? 2 : 1,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
-                          color: isCompleted ? Colors.green[50] : Colors.white,
+                          color: isCompleted
+                              ? Colors.green[50]
+                              : isCancelled
+                                  ? Colors.grey[200]
+                                  : Colors.white,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(18),
                             onTap: () => _showOrderDetails(order),
@@ -413,17 +428,29 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              order.restaurant.name,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 17,
-                                                  ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  order.restaurant.name,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 17,
+                                                      ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                if (isCancelled) ...[
+                                                  const SizedBox(width: 6),
+                                                  const Icon(Icons.cancel,
+                                                      color: Colors.red,
+                                                      size: 20),
+                                                ]
+                                              ],
                                             ),
                                             const SizedBox(height: 4),
                                             Row(

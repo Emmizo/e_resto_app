@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:e_resta_app/core/services/database_helper.dart';
+import 'database_helper.dart';
 
 class ActionQueueHelper {
   static Future<void> queueAction({

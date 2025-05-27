@@ -9,7 +9,6 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: Color(0xFF184C55),
         secondary: Color(0xFFFFFFFF),
-        surface: Colors.white,
         error: Colors.red,
       ),
       textTheme: GoogleFonts.poppinsTextTheme(),
@@ -58,8 +57,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: Color(0xFF184C55),
-        secondary: Color(0xFFFFFFFF),
+        primary: const Color(0xFF184C55),
+        secondary: const Color(0xFFFFFFFF),
         surface: Colors.grey[900]!,
         error: Colors.redAccent,
       ),
@@ -68,7 +67,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         backgroundColor: Colors.grey[900],
-        foregroundColor: Color(0xFFFFFFFF),
+        foregroundColor: const Color(0xFFFFFFFF),
       ),
       cardTheme: CardThemeData(
         elevation: 2,

@@ -1,13 +1,15 @@
-import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' as latlong2;
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:latlong2/latlong.dart' as latlong2;
+
+import '../../../home/presentation/screens/home_screen.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 import 'route_map_screen.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
-import 'dart:io';
 
 String fixImageUrl(String url) {
   if (Platform.isAndroid) {
@@ -85,7 +87,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _initUserLocation() async {
     try {
-      Position position = await Geolocator.getCurrentPosition(
+      final Position position = await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
       );
@@ -143,7 +145,7 @@ class _MapScreenState extends State<MapScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Color(0xFF184C55),
+                        color: const Color(0xFF184C55),
                         width: 4,
                       ),
                     ),
@@ -156,7 +158,8 @@ class _MapScreenState extends State<MapScreen> {
                           : null,
                       child: (restaurant.image == null ||
                               restaurant.image!.isEmpty)
-                          ? Icon(Icons.restaurant, color: Colors.teal, size: 24)
+                          ? const Icon(Icons.restaurant,
+                              color: Colors.teal, size: 24)
                           : null,
                     ),
                   ),
@@ -190,23 +193,23 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _showDistanceInfo(RestaurantModel restaurant) async {
     if (!mounted) return;
     try {
-      Position position = await Geolocator.getCurrentPosition(
+      final Position position = await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
       );
       if (!mounted) return;
 
-      double userLat = position.latitude;
-      double userLng = position.longitude;
-      double restLat = double.tryParse(restaurant.latitude) ?? 0.0;
-      double restLng = double.tryParse(restaurant.longitude) ?? 0.0;
-      double distanceMeters =
+      final double userLat = position.latitude;
+      final double userLng = position.longitude;
+      final double restLat = double.tryParse(restaurant.latitude) ?? 0.0;
+      final double restLng = double.tryParse(restaurant.longitude) ?? 0.0;
+      final double distanceMeters =
           Geolocator.distanceBetween(userLat, userLng, restLat, restLng);
-      double distanceKm = distanceMeters / 1000.0;
+      final double distanceKm = distanceMeters / 1000.0;
       // Walking: ~5 km/h (divide meters by 83.33 for minutes)
-      int walkingMinutes = (distanceMeters / 83.33).round();
+      final int walkingMinutes = (distanceMeters / 83.33).round();
       // Driving: ~40 km/h (divide meters by 666.67 for minutes)
-      int drivingMinutes = (distanceMeters / 666.67).round();
+      final int drivingMinutes = (distanceMeters / 666.67).round();
 
       if (!mounted) return;
       showModalBottomSheet(
@@ -291,11 +294,11 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Divider(),
+              const Divider(),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.place, color: Colors.teal, size: 20),
+                  const Icon(Icons.place, color: Colors.teal, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Distance: ${distanceKm.toStringAsFixed(2)} km (${distanceMeters.toStringAsFixed(0)} m)',
@@ -306,7 +309,8 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.directions_walk, color: Colors.orange, size: 20),
+                  const Icon(Icons.directions_walk,
+                      color: Colors.orange, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Estimated walking: $walkingMinutes min',
@@ -317,7 +321,8 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.directions_car, color: Colors.blue, size: 20),
+                  const Icon(Icons.directions_car,
+                      color: Colors.blue, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Estimated driving: $drivingMinutes min',
@@ -384,7 +389,8 @@ class _MapScreenState extends State<MapScreen> {
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('User location not available.')),
+                        const SnackBar(
+                            content: Text('User location not available.')),
                       );
                     }
                   },
@@ -401,8 +407,8 @@ class _MapScreenState extends State<MapScreen> {
     } catch (e) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
+        builder: (context) => const AlertDialog(
+          title: Text('Error'),
           content: Text('Could not get location or calculate distance.'),
         ),
       );
@@ -425,9 +431,6 @@ class _MapScreenState extends State<MapScreen> {
             options: MapOptions(
               initialCenter: initialLatLng,
               initialZoom: _currentZoom,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all,
-              ),
               onPositionChanged: (pos, hasGesture) {
                 setState(() {
                   _currentZoom = pos.zoom;
@@ -465,13 +468,12 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                     child: TextField(
                       controller: _searchController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Search here...',
                         prefixIcon:
                             Icon(Icons.search, color: Color(0xFF184C55)),
                         border: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 16),
+                        contentPadding: EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),
@@ -579,7 +581,7 @@ class _BlinkingMarkerState extends State<_BlinkingMarker>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.red.withOpacity(_animation.value),
+                color: Colors.red.withValues(alpha: _animation.value),
                 width: 5,
               ),
             ),
@@ -591,7 +593,7 @@ class _BlinkingMarkerState extends State<_BlinkingMarker>
                       ? NetworkImage(fixImageUrl(restaurant.image!))
                       : null,
               child: (restaurant.image == null || restaurant.image!.isEmpty)
-                  ? Icon(Icons.restaurant, color: Colors.teal, size: 24)
+                  ? const Icon(Icons.restaurant, color: Colors.teal, size: 24)
                   : null,
             ),
           ),

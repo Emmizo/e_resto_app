@@ -1,9 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'address_remote_datasource.dart';
-import '../presentation/screens/saved_addresses_screen.dart';
+
 import '../../auth/domain/providers/auth_provider.dart';
-import 'package:dio/dio.dart';
+import '../presentation/screens/saved_addresses_screen.dart';
+import 'address_remote_datasource.dart';
 
 class AddressProvider extends ChangeNotifier {
   List<Address> _addresses = [];
@@ -89,7 +90,7 @@ class AddressProvider extends ChangeNotifier {
 
 extension FirstWhereOrNullExtension<E> on Iterable<E> {
   E? firstWhereOrNull(bool Function(E) test) {
-    for (var element in this) {
+    for (final element in this) {
       if (test(element)) return element;
     }
     return null;

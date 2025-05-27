@@ -1,8 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -57,7 +58,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Password changed successfully!'),
+          content: const Text('Password changed successfully!'),
           backgroundColor: Colors.green.withValues(alpha: 0.7),
         ),
       );
@@ -128,7 +129,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   hintText: 'Current password',
                   hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                   contentPadding:
-                      EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
               ),
               const SizedBox(height: 24),
@@ -160,7 +161,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   hintText: 'New password',
                   hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                   contentPadding:
-                      EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
               ),
               const SizedBox(height: 24),
@@ -194,7 +195,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   hintText: 'Confirm new password',
                   hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                   contentPadding:
-                      EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
               ),
               const SizedBox(height: 32),
@@ -207,11 +208,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                 ),
               if (_success)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
                   child: Text(
                     'Password changed successfully!',
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Colors.green, fontWeight: FontWeight.bold),
                   ),
                 ),

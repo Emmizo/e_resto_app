@@ -1,21 +1,22 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../map/presentation/screens/map_screen.dart';
-import '../../../profile/presentation/screens/profile_screen.dart';
-import '../../../cart/presentation/screens/cart_screen.dart';
-import '../../../../core/providers/cart_provider.dart';
-import 'home_screen.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
-import 'package:e_resta_app/features/profile/presentation/screens/favorite_tab_screen.dart';
-import 'dart:ui';
+
+import '../../../../core/providers/cart_provider.dart';
 import '../../../../core/providers/connectivity_provider.dart';
-import 'package:e_resta_app/core/providers/action_queue_provider.dart';
-import 'package:e_resta_app/core/screens/failed_actions_screen.dart';
-import 'package:e_resta_app/core/providers/theme_provider.dart';
-import 'package:e_resta_app/features/order/presentation/screens/order_history_screen.dart';
-import 'package:e_resta_app/features/reservation/presentation/screens/my_reservations_screen.dart';
+import '../../../../core/providers/theme_provider.dart';
+import '../../../../core/screens/failed_actions_screen.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../cart/presentation/screens/cart_screen.dart';
+import '../../../map/presentation/screens/map_screen.dart';
+import '../../../order/presentation/screens/order_history_screen.dart';
+import '../../../profile/presentation/screens/favorite_tab_screen.dart';
+import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../reservation/presentation/screens/my_reservations_screen.dart';
+import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -160,7 +161,7 @@ class _MainScreenState extends State<MainScreen> {
                                   ? NetworkImage(profilePic)
                                   : null,
                           child: (profilePic == null || profilePic.isEmpty)
-                              ? Icon(Icons.person, color: Colors.grey, size: 22)
+                              ? const Icon(Icons.person, color: Colors.grey, size: 22)
                               : null,
                         ),
                       ),
@@ -211,9 +212,9 @@ class _MainScreenState extends State<MainScreen> {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Notifications'),
-                      content: const Text('No new notifications.'),
+                    builder: (context) => const AlertDialog(
+                      title: Text('Notifications'),
+                      content: Text('No new notifications.'),
                     ),
                   );
                 },
@@ -239,7 +240,7 @@ class _MainScreenState extends State<MainScreen> {
                     builder: (context, authProvider, _) {
                       final user = authProvider.user;
                       final name = user != null
-                          ? ('${user.firstName} ${user.lastName}')
+                          ? '${user.firstName} ${user.lastName}'
                           : 'Guest';
                       final email = user?.email ?? '';
                       final profilePic = user?.profilePicture;
@@ -475,7 +476,7 @@ class _MainScreenState extends State<MainScreen> {
                             : Icons.light_mode,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      title: Text('Dark Mode'),
+                      title: const Text('Dark Mode'),
                       value: themeProvider.themeMode == ThemeMode.dark,
                       onChanged: (val) => themeProvider.toggleTheme(),
                     ),
@@ -592,7 +593,6 @@ class _MainScreenState extends State<MainScreen> {
             left: 0,
             right: 0,
             child: SafeArea(
-              top: true,
               bottom: false,
               child: Material(
                 color: Colors.transparent,
@@ -615,14 +615,12 @@ class _MainScreenState extends State<MainScreen> {
                     ],
                   ),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.wifi_off, color: Colors.white, size: 32),
+                      const Icon(Icons.wifi_off, color: Colors.white, size: 32),
                       const SizedBox(width: 18),
                       Expanded(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
                               'No Internet Connection',
@@ -757,7 +755,7 @@ class _ModernListTile extends StatelessWidget {
                   ? Icon(trailing, size: 18, color: Colors.grey[400])
                   : null,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  const EdgeInsets.symmetric(horizontal: 8),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
               minLeadingWidth: 0,

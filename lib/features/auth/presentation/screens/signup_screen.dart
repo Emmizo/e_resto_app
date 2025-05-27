@@ -1,7 +1,9 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../domain/providers/auth_provider.dart';
+
 import '../../../home/presentation/screens/main_screen.dart';
+import '../../domain/providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -29,17 +31,26 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await FirebaseMessaging.instance.requestPermission();
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      fcmToken = null;
+    }
+    if (!mounted) return;
     final success = await authProvider.signup(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
+      fcmToken: fcmToken,
     );
+    if (!mounted) return;
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (context) => const MainScreen(initialIndex: 0)),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +90,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       padding: const EdgeInsets.only(
                           top: 80, left: 32, right: 32, bottom: 120),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Image.asset(
                             'assets/images/logo.png',
@@ -88,7 +98,6 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           const SizedBox(width: 16),
                           Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 'The Resto',

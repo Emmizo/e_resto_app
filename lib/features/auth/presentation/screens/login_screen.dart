@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
-import 'forgot_password_screen.dart';
-import 'package:provider/provider.dart';
-import '../../domain/providers/auth_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import '../../../home/presentation/screens/main_screen.dart';
-import 'package:e_resta_app/core/services/biometrics_service.dart';
+import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../core/services/biometrics_service.dart';
+import '../../../home/presentation/screens/main_screen.dart';
+import '../../domain/providers/auth_provider.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -95,15 +96,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-              builder: (context) => const MainScreen(initialIndex: 0)),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.error ?? 'Login failed'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -119,8 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-              builder: (context) => const MainScreen(initialIndex: 0)),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +149,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.only(
                     top: 80, left: 32, right: 32, bottom: 130),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Image.asset(
                       'assets/images/logo.png',
@@ -159,7 +157,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(width: 16),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           'The Resto',
@@ -360,13 +357,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 48,
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              bool authenticated =
+                              final bool authenticated =
                                   await _biometricsService.authenticate();
                               if (authenticated) {
                                 _submit();
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                       content: Text(
                                           'Biometric authentication failed or unavailable.')),
                                 );
@@ -375,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             icon: Icon(getBiometricIcon(), size: 24),
                             label: Text(
                               getBiometricLabel(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 18),
                             ),
                             style: ElevatedButton.styleFrom(

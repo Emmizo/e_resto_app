@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:provider/provider.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
-import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/services/dio_service.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
+import '../../../home/presentation/screens/main_screen.dart';
 
 class FavoriteMenuItemsScreen extends StatefulWidget {
   const FavoriteMenuItemsScreen({super.key});
@@ -51,7 +53,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Favorite menu items loaded successfully!'),
+          content: const Text('Favorite menu items loaded successfully!'),
           backgroundColor: Colors.green.withValues(alpha: 0.7),
         ),
       );
@@ -134,7 +136,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const MainScreen(initialIndex: 0),
+                    builder: (context) => const MainScreen(),
                   ),
                   (route) => false,
                 );

@@ -1,7 +1,8 @@
-import 'package:e_resta_app/core/providers/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../core/providers/theme_provider.dart';
 
 class PaymentMethodsScreen extends StatelessWidget {
   const PaymentMethodsScreen({super.key});
@@ -101,7 +102,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                   method['type'] == 'Credit Card'
                       ? Icons.credit_card
                       : Icons.payment,
-                  color: Color(0xFF184C55),
+                  color: const Color(0xFF184C55),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -133,7 +134,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                       color: Colors.grey.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Default',
                       style: TextStyle(
                         color: Color(0xFF184C55),

@@ -8,6 +8,6 @@ Future<void> main() {
       ..features = [RegExp('test_driver/features/*.*')]
       ..stepDefinitions = steps
       ..restartAppBetweenScenarios = true
-      ..targetAppPath = "lib/main.dart",
+      ..targetAppPath = 'lib/main.dart',
   );
 }

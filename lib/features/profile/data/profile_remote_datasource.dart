@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
+import '../../../core/constants/api_endpoints.dart';
 
 class ProfileRemoteDatasource {
   final Dio dio;

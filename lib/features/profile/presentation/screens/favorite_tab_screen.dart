@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'favorite_menu_items_screen.dart';
+
 import '../../../restaurant/presentation/screens/favorite_restaurants_screen.dart';
+import 'favorite_menu_items_screen.dart';
 
 class FavoriteTabScreen extends StatefulWidget {
   const FavoriteTabScreen({super.key});

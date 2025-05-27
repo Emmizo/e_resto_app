@@ -55,7 +55,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 padding: const EdgeInsets.only(
                     top: 80, left: 32, right: 32, bottom: 120),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Image.asset(
                       'assets/images/logo.png',
@@ -64,7 +63,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     const SizedBox(width: 16),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           'The Resto',
@@ -157,7 +155,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               hintText: 'your email',
               hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
               contentPadding:
-                  EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             ),
           ),
           const SizedBox(height: 32),

@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import '../../features/auth/presentation/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/auth/domain/providers/auth_provider.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../main.dart';
 
 class DioService {
@@ -42,7 +42,7 @@ class SessionInterceptor extends Interceptor {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 48),
+                const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   'Session expired',

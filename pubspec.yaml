@@ -71,6 +71,7 @@ dependencies:
 
   path: any
   flutter_slidable: ^4.0.0
+  http: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -96,8 +97,9 @@ dev_dependencies:
   sqflite_common: any
   connectivity_plus_platform_interface: any
   geolocator_platform_interface: any
-  http: any
  
+  # flutter_driver: any  # Removed because it does not support null safety and Dart 3.8.0
+  plugin_platform_interface: any
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -108,7 +110,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
-    - assets/icons/
+    - assets/icons/google.png
+    - assets/icons/facebook.png
     - assets/animations/
 
   # An image asset can refer to one or more resolution-specific "variants", see

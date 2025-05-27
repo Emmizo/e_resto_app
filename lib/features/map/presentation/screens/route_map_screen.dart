@@ -47,10 +47,10 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
   }
 
   List<LatLng> _decodePolyline(String poly) {
-    var list = poly.codeUnits;
-    var lList = <double>[];
+    final list = poly.codeUnits;
+    final lList = <double>[];
     int index = 0;
-    int len = poly.length;
+    final int len = poly.length;
     int c = 0;
     do {
       var shift = 0;
@@ -64,10 +64,10 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
       if (result & 1 == 1) {
         result = ~result;
       }
-      var result1 = (result >> 1) * 0.00001;
+      final result1 = (result >> 1) * 0.00001;
       lList.add(result1);
     } while (index < len);
-    List<LatLng> positions = [];
+    final List<LatLng> positions = [];
     double lat = 0;
     double lng = 0;
     for (var i = 0; i < lList.length; i++) {
@@ -93,7 +93,7 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
         polylines: {
           if (_routePoints.isNotEmpty)
             Polyline(
-              polylineId: PolylineId('route'),
+              polylineId: const PolylineId('route'),
               points: _routePoints,
               color: Colors.blue,
               width: 5,
@@ -101,12 +101,12 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
         },
         markers: {
           Marker(
-            markerId: MarkerId('user'),
+            markerId: const MarkerId('user'),
             position: widget.userLocation,
-            infoWindow: InfoWindow(title: 'You'),
+            infoWindow: const InfoWindow(title: 'You'),
           ),
           Marker(
-            markerId: MarkerId('restaurant'),
+            markerId: const MarkerId('restaurant'),
             position: widget.restaurantLocation,
             infoWindow: InfoWindow(title: widget.restaurantName),
           ),

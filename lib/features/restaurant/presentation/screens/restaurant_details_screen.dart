@@ -1,19 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/providers/cart_provider.dart';
+import '../../../../core/services/dio_service.dart';
+import '../../../../core/utils/error_utils.dart';
+import '../../../../core/widgets/error_state_widget.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../cart/presentation/screens/cart_screen.dart';
+import '../../../home/presentation/screens/home_screen.dart';
 import '../../../reservation/presentation/screens/reservation_screen.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
-import 'package:dio/dio.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:e_resta_app/core/widgets/error_state_widget.dart';
-import 'package:e_resta_app/core/utils/error_utils.dart';
-import '../../../home/presentation/screens/home_screen.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
-import 'dart:convert';
-import 'dart:io';
 
 class RestaurantDetailsScreen extends StatefulWidget {
   final RestaurantModel restaurant;
@@ -59,7 +61,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   String getCuisineName(int? id) {
     final CuisineCategory cuisine = widget.cuisines.firstWhere(
       (c) => c.id == id,
-      orElse: () => CuisineCategory(id: null, name: 'Unknown'),
+      orElse: () => CuisineCategory(name: 'Unknown'),
     );
     return cuisine.name;
   }
@@ -176,7 +178,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
-                                  color: Color(0xFF184C55),
+                                  color: const Color(0xFF184C55),
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -397,8 +399,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         'rating': rating,
         'comment': comment,
       };
-      print('Submitting review:');
-      print(data);
       final response = await dio.post(
         '${ApiConfig.baseUrl}/reviews',
         data: data,
@@ -409,8 +409,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
           },
         ),
       );
-      print('Review submission response:');
-      print(response.data);
       if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(parentContext).showSnackBar(
@@ -419,11 +417,9 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
               backgroundColor: Colors.green),
         );
       } else {
-        throw Exception('Failed to submit review: \\${response.statusMessage}');
+        throw Exception('Failed to submit review: \${response.statusMessage}');
       }
     } catch (e) {
-      print('Review submission error:');
-      print(e);
       if (!mounted) return;
       final parsed = parseDioError(e);
       showDialog(
@@ -475,7 +471,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 top: MediaQuery.of(context).padding.top + 12,
                 left: 12,
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.4),
+                  backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
@@ -486,7 +482,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 top: MediaQuery.of(context).padding.top + 12,
                 right: 12,
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.4),
+                  backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
                     icon: const Icon(Icons.star, color: Colors.white),
                     onPressed: () => _showReviewDialog(context),
@@ -519,23 +515,24 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          Icon(Icons.local_dining,
+                          const Icon(Icons.local_dining,
                               color: Colors.orange, size: 20),
                           const SizedBox(width: 6),
                           Text(getCuisineName(restaurant.cuisineId),
                               style: Theme.of(context).textTheme.bodyMedium),
                           const SizedBox(width: 16),
-                          Icon(Icons.star, color: Colors.amber, size: 20),
+                          const Icon(Icons.star, color: Colors.amber, size: 20),
                           const SizedBox(width: 4),
                           Text(restaurant.averageRating.toStringAsFixed(1)),
                           const SizedBox(width: 16),
-                          Icon(Icons.timer, color: Colors.grey, size: 20),
+                          const Icon(Icons.timer, color: Colors.grey, size: 20),
                           const SizedBox(width: 4),
-                          Text(time),
+                          const Text(time),
                           const SizedBox(width: 16),
-                          Icon(Icons.location_on, color: Colors.grey, size: 20),
+                          const Icon(Icons.location_on,
+                              color: Colors.grey, size: 20),
                           const SizedBox(width: 4),
-                          Text(distance),
+                          const Text(distance),
                         ],
                       ),
                     ),
@@ -629,8 +626,9 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color:
-                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          color: Theme.of(context)
+                              .primaryColor
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -707,8 +705,9 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                           padding: const EdgeInsets.symmetric(
                               vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            color: Theme.of(context)
+                                .primaryColor
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -744,7 +743,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                                             ?.copyWith(
                                               color: Theme.of(context)
                                                   .primaryColor
-                                                  .withOpacity(0.8),
+                                                  .withValues(alpha: 0.8),
                                             ),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -759,7 +758,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context)
                                       .primaryColor
-                                      .withOpacity(0.2),
+                                      .withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -822,7 +821,6 @@ class _MenuItemCard extends StatefulWidget {
 class _MenuItemCardState extends State<_MenuItemCard> {
   bool _isFavorite = false;
   bool _loading = false;
-  final Set<int> _favoriteMenuItemIds = {};
 
   @override
   void initState() {
@@ -914,7 +912,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
       _addToCart(context, item);
       return;
     }
-    List<String> selected = [];
+    final List<String> selected = [];
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -1070,7 +1068,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to add item to cart'),
+            content: const Text('Failed to add item to cart'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -1190,8 +1188,9 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            color: Theme.of(context)
+                                .primaryColor
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -1251,7 +1250,7 @@ class _DietaryInfoWidget extends StatelessWidget {
 
     if (info == null || info.isEmpty) return const SizedBox.shrink();
 
-    List<Widget> chips = [];
+    final List<Widget> chips = [];
     if (info['contains'] is List) {
       chips.addAll((info['contains'] as List).map((e) => Padding(
             padding: const EdgeInsets.only(right: 4),

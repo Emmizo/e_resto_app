@@ -1,14 +1,16 @@
 import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/providers/connectivity_provider.dart';
-import 'package:e_resta_app/core/services/database_helper.dart';
+import '../../../../core/services/database_helper.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
 
 class Reservation {
   final String id;
@@ -401,7 +403,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     : () {
                         if (!isOnline) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Text(
                                   'No internet connection. Please try again later.'),
                             ),
@@ -479,7 +481,7 @@ class _ReservationForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(
+          const _SectionTitle(
             title: 'Select Date',
             icon: Icons.calendar_today,
           ).animate().fadeIn().slideX(),
@@ -505,7 +507,7 @@ class _ReservationForm extends StatelessWidget {
             ),
           ).animate().fadeIn(delay: 200.ms).slideX(),
           const SizedBox(height: 24),
-          _SectionTitle(
+          const _SectionTitle(
             title: 'Select Time',
             icon: Icons.access_time,
           ).animate().fadeIn(delay: 400.ms).slideX(),
@@ -531,7 +533,7 @@ class _ReservationForm extends StatelessWidget {
             ),
           ).animate().fadeIn(delay: 600.ms).slideX(),
           const SizedBox(height: 24),
-          _SectionTitle(
+          const _SectionTitle(
             title: 'Number of Guests',
             icon: Icons.people,
           ).animate().fadeIn(delay: 800.ms).slideX(),
@@ -571,7 +573,7 @@ class _ReservationForm extends StatelessWidget {
             ),
           ).animate().fadeIn(delay: 1000.ms).slideX(),
           const SizedBox(height: 24),
-          _SectionTitle(
+          const _SectionTitle(
             title: 'Contact Information',
             icon: Icons.person,
           ).animate().fadeIn(delay: 1200.ms).slideX(),
@@ -610,7 +612,7 @@ class _ReservationForm extends StatelessWidget {
             },
           ).animate().fadeIn(delay: 1600.ms).slideX(),
           const SizedBox(height: 24),
-          _SectionTitle(
+          const _SectionTitle(
             title: 'Additional Notes',
             icon: Icons.note,
           ).animate().fadeIn(delay: 1800.ms).slideX(),
@@ -631,7 +633,7 @@ class _ReservationForm extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onSubmit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF227C9D),
+                backgroundColor: const Color(0xFF227C9D),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

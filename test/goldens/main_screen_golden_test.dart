@@ -1,26 +1,27 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
-import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:e_resta_app/core/providers/theme_provider.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:e_resta_app/features/auth/data/repositories/auth_repository.dart';
-import 'package:e_resta_app/features/auth/data/models/user_model.dart';
 import 'package:dio/dio.dart';
-import 'package:e_resta_app/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:e_resta_app/core/providers/connectivity_provider.dart';
-import 'package:e_resta_app/core/providers/cart_provider.dart';
 import 'package:e_resta_app/core/providers/action_queue_provider.dart';
-import 'package:e_resta_app/features/reservation/presentation/screens/reservation_screen.dart';
-import 'package:e_resta_app/features/profile/data/address_provider.dart';
-import 'package:flutter/services.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:e_resta_app/core/providers/cart_provider.dart';
+import 'package:e_resta_app/core/providers/connectivity_provider.dart';
+import 'package:e_resta_app/core/providers/theme_provider.dart';
 import 'package:e_resta_app/core/services/database_helper.dart';
+import 'package:e_resta_app/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:e_resta_app/features/auth/data/models/user_model.dart';
+import 'package:e_resta_app/features/auth/data/repositories/auth_repository.dart';
+import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
+import 'package:e_resta_app/features/profile/data/address_provider.dart';
+import 'package:e_resta_app/features/reservation/presentation/screens/reservation_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import '../unit/connectivity_provider_test.mocks.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 import '../test_helpers/firebase_mocks.dart';
+import '../unit/connectivity_provider_test.mocks.dart';
 
 late MockDio mockDio;
 late MockDatabaseHelper mockDbHelper;
@@ -143,10 +144,10 @@ void main() {
               create: (_) => AddressProvider(mockDio)),
         ],
         child: MaterialApp(
-          home: MainScreen(),
+          home: const MainScreen(),
           routes: {
             '/login': (context) =>
-                Scaffold(body: Center(child: Text('Login Screen'))),
+                const Scaffold(body: Center(child: Text('Login Screen'))),
             // Add other routes as needed for navigation
           },
         ),
@@ -196,6 +197,7 @@ class FakeConnectivityProvider extends ChangeNotifier
 }
 
 class _FakeDb implements Database {
+  @override
   Future<List<Map<String, dynamic>>> query(String table,
           {bool? distinct,
           List<String>? columns,
@@ -207,25 +209,32 @@ class _FakeDb implements Database {
           int? limit,
           int? offset}) async =>
       [];
+  @override
   Future<int> delete(String table,
           {String? where, List<Object?>? whereArgs}) async =>
       0;
+  @override
   Future<int> insert(String table, Map<String, dynamic> values,
           {String? nullColumnHack,
           ConflictAlgorithm? conflictAlgorithm}) async =>
       1;
+  @override
   Future<int> update(String table, Map<String, dynamic> values,
           {String? where,
           List<Object?>? whereArgs,
           ConflictAlgorithm? conflictAlgorithm}) async =>
       1;
+  @override
   Future<List<Map<String, dynamic>>> rawQuery(String sql,
           [List<Object?>? arguments]) async =>
       [];
+  @override
   Future<T> transaction<T>(Future<T> Function(Transaction txn) action,
           {bool? exclusive}) async =>
       throw UnimplementedError();
+  @override
   Future<void> close() async {}
+  @override
   Future<void> execute(String sql, [List<Object?>? arguments]) async {}
   Future<int> getVersion() async => 1;
   Future<void> setVersion(int version) async {}
@@ -236,15 +245,22 @@ class _FakeDb implements Database {
       required Function function,
       int argumentCount = 1,
       bool deterministic = false}) async {}
+  @override
   String get path => '';
+  @override
   bool get isOpen => true;
+  @override
   Future<T> devInvokeMethod<T>(String method, [dynamic arguments]) async =>
       throw UnimplementedError();
+  @override
   Future<T> devInvokeSqlMethod<T>(String method, String sql,
           [List<Object?>? arguments]) async =>
       throw UnimplementedError();
+  @override
   Future<int> rawDelete(String sql, [List<Object?>? arguments]) async => 0;
+  @override
   Future<int> rawInsert(String sql, [List<Object?>? arguments]) async => 1;
+  @override
   Future<int> rawUpdate(String sql, [List<Object?>? arguments]) async => 1;
   Future<void> executeBatch(List<String> sqlStatements) async {}
   Future<void> onConfigure(Database db) async {}
@@ -252,9 +268,11 @@ class _FakeDb implements Database {
   Future<void> onDowngrade(Database db, int oldVersion, int newVersion) async {}
   Future<void> onOpen(Database db) async {}
   Future<void> onUpgrade(Database db, int oldVersion, int newVersion) async {}
+  @override
   Future<T> readTransaction<T>(Future<T> Function(Transaction txn) action,
           {bool? exclusive}) async =>
       throw UnimplementedError();
+  @override
   Future<QueryCursor> queryCursor(String table,
           {bool? distinct,
           List<String>? columns,
@@ -267,26 +285,36 @@ class _FakeDb implements Database {
           int? offset,
           int? bufferSize}) async =>
       throw UnimplementedError();
+  @override
   Future<QueryCursor> rawQueryCursor(String sql, List<Object?>? arguments,
           {int? bufferSize}) async =>
       throw UnimplementedError();
+  @override
   Database get database => this;
   @override
   Batch batch() => _FakeBatch();
 }
 
 class _FakeBatch implements Batch {
+  @override
   void delete(String table, {String? where, List<Object?>? whereArgs}) {}
+  @override
   void insert(String table, Map<String, Object?> values,
       {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) {}
+  @override
   void update(String table, Map<String, Object?> values,
       {String? where,
       List<Object?>? whereArgs,
       ConflictAlgorithm? conflictAlgorithm}) {}
+  @override
   void execute(String sql, [List<Object?>? arguments]) {}
+  @override
   void rawDelete(String sql, [List<Object?>? arguments]) {}
+  @override
   void rawInsert(String sql, [List<Object?>? arguments]) {}
+  @override
   void rawUpdate(String sql, [List<Object?>? arguments]) {}
+  @override
   void query(String table,
       {bool? distinct,
       List<String>? columns,
@@ -297,11 +325,15 @@ class _FakeBatch implements Batch {
       String? orderBy,
       int? limit,
       int? offset}) {}
+  @override
   void rawQuery(String sql, [List<Object?>? arguments]) {}
+  @override
   Future<List<Object?>> commit(
           {bool? noResult, bool? continueOnError, bool? exclusive}) async =>
       [];
+  @override
   int get length => 0;
+  @override
   Future<List<Object?>> apply(
           {bool? noResult, bool? continueOnError, bool? exclusive}) async =>
       [];

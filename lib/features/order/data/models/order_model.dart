@@ -21,10 +21,6 @@ class MenuItemModel {
   });
 
   factory MenuItemModel.fromJson(Map<String, dynamic> json) {
-    if (json['image'] == null) {
-      print(
-          'MenuItemModel.fromJson: image is null for menu_item_id: \\${json['id']}');
-    }
     return MenuItemModel(
       id: json['id'],
       name: json['name'] ?? '',
@@ -78,10 +74,6 @@ class RestaurantModel {
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) {
-    if (json['image'] == null) {
-      print(
-          'RestaurantModel.fromJson: image is null for restaurant_id: \\${json['id']}');
-    }
     return RestaurantModel(
       id: json['id'],
       name: json['name'] ?? '',

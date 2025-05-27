@@ -1,15 +1,17 @@
-import 'package:e_resta_app/features/home/presentation/screens/home_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/widgets/error_state_widget.dart';
-import 'package:e_resta_app/core/utils/error_utils.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'dart:io';
+import 'package:provider/provider.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/services/dio_service.dart';
+import '../../../../core/utils/error_utils.dart';
+import '../../../../core/widgets/error_state_widget.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
+import '../../../home/presentation/screens/home_screen.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -47,12 +49,14 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
           if (token != null) 'Authorization': 'Bearer $token',
         }),
       );
+      if (!mounted) return;
       setState(() {
         _restaurants = response.data['data'] as List;
         _isLoading = false;
       });
     } catch (e) {
       final parsed = parseDioError(e);
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _error = parsed.message;
@@ -66,8 +70,6 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       final dio = DioService.getDio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
-      // Debug log
-      print('Unfavorite restaurantId: $restaurantId, token: $token');
       await dio.post(
         ApiEndpoints.restaurantUnfavorite,
         data: {'restaurant_id': restaurantId},
@@ -75,6 +77,7 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
           if (token != null) 'Authorization': 'Bearer $token',
         }),
       );
+      if (!mounted) return;
       setState(() {
         _restaurants.removeAt(index);
       });
@@ -96,7 +99,6 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
       } else {
         message = e.toString();
       }
-      print('Unfavorite error: $message');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
@@ -233,7 +235,7 @@ class _RestaurantCard extends StatelessWidget {
     final reviewsCount = item['reviews_count'] ?? 0;
     return Card(
       elevation: 12,
-      shadowColor: Colors.black.withOpacity(0.10),
+      shadowColor: Colors.black.withValues(alpha: 0.18),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       child: Padding(
@@ -302,7 +304,7 @@ class _RestaurantCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(Icons.star, color: Colors.amber, size: 18),
+                      const Icon(Icons.star, color: Colors.amber, size: 18),
                       const SizedBox(width: 4),
                       Text(
                         averageRating.toStringAsFixed(1),
@@ -325,7 +327,7 @@ class _RestaurantCard extends StatelessWidget {
                   if (restaurant['cuisine'] != null)
                     Row(
                       children: [
-                        Icon(Icons.local_dining,
+                        const Icon(Icons.local_dining,
                             size: 16, color: Colors.orange),
                         const SizedBox(width: 4),
                         Text(
@@ -341,7 +343,7 @@ class _RestaurantCard extends StatelessWidget {
                   if (restaurant['distance'] != null)
                     Row(
                       children: [
-                        Icon(Icons.directions_walk,
+                        const Icon(Icons.directions_walk,
                             size: 16, color: Colors.blueGrey),
                         const SizedBox(width: 4),
                         Text(

@@ -1,11 +1,13 @@
 import 'dart:async';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'dart:convert';
-import 'package:e_resta_app/core/services/database_helper.dart';
-import 'package:e_resta_app/core/providers/action_queue_provider.dart';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+
+import '../constants/api_endpoints.dart';
+import '../services/database_helper.dart';
+import 'action_queue_provider.dart';
 
 class ConnectivityProvider extends ChangeNotifier {
   final Connectivity _connectivity;
@@ -89,15 +91,15 @@ class ConnectivityProvider extends ChangeNotifier {
             data: payload,
           );
         } else if (type == 'add_to_cart') {
-          await Future.delayed(Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 300));
         } else if (type == 'remove_from_cart') {
-          await Future.delayed(Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 300));
         } else if (type == 'update_cart_quantity') {
-          await Future.delayed(Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 300));
         } else if (type == 'make_reservation') {
-          await Future.delayed(Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 300));
         } else if (type == 'cancel_reservation') {
-          await Future.delayed(Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 300));
         }
         // If successful, remove from queue
         await db

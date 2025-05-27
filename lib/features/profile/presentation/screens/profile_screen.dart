@@ -1,24 +1,26 @@
-import 'package:e_resta_app/features/profile/presentation/screens/change_password_screen.dart';
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/services/dio_service.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../home/presentation/screens/main_screen.dart';
 import '../../../order/presentation/screens/order_history_screen.dart';
-import '../../../reservation/presentation/screens/my_reservations_screen.dart';
 import '../../../payment/presentation/screens/payment_methods_screen.dart';
+import '../../../reservation/presentation/screens/my_reservations_screen.dart';
+import '../../data/profile_remote_datasource.dart';
+import 'change_password_screen.dart';
 import 'notification_preferences_screen.dart';
 import 'saved_addresses_screen.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:e_resta_app/features/profile/data/profile_remote_datasource.dart';
-import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:e_resta_app/features/auth/data/models/user_model.dart';
-import 'package:e_resta_app/core/services/dio_service.dart';
-import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
 // import 'package:photofilters/photofilters.dart'; // Uncomment if using photofilters
 
 class ProfileScreen extends StatelessWidget {
@@ -89,6 +91,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
         source: fromCamera ? ImageSource.camera : ImageSource.gallery);
+    if (!mounted) return;
     if (picked == null) return;
     // Crop
     final cropped = await ImageCropper().cropImage(
@@ -187,8 +190,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
-    final name =
-        user != null ? ('${user.firstName} ${user.lastName}') : 'Guest';
+    final name = user != null ? '${user.firstName} ${user.lastName}' : 'Guest';
     final email = user?.email ?? '';
     final profilePic = user?.profilePicture;
     return Scaffold(
@@ -255,8 +257,6 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 20, vertical: 28),
                                   child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
                                     children: [
                                       Stack(
                                         children: [
@@ -369,9 +369,7 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
                                                           onTap: () async {
                                                             Navigator.pop(
                                                                 context);
-                                                            await _pickAndEditImage(
-                                                                fromCamera:
-                                                                    false);
+                                                            await _pickAndEditImage();
                                                           },
                                                         ),
                                                       ],
@@ -839,7 +837,7 @@ class _ProfileOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? Colors.red : Color(0xFF184C55);
+    final color = isDestructive ? Colors.red : const Color(0xFF184C55);
     final backgroundColor = isDestructive
         ? Colors.red.withValues(alpha: 0.12)
         : const Color(0xFF184C55).withValues(alpha: 0.10);
@@ -963,11 +961,11 @@ class _EditProfileFormState extends State<_EditProfileForm> {
       return;
     }
     final data = {
-      "first_name": _firstNameController.text.trim(),
-      "last_name": _lastNameController.text.trim(),
-      "email": _emailController.text.trim(),
-      "phone_number": _phoneController.text.trim(),
-      "address": _addressController.text.trim(),
+      'first_name': _firstNameController.text.trim(),
+      'last_name': _lastNameController.text.trim(),
+      'email': _emailController.text.trim(),
+      'phone_number': _phoneController.text.trim(),
+      'address': _addressController.text.trim(),
     };
     try {
       final profileDatasource = ProfileRemoteDatasource(Dio());

@@ -1,9 +1,11 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:e_resta_app/core/services/database_helper.dart';
 import 'package:provider/provider.dart';
-import 'package:e_resta_app/core/providers/connectivity_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/database_helper.dart';
+import 'connectivity_provider.dart';
 
 class CartItem {
   final String id;

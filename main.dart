@@ -3,8 +3,8 @@ import 'package:e_resta_app/core/services/firebase_auth_service.dart';
 import 'package:e_resta_app/core/services/notification_service.dart';
 import 'package:e_resta_app/main.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

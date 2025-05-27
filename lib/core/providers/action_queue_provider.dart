@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:e_resta_app/core/services/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
+
+import '../services/database_helper.dart';
 
 class ActionQueueProvider extends ChangeNotifier {
   static ActionQueueProvider? globalInstance;

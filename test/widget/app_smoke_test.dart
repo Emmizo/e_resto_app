@@ -1,24 +1,25 @@
 // ignore_for_file: unused_element
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:e_resta_app/app.dart';
+import 'package:e_resta_app/core/providers/connectivity_provider.dart';
+import 'package:e_resta_app/core/providers/theme_provider.dart';
+import 'package:e_resta_app/features/auth/data/models/user_model.dart';
+import 'package:e_resta_app/features/auth/presentation/screens/login_screen.dart';
+import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
-import 'package:e_resta_app/app.dart';
-import 'package:e_resta_app/features/home/presentation/screens/main_screen.dart';
-import 'package:e_resta_app/features/auth/presentation/screens/login_screen.dart';
-import 'package:e_resta_app/features/auth/data/models/user_model.dart';
-import 'package:e_resta_app/core/providers/theme_provider.dart';
-import 'app_smoke_test.mocks.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import '../test_helpers/geolocator_mocks.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:e_resta_app/core/providers/connectivity_provider.dart';
+import 'app_smoke_test.mocks.dart';
 
 void _setupFirebaseCoreMock() {
   final binaryMessenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/firebase_core'),
+    const MethodChannel('plugins.flutter.io/firebase_core'),
     (MethodCall methodCall) async {
       if (methodCall.method == 'initializeCore') {
         return [
@@ -51,23 +52,23 @@ void _setupFirebaseCoreMock() {
   );
   // Mock other common Firebase plugin channels
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/firebase_auth'),
+    const MethodChannel('plugins.flutter.io/firebase_auth'),
     (_) async => null,
   );
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/cloud_firestore'),
+    const MethodChannel('plugins.flutter.io/cloud_firestore'),
     (_) async => null,
   );
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/firebase_messaging'),
+    const MethodChannel('plugins.flutter.io/firebase_messaging'),
     (_) async => null,
   );
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/firebase_storage'),
+    const MethodChannel('plugins.flutter.io/firebase_storage'),
     (_) async => null,
   );
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/firebase_analytics'),
+    const MethodChannel('plugins.flutter.io/firebase_analytics'),
     (_) async => null,
   );
 }
@@ -76,7 +77,7 @@ void _setupFirebaseMessagingMock() {
   final binaryMessenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   binaryMessenger.setMockMethodCallHandler(
-    MethodChannel('plugins.flutter.io/firebase_messaging'),
+    const MethodChannel('plugins.flutter.io/firebase_messaging'),
     (MethodCall methodCall) async {
       if (methodCall.method == 'getToken') {
         return 'test-fcm-token';
@@ -118,8 +119,6 @@ void main() {
         phoneNumber: '1234567890',
         has2faEnabled: false,
         status: 1,
-        fcmToken: null,
-        google2faSecret: null,
         address: '123 Test St',
       );
       when(mockPrefs.getBool('isDarkMode')).thenReturn(false);

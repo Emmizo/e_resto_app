@@ -1,13 +1,15 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
-import 'package:e_resta_app/core/services/database_helper.dart';
-import 'package:e_resta_app/core/providers/connectivity_provider.dart';
-import 'dart:io';
+import 'package:provider/provider.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/providers/connectivity_provider.dart';
+import '../../../../core/services/database_helper.dart';
+import '../../../auth/domain/providers/auth_provider.dart';
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -74,7 +76,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Reservations loaded successfully!'),
+          content: const Text('Reservations loaded successfully!'),
           backgroundColor: Colors.green.withValues(alpha: 0.7),
         ),
       );

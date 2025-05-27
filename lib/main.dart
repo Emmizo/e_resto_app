@@ -1,32 +1,32 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dio/dio.dart';
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'features/home/presentation/screens/main_screen.dart';
-import 'core/theme/app_theme.dart';
-import 'core/providers/theme_provider.dart';
+
+import 'core/providers/action_queue_provider.dart';
 import 'core/providers/cart_provider.dart';
-import 'features/reservation/presentation/screens/reservation_screen.dart';
-import 'features/profile/presentation/screens/profile_screen.dart';
-import 'features/order/presentation/screens/order_history_screen.dart';
-import 'features/reservation/presentation/screens/my_reservations_screen.dart';
-import 'features/restaurant/presentation/screens/favorite_restaurants_screen.dart';
-import 'features/profile/presentation/screens/saved_addresses_screen.dart';
-import 'features/payment/presentation/screens/payment_methods_screen.dart';
-import 'features/profile/presentation/screens/notification_preferences_screen.dart';
+import 'core/providers/connectivity_provider.dart';
+import 'core/providers/theme_provider.dart';
+import 'core/services/notification_service.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/domain/providers/auth_provider.dart';
-import 'features/auth/presentation/screens/signup_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'core/services/notification_service.dart';
-import 'core/providers/connectivity_provider.dart';
-import 'core/providers/action_queue_provider.dart';
+import 'features/auth/presentation/screens/signup_screen.dart';
+import 'features/home/presentation/screens/main_screen.dart';
+import 'features/order/presentation/screens/order_history_screen.dart';
+import 'features/payment/presentation/screens/payment_methods_screen.dart';
 import 'features/profile/data/address_provider.dart';
+import 'features/profile/presentation/screens/notification_preferences_screen.dart';
+import 'features/profile/presentation/screens/profile_screen.dart';
+import 'features/profile/presentation/screens/saved_addresses_screen.dart';
+import 'features/reservation/presentation/screens/my_reservations_screen.dart';
+import 'features/reservation/presentation/screens/reservation_screen.dart';
+import 'features/restaurant/presentation/screens/favorite_restaurants_screen.dart';
+import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 

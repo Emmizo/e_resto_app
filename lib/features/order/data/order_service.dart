@@ -1,13 +1,15 @@
 import 'dart:convert';
-import 'package:e_resta_app/core/services/database_helper.dart';
-import 'package:e_resta_app/core/services/action_queue_helper.dart';
-import 'package:e_resta_app/features/order/data/models/order_model.dart';
+
 import 'package:dio/dio.dart';
-import 'package:e_resta_app/core/constants/api_endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:e_resta_app/core/providers/connectivity_provider.dart';
-import 'package:e_resta_app/features/auth/domain/providers/auth_provider.dart';
+
+import '../../../core/constants/api_endpoints.dart';
+import '../../../core/providers/connectivity_provider.dart';
+import '../../../core/services/action_queue_helper.dart';
+import '../../../core/services/database_helper.dart';
+import '../../auth/domain/providers/auth_provider.dart';
+import 'models/order_model.dart';
 
 class OrderService {
   static Future<void> placeOrder({
@@ -21,7 +23,7 @@ class OrderService {
     String orderType = 'delivery',
     List<dynamic>? dietaryInfo,
   }) async {
-    debugPrint('OrderService.placeOrder called');
+    // debugPrint('OrderService.placeOrder called');
     final isOnline =
         Provider.of<ConnectivityProvider>(context, listen: false).isOnline;
     final db = await DatabaseHelper().db;
@@ -38,7 +40,7 @@ class OrderService {
     );
     // Save locally
     try {
-      debugPrint('Inserting order into local DB...');
+      // debugPrint('Inserting order into local DB...');
       await db.insert('orders', {
         'items': jsonEncode(items),
         'total_amount': total,
@@ -48,12 +50,12 @@ class OrderService {
         'restaurant_id': restaurant.id,
         'payment_method': paymentMethod,
       });
-      debugPrint('Order inserted into local DB');
+      // debugPrint('Order inserted into local DB');
     } catch (e) {
-      debugPrint('Error inserting order into local DB: \\${e.toString()}');
+      // debugPrint('Error inserting order into local DB: \\${e.toString()}');
     }
     if (!isOnline) {
-      debugPrint('Offline: queuing order for sync');
+      // debugPrint('Offline: queuing order for sync');
       // Queue for sync
       await ActionQueueHelper.queueAction(
         actionType: 'place_order',
@@ -63,7 +65,7 @@ class OrderService {
     }
     // Online: send to backend
     try {
-      debugPrint('Sending order to backend...');
+      // debugPrint('Sending order to backend...');
       final dio = Dio();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
@@ -86,7 +88,7 @@ class OrderService {
         'order_type': orderType,
         'items': backendItems,
       };
-      debugPrint('Order payload: ' + payload.toString());
+      // debugPrint('Order payload: $payload');
       final response = await dio.post(
         ApiEndpoints.orders,
         data: payload,
@@ -95,15 +97,15 @@ class OrderService {
           'Accept': 'application/json',
         }),
       );
-      debugPrint('Order sent to backend. Response: \\${response.statusCode}');
+      // debugPrint('Order sent to backend. Response: \\${response.statusCode}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Optionally update local order status to 'placed' if needed
-        debugPrint('Order placed successfully online');
+        // debugPrint('Order placed successfully online');
       } else {
-        debugPrint('Order not placed. Status: \\${response.statusCode}');
+        // debugPrint('Order not placed. Status: \\${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error sending order to backend: \\${e.toString()}');
+      // debugPrint('Error sending order to backend: \\${e.toString()}');
       // If failed, mark as failed in local DB
       await db.update(
         'orders',

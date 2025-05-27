@@ -67,7 +67,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Date Selection
-                _SectionTitle(
+                const _SectionTitle(
                   title: 'Select Date',
                   icon: Icons.calendar_today,
                 ).animate().fadeIn().slideX(),
@@ -96,7 +96,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 const SizedBox(height: 24),
 
                 // Time Selection
-                _SectionTitle(
+                const _SectionTitle(
                   title: 'Select Time',
                   icon: Icons.access_time,
                 ).animate().fadeIn(delay: 400.ms).slideX(),
@@ -125,7 +125,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 const SizedBox(height: 24),
 
                 // Number of Guests
-                _SectionTitle(
+                const _SectionTitle(
                   title: 'Number of Guests',
                   icon: Icons.people,
                 ).animate().fadeIn(delay: 800.ms).slideX(),
@@ -168,7 +168,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 const SizedBox(height: 24),
 
                 // Contact Information
-                _SectionTitle(
+                const _SectionTitle(
                   title: 'Contact Information',
                   icon: Icons.person,
                 ).animate().fadeIn(delay: 1200.ms).slideX(),
@@ -210,7 +210,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 const SizedBox(height: 24),
 
                 // Additional Notes
-                _SectionTitle(
+                const _SectionTitle(
                   title: 'Additional Notes',
                   icon: Icons.note,
                 ).animate().fadeIn(delay: 1800.ms).slideX(),

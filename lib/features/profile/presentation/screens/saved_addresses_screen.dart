@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../../core/providers/connectivity_provider.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../core/providers/connectivity_provider.dart';
 import '../../data/address_provider.dart';
 
 class Address {
@@ -67,7 +68,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: _AddAddressForm(),
+        child: const _AddAddressForm(),
       ),
     );
   }
@@ -139,7 +140,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                 ? _showAddAddressDialog
                 : () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      const SnackBar(
                           content: Text(
                               'No internet connection. Please try again later.')),
                     );
@@ -174,7 +175,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                             ? _showAddAddressDialog
                             : () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                       content: Text(
                                           'No internet connection. Please try again later.')),
                                 );
@@ -196,7 +197,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                           ? () => _showEditAddressDialog(address)
                           : () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                     content: Text(
                                         'No internet connection. Please try again later.')),
                               );
@@ -205,7 +206,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                           ? () => _showDeleteConfirmation(address)
                           : () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                     content: Text(
                                         'No internet connection. Please try again later.')),
                               );
@@ -263,7 +264,7 @@ class _AddressCard extends StatelessWidget {
                   ),
                   child: Icon(
                     _getAddressTypeIcon(),
-                    color: Color(0xFF184C55),
+                    color: const Color(0xFF184C55),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -294,7 +295,7 @@ class _AddressCard extends StatelessWidget {
                                     .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Text(
+                              child: const Text(
                                 'Default',
                                 style: TextStyle(
                                   fontSize: 12,
@@ -415,7 +416,7 @@ class _AddAddressFormState extends State<_AddAddressForm> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Address added successfully!'),
+        content: const Text('Address added successfully!'),
         backgroundColor: Colors.green.withValues(alpha: 0.7),
       ),
     );
@@ -439,7 +440,7 @@ class _AddAddressFormState extends State<_AddAddressForm> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Colors.red)),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 24),
             TextFormField(
