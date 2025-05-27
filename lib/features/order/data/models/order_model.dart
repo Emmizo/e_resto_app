@@ -65,8 +65,8 @@ class RestaurantModel {
   final String name;
   final String address;
   final String image;
-  final int acceptsReservations;
-  final int acceptsDelivery;
+  final int? acceptsReservations;
+  final int? acceptsDelivery;
 
   RestaurantModel({
     required this.id,
@@ -83,8 +83,16 @@ class RestaurantModel {
       name: json['name'] ?? '',
       address: json['address'] ?? '',
       image: json['image'] ?? '',
-      acceptsReservations: json['accepts_reservations'] ?? 0,
-      acceptsDelivery: json['accepts_delivery'] ?? 0,
+      acceptsReservations: (json['accepts_reservations'] == true)
+          ? 1
+          : (json['accepts_reservations'] == false)
+              ? 0
+              : (json['accepts_reservations'] ?? 0),
+      acceptsDelivery: (json['accepts_delivery'] == true)
+          ? 1
+          : (json['accepts_delivery'] == false)
+              ? 0
+              : (json['accepts_delivery'] ?? 0),
     );
   }
 
@@ -93,8 +101,8 @@ class RestaurantModel {
         'name': name,
         'address': address,
         'image': image,
-        'accepts_reservations': acceptsReservations,
-        'accepts_delivery': acceptsDelivery,
+        'accepts_reservations': acceptsReservations ?? 0,
+        'accepts_delivery': acceptsDelivery ?? 0,
       };
 }
 

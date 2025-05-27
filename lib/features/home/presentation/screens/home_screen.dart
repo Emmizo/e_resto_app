@@ -550,7 +550,7 @@ class HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -946,99 +946,117 @@ class HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-            SizedBox(
-              height: 240,
-              child: _isRestaurantLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _restaurantError != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error_outline,
-                                  size: 54, color: Colors.red[300]),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Something went wrong',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'We couldn\'t load restaurants. Please try again.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(color: Colors.grey[600]),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        )
-                      : _filteredRestaurants.isEmpty
-                          ? Center(
-                              child: Card(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 24),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.restaurant_outlined,
-                                          size: 54, color: Colors.grey[400]),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'No restaurants found',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Try a different search or category',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(color: Colors.grey[600]),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _filteredRestaurants.length > 5
-                                  ? 5
-                                  : _filteredRestaurants.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 16),
-                              itemBuilder: (context, index) {
-                                final restaurant = _filteredRestaurants[index];
-                                return SizedBox(
-                                  width: 180,
-                                  child: _ApiRestaurantCard(
-                                    restaurant: restaurant,
-                                    categories: _categories,
-                                    onFavoriteToggle: () =>
-                                        _toggleFavorite(restaurant),
-                                  ),
-                                );
-                              },
+            // Remove Expanded and use shrinkWrap for GridView
+            _isRestaurantLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _restaurantError != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline,
+                                size: 54, color: Colors.red[300]),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Something went wrong',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
                             ),
-            ),
-            const SizedBox(height: 24),
+                            const SizedBox(height: 4),
+                            Text(
+                              'We couldn\'t load restaurants. Please try again.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: Colors.grey[600]),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    : _filteredRestaurants.isEmpty
+                        ? Center(
+                            child: Card(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 24),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.restaurant_outlined,
+                                        size: 54, color: Colors.grey[400]),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'No restaurants found',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Try a different search or category',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(color: Colors.grey[600]),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : (() {
+                            // Chunk the restaurants into groups of 3 for horizontally scrollable rows
+                            List<List<RestaurantModel>> chunked = [];
+                            for (var i = 0;
+                                i < _filteredRestaurants.length;
+                                i += 3) {
+                              chunked.add(_filteredRestaurants
+                                  .skip(i)
+                                  .take(3)
+                                  .toList());
+                            }
+                            return Column(
+                              children: [
+                                for (int i = 0; i < chunked.length; i++) ...[
+                                  SizedBox(
+                                    height: 240, // Card height
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: chunked[i].length,
+                                      separatorBuilder: (_, __) =>
+                                          const SizedBox(width: 16),
+                                      itemBuilder: (context, index) {
+                                        final restaurant = chunked[i][index];
+                                        return SizedBox(
+                                          width: 180,
+                                          child: _ApiRestaurantCard(
+                                            restaurant: restaurant,
+                                            categories: _categories,
+                                            onFavoriteToggle: () =>
+                                                _toggleFavorite(restaurant),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  if (i < chunked.length - 1)
+                                    const SizedBox(height: 16),
+                                ],
+                              ],
+                            );
+                          })(),
           ],
         ),
       ),

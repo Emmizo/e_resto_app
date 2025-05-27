@@ -51,12 +51,12 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
         _isLoading = false;
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      /*   ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Favorite menu items loaded successfully!'),
           backgroundColor: Colors.green.withValues(alpha: 0.7),
         ),
-      );
+      ); */
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -222,93 +222,116 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
               ],
             ),
             child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              elevation: 8,
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              elevation: 3,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              child: ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                leading: menuItem['image'] != null &&
-                        menuItem['image'].toString().isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          fixImageUrl(menuItem['image'].toString()),
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.fastfood, color: Colors.grey),
-                      ),
-                title: Text(menuItem['name'] ?? '',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                subtitle: Column(
+                  borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if ((menu != null && menu['name'] != null) ||
-                        (restaurant != null && restaurant['name'] != null))
-                      Row(
+                    menuItem['image'] != null &&
+                            menuItem['image'].toString().isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              fixImageUrl(menuItem['image'].toString()),
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.restaurant_menu,
+                                color: Colors.teal, size: 28),
+                          ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (restaurant != null && restaurant['name'] != null)
-                            Flexible(
-                              child: Text(
-                                restaurant['name'],
-                                style: const TextStyle(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  menuItem['name'] ?? '',
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.teal,
-                                    fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          if (menu != null && menu['name'] != null) ...[
-                            if (restaurant != null &&
-                                restaurant['name'] != null)
-                              const Text(' • ',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 13)),
-                            Flexible(
-                              child: Text(
-                                menu['name'],
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.deepOrange,
-                                    fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
+                              Text(
+                                '₣${menuItem['price']}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.green[700],
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              if (restaurant != null &&
+                                  restaurant['name'] != null)
+                                Flexible(
+                                  child: Text(
+                                    restaurant['name'],
+                                    style: TextStyle(
+                                      color: Colors.teal[700],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              if (menu != null && menu['name'] != null) ...[
+                                if (restaurant != null &&
+                                    restaurant['name'] != null)
+                                  const Text(' • ',
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 13)),
+                                Flexible(
+                                  child: Text(
+                                    menu['name'],
+                                    style: TextStyle(
+                                      color: Colors.orange[700],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          if ((menuItem['description'] ?? '')
+                              .toString()
+                              .isNotEmpty)
+                            Text(
+                              menuItem['description'],
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: 13,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
                         ],
                       ),
-                    if ((menuItem['description'] ?? '').toString().isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2.0),
-                        child: Text(menuItem['description'],
-                            style: Theme.of(context).textTheme.bodySmall),
-                      ),
-                  ],
-                ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('₣${menuItem['price']}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold)),
+                    ),
                   ],
                 ),
               ),
