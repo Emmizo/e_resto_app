@@ -220,7 +220,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
           // Queue the reservation in SQLite
           final db = await DatabaseHelper().db;
           await Future.delayed(Duration.zero);
-          if (!mounted) return;
           await db.insert('action_queue', {
             'actionType': 'make_reservation',
             'payload': jsonEncode(data),
@@ -367,10 +366,11 @@ class _ReservationScreenState extends State<ReservationScreen> {
           ),
         );
       } finally {
-        if (!mounted) return;
-        setState(() {
-          _isSubmitting = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
       }
     }
   }

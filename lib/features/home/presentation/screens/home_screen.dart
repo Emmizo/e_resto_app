@@ -227,7 +227,7 @@ class HomeScreenState extends State<HomeScreen>
           },
         ),
       );
-
+      if (!mounted) return;
       final List<dynamic> data = response.data['data'];
 
       final restaurants = data
@@ -235,10 +235,6 @@ class HomeScreenState extends State<HomeScreen>
             try {
               return RestaurantModel.fromJson(json);
             } catch (e) {
-              print('Restaurant parse error: ' +
-                  e.toString() +
-                  ', data: ' +
-                  json.toString());
               return null;
             }
           })
@@ -1018,7 +1014,7 @@ class HomeScreenState extends State<HomeScreen>
                           )
                         : (() {
                             // Chunk the restaurants into groups of 3 for horizontally scrollable rows
-                            List<List<RestaurantModel>> chunked = [];
+                            final List<List<RestaurantModel>> chunked = [];
                             for (var i = 0;
                                 i < _filteredRestaurants.length;
                                 i += 3) {

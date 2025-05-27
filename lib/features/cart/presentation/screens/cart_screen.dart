@@ -1489,9 +1489,7 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                                             Duration.zero); // async gap
                                         if (!context.mounted) return;
                                         cartProvider.clearCart();
-                                        if (!context.mounted) return;
                                         Navigator.pop(context);
-                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(parentContext)
                                             .showSnackBar(
                                           const SnackBar(
@@ -1924,9 +1922,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
                                             Duration.zero); // async gap
                                         if (!context.mounted) return;
                                         cartProvider.clearCart();
-                                        if (!context.mounted) return;
                                         Navigator.pop(context);
-                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(parentContext)
                                             .showSnackBar(
                                           const SnackBar(

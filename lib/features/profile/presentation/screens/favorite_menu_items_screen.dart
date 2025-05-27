@@ -197,9 +197,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                         );
                         await Future.delayed(Duration.zero);
                         if (!mounted) return;
-                        setState(() {
-                          _favoriteMenuItems.removeAt(index);
-                        });
+                        _favoriteMenuItems.removeAt(index);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Removed from favorites')),
@@ -249,7 +247,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                               color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(Icons.restaurant_menu,
+                            child: const Icon(Icons.restaurant_menu,
                                 color: Colors.teal, size: 28),
                           ),
                     const SizedBox(width: 16),

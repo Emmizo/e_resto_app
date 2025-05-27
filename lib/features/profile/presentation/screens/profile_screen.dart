@@ -186,10 +186,11 @@ class _ProfileScreenBodyState extends State<_ProfileScreenBody> {
         SnackBar(content: Text(errorMsg)),
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
   }
 
@@ -1008,8 +1009,11 @@ class _EditProfileFormState extends State<_EditProfileForm> {
         SnackBar(content: Text('Error: $e')),
       );
     } finally {
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 

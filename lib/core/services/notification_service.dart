@@ -137,7 +137,6 @@ class NotificationService {
       while (token == null && fcmAttempts < 3) {
         try {
           token = await _firebaseMessaging.getToken();
-          // print('FCM Token: ${token ?? 'null'}');
           if (token == null) {
             await Future.delayed(const Duration(seconds: 2));
             fcmAttempts++;

@@ -552,6 +552,7 @@ class _MainScreenState extends State<MainScreen> {
                           ],
                         ),
                       );
+                      if (!mounted) return;
                       if (confirmed == true) {
                         final authProvider =
                             Provider.of<AuthProvider>(context, listen: false);

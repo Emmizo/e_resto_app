@@ -121,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen> {
         );
       }
     } catch (e) {
-      debugPrint('Error navigating to home: $e');
+      // debugPrint('Error navigating to home: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),

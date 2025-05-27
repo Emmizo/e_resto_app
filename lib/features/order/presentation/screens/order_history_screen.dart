@@ -273,8 +273,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                               await Future.delayed(Duration.zero);
                               if (!mounted) return;
                               Navigator.pop(context);
-                              await Future.delayed(Duration.zero);
-                              if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text('Order added to cart!')),

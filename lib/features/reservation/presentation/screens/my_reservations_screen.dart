@@ -232,9 +232,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen>
                 });
                 await Future.delayed(Duration.zero);
                 if (!mounted) return;
-                setState(() {
-                  _reservations.removeWhere((r) => r.id == reservation.id);
-                });
+                _reservations.removeWhere((r) => r.id == reservation.id);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Reservation will be cancelled when online'),
