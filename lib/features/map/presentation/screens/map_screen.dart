@@ -55,6 +55,7 @@ class _MapScreenState extends State<MapScreen> {
     _filteredRestaurants = List.from(widget.restaurants);
     _setRestaurantMarkers(_filteredRestaurants);
     _searchController.addListener(_onSearchChanged);
+    
   }
 
   @override

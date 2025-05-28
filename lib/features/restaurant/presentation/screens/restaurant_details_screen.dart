@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
@@ -31,10 +32,15 @@ class RestaurantDetailsScreen extends StatefulWidget {
 class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   Set<int> _favoriteMenuItemIds = {};
 
+  double? _distanceMeters;
+  String? _walkingTime;
+  String? _drivingTime;
+
   @override
   void initState() {
     super.initState();
     _fetchFavoriteMenuItemIds();
+    _calculateDistanceAndTime();
   }
 
   Future<void> _fetchFavoriteMenuItemIds() async {
@@ -56,6 +62,38 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             .toSet();
       });
     } catch (_) {}
+  }
+
+  Future<void> _calculateDistanceAndTime() async {
+    try {
+      final Position position = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      final double restLat = double.tryParse(widget.restaurant.latitude) ?? 0.0;
+      final double restLng =
+          double.tryParse(widget.restaurant.longitude) ?? 0.0;
+      final double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        restLat,
+        restLng,
+      );
+      // Walking: avg 5km/h = 83.33 m/min, Driving: avg 40km/h = 666.67 m/min
+      final walkingMinutes = (distance / 83.33).ceil();
+      final drivingMinutes = (distance / 666.67).ceil();
+      setState(() {
+        _distanceMeters = distance;
+        _walkingTime = '$walkingMinutes min walk';
+        _drivingTime = '$drivingMinutes min drive';
+      });
+    } catch (e) {
+      setState(() {
+        _distanceMeters = null;
+        _walkingTime = null;
+        _drivingTime = null;
+      });
+    }
   }
 
   String getCuisineName(int? id) {
@@ -441,10 +479,12 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // For demo: static time and distance (replace with real logic if needed)
-    const String time = '26 min';
-    const String distance = '0.6 mi';
     final restaurant = widget.restaurant;
+    String distanceStr = _distanceMeters != null
+        ? (_distanceMeters! > 1000
+            ? '${(_distanceMeters! / 1000).toStringAsFixed(2)} km'
+            : '${_distanceMeters!.toStringAsFixed(0)} m')
+        : '-';
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: ListView(
@@ -530,12 +570,23 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                           const SizedBox(width: 16),
                           const Icon(Icons.timer, color: Colors.grey, size: 20),
                           const SizedBox(width: 4),
-                          const Text(time),
+                          _walkingTime != null
+                              ? Text(_walkingTime!)
+                              : const SizedBox(
+                                  width: 40, child: LinearProgressIndicator()),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.directions_car,
+                              color: Colors.grey, size: 20),
+                          const SizedBox(width: 4),
+                          _drivingTime != null
+                              ? Text(_drivingTime!)
+                              : const SizedBox(
+                                  width: 40, child: LinearProgressIndicator()),
                           const SizedBox(width: 16),
                           const Icon(Icons.location_on,
                               color: Colors.grey, size: 20),
                           const SizedBox(width: 4),
-                          const Text(distance),
+                          Text(distanceStr),
                         ],
                       ),
                     ),

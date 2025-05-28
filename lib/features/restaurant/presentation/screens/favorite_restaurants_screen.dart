@@ -12,6 +12,8 @@ import '../../../../core/utils/error_utils.dart';
 import '../../../../core/widgets/error_state_widget.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../home/presentation/screens/home_screen.dart';
+import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
+import '../../data/models/restaurant_model.dart';
 
 class FavoriteRestaurantsScreen extends StatefulWidget {
   const FavoriteRestaurantsScreen({super.key});
@@ -105,6 +107,23 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
     }
   }
 
+  Future<RestaurantModel?> _fetchRestaurantDetails(int restaurantId) async {
+    try {
+      final dio = DioService.getDio();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      final response = await dio.get(
+        '${ApiEndpoints.restaurants}/$restaurantId',
+        options: Options(headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        }),
+      );
+      return RestaurantModel.fromJson(response.data['data']);
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -166,10 +185,41 @@ class _FavoriteRestaurantsScreenState extends State<FavoriteRestaurantsScreen> {
                 ),
               ],
             ),
-            child: _RestaurantCard(
-              item: item,
-              onRemove: () => _unfavoriteRestaurant(restaurantId, index),
-            ).animate(delay: (100 * index).ms).fadeIn(),
+            child: GestureDetector(
+              onTap: () async {
+                final restaurantObj = item['restaurant'] ?? item;
+                final restaurantId = restaurantObj['id'];
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+                final fullRestaurant =
+                    await _fetchRestaurantDetails(restaurantId);
+                Navigator.pop(context); // Remove loading dialog
+                if (fullRestaurant != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RestaurantDetailsScreen(
+                        restaurant: fullRestaurant,
+                        cuisines: const [], // Pass cuisines if available
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Failed to load restaurant details')),
+                  );
+                }
+              },
+              child: _RestaurantCard(
+                item: item,
+                onRemove: () => _unfavoriteRestaurant(restaurantId, index),
+              ).animate(delay: (100 * index).ms).fadeIn(),
+            ),
           );
         },
       );

@@ -254,6 +254,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
     String? email,
     String? password, {
     String? fcmToken,
+    String? timezone,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -284,6 +285,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
     required String? email,
     required String? phoneNumber,
     String? fcmToken,
+    String? timezone,
   }) =>
       (super.noSuchMethod(
         Invocation.method(

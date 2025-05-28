@@ -7,6 +7,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/providers/cart_provider.dart';
 import '../../../../core/services/dio_service.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../home/presentation/screens/main_screen.dart';
@@ -327,6 +328,64 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.add_shopping_cart),
+                              label: const Text('Add to Cart'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                textStyle: const TextStyle(fontSize: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: () async {
+                                try {
+                                  final cartProvider =
+                                      Provider.of<CartProvider>(context,
+                                          listen: false);
+                                  await cartProvider.addItem(
+                                      CartItem(
+                                        id: menuItem['id'].toString(),
+                                        name: menuItem['name'] ?? '',
+                                        description:
+                                            menuItem['description'] ?? '',
+                                        price: double.tryParse(
+                                                menuItem['price'].toString()) ??
+                                            0.0,
+                                        imageUrl: menuItem['image'] ?? '',
+                                        restaurantId: restaurant != null
+                                            ? restaurant['id'].toString()
+                                            : '',
+                                        restaurantName: restaurant != null
+                                            ? restaurant['name'] ?? ''
+                                            : '',
+                                        restaurantAddress: restaurant != null
+                                            ? restaurant['address'] ?? ''
+                                            : '',
+                                        quantity: 1,
+                                        dietaryInfo: null,
+                                      ),
+                                      context: context);
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Added to cart!')),
+                                  );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(e.toString()),
+                                        backgroundColor: Colors.red),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),

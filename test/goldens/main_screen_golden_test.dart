@@ -172,7 +172,7 @@ class FakeAuthRepository extends AuthRepository {
   Future<void> logout() async {}
   @override
   Future<UserModel?> login(String email, String password,
-          {String? fcmToken}) async =>
+          {String? fcmToken, String? timezone}) async =>
       null;
   @override
   Future<UserModel?> signup(
@@ -180,6 +180,7 @@ class FakeAuthRepository extends AuthRepository {
           required String lastName,
           required String email,
           required String phoneNumber,
+          String? timezone,
           String? fcmToken}) async =>
       null;
 }
