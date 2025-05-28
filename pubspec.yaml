@@ -68,7 +68,7 @@ dependencies:
   local_auth: ^2.1.6
   flutter_map: ^8.1.1
   latlong2: ^0.9.1
-
+  flutter_native_timezone: ^2.0.0
   path: any
   flutter_slidable: ^4.0.0
   http: any

@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:provider/provider.dart';
 
 import '../../../home/presentation/screens/main_screen.dart';
@@ -38,6 +39,12 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       fcmToken = null;
     }
+    String timezone;
+    try {
+      timezone = await FlutterNativeTimezone.getLocalTimezone();
+    } catch (e) {
+      timezone = 'UTC';
+    }
     if (!mounted) return;
     final success = await authProvider.signup(
       firstName: _firstNameController.text.trim(),
@@ -45,6 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
       email: _emailController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       fcmToken: fcmToken,
+      timezone: timezone,
     );
     if (!mounted) return;
     if (success) {

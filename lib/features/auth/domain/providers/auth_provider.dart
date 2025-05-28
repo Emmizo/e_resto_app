@@ -25,12 +25,14 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _loading;
   String? get error => _error;
 
-  Future<bool> login(String email, String password, {String? fcmToken}) async {
+  Future<bool> login(String email, String password,
+      {String? fcmToken, String? timezone}) async {
     _loading = true;
     _error = null;
     notifyListeners();
     try {
-      final user = await repository.login(email, password, fcmToken: fcmToken);
+      final user = await repository.login(email, password,
+          fcmToken: fcmToken, timezone: timezone);
       if (user != null) {
         _user = user;
         _token = repository.getToken();
@@ -73,6 +75,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String phoneNumber,
     String? fcmToken,
+    String? timezone,
   }) async {
     _loading = true;
     _error = null;
@@ -84,6 +87,7 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         phoneNumber: phoneNumber,
         fcmToken: fcmToken,
+        timezone: timezone,
       );
       if (user != null) {
         _user = user;

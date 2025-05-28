@@ -15,8 +15,9 @@ class AuthRepository {
   static const _userKey = 'auth_user';
 
   Future<UserModel?> login(String email, String password,
-      {String? fcmToken}) async {
-    final data = await remote.login(email, password, fcmToken: fcmToken);
+      {String? fcmToken, String? timezone}) async {
+    final data = await remote.login(email, password,
+        fcmToken: fcmToken, timezone: timezone);
     if (data['success'] == true &&
         data['token'] != null &&
         data['user'] != null) {
@@ -52,6 +53,7 @@ class AuthRepository {
     required String email,
     required String phoneNumber,
     String? fcmToken,
+    String? timezone,
   }) async {
     final response = await remote.signup(
       firstName: firstName,
@@ -59,6 +61,7 @@ class AuthRepository {
       email: email,
       phoneNumber: phoneNumber,
       fcmToken: fcmToken,
+      timezone: timezone,
     );
 
     if (response['token'] != null && response['user'] != null) {

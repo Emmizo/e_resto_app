@@ -8,7 +8,7 @@ class AuthRemoteDatasource {
   AuthRemoteDatasource(this.dio);
 
   Future<Map<String, dynamic>> login(String email, String password,
-      {String? fcmToken}) async {
+      {String? fcmToken, String? timezone}) async {
     if (fcmToken == null) {
       try {
         fcmToken = await FirebaseMessaging.instance.getToken();
@@ -20,11 +20,15 @@ class AuthRemoteDatasource {
     if (fcmToken != null) {
       data['fcm_token'] = fcmToken;
     }
+    if (timezone != null) {
+      data['timezone'] = timezone;
+    }
     final response = await dio.post(
       ApiEndpoints.login,
       data: data,
       options: Options(headers: {'accept': 'application/json'}),
     );
+    print('Detected timezone: $timezone');
     return response.data;
   }
 
@@ -34,6 +38,7 @@ class AuthRemoteDatasource {
     required String email,
     required String phoneNumber,
     String? fcmToken,
+    String? timezone,
   }) async {
     try {
       final signupData = {
@@ -42,6 +47,7 @@ class AuthRemoteDatasource {
         'email': email,
         'phone_number': phoneNumber,
         if (fcmToken != null) 'fcm_token': fcmToken,
+        if (timezone != null) 'timezone': timezone,
       };
       final response = await dio.post(
         ApiEndpoints.signup,
