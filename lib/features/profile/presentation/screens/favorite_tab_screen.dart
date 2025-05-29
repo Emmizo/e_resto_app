@@ -35,6 +35,9 @@ class _FavoriteTabScreenState extends State<FavoriteTabScreen>
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: const [
             Tab(icon: Icon(Icons.fastfood), text: 'Menu'),
             Tab(icon: Icon(Icons.restaurant), text: 'Restaurant'),

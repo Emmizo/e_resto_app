@@ -40,14 +40,7 @@ class _MainScreenState extends State<MainScreen> {
 
   List<Widget> get _screens => [
         HomeScreen(key: _homeScreenKey),
-        Builder(
-          builder: (context) {
-            final homeState = _homeScreenKey.currentState;
-            final restaurants = homeState?.nearestRestaurantsForMap ?? [];
-            final cuisines = homeState?.categories ?? [];
-            return MapScreen(restaurants: restaurants, cuisines: cuisines);
-          },
-        ),
+        const MapScreen(),
         const ProfileScreen(),
       ];
 

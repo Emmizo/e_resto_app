@@ -331,46 +331,39 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                           const SizedBox(height: 8),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.add_shopping_cart),
-                              label: const Text('Add to Cart'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.teal,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                textStyle: const TextStyle(fontSize: 14),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8)),
-                              ),
+                            child: IconButton(
+                              icon: Icon(Icons.add_shopping_cart,
+                                  color: Theme.of(context).colorScheme.primary),
+                              tooltip: 'Add to Cart',
                               onPressed: () async {
                                 try {
                                   final cartProvider =
                                       Provider.of<CartProvider>(context,
                                           listen: false);
                                   await cartProvider.addItem(
-                                      CartItem(
-                                        id: menuItem['id'].toString(),
-                                        name: menuItem['name'] ?? '',
-                                        description:
-                                            menuItem['description'] ?? '',
-                                        price: double.tryParse(
-                                                menuItem['price'].toString()) ??
-                                            0.0,
-                                        imageUrl: menuItem['image'] ?? '',
-                                        restaurantId: restaurant != null
-                                            ? restaurant['id'].toString()
-                                            : '',
-                                        restaurantName: restaurant != null
-                                            ? restaurant['name'] ?? ''
-                                            : '',
-                                        restaurantAddress: restaurant != null
-                                            ? restaurant['address'] ?? ''
-                                            : '',
-                                        quantity: 1,
-                                        dietaryInfo: null,
-                                      ),
-                                      context: context);
+                                    CartItem(
+                                      id: menuItem['id'].toString(),
+                                      name: menuItem['name'] ?? '',
+                                      description:
+                                          menuItem['description'] ?? '',
+                                      price: double.tryParse(
+                                              menuItem['price'].toString()) ??
+                                          0.0,
+                                      imageUrl: menuItem['image'] ?? '',
+                                      restaurantId: restaurant != null
+                                          ? restaurant['id'].toString()
+                                          : '',
+                                      restaurantName: restaurant != null
+                                          ? restaurant['name'] ?? ''
+                                          : '',
+                                      restaurantAddress: restaurant != null
+                                          ? restaurant['address'] ?? ''
+                                          : '',
+                                      quantity: 1,
+                                      dietaryInfo: null,
+                                    ),
+                                    context: context,
+                                  );
                                   if (!mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Added to cart!')),

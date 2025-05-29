@@ -5,9 +5,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:latlong2/latlong.dart' as latlong2;
+import 'package:provider/provider.dart';
 
-import '../../../home/presentation/screens/home_screen.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
+import '../../../restaurant/data/restaurant_provider.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 import 'route_map_screen.dart';
 
@@ -19,10 +20,7 @@ String fixImageUrl(String url) {
 }
 
 class MapScreen extends StatefulWidget {
-  final List<RestaurantModel> restaurants;
-  final List<CuisineCategory> cuisines;
-  const MapScreen(
-      {super.key, required this.restaurants, required this.cuisines});
+  const MapScreen({super.key});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -43,19 +41,8 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    final initialLatLng = widget.restaurants.isNotEmpty
-        ? latlong2.LatLng(
-            double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
-            double.tryParse(widget.restaurants.first.longitude) ?? 0.0,
-          )
-        : const latlong2.LatLng(0, 0);
     _mapController = MapController();
-    _mapCenter = initialLatLng;
-    _initUserLocation();
-    _filteredRestaurants = List.from(widget.restaurants);
-    _setRestaurantMarkers(_filteredRestaurants);
     _searchController.addListener(_onSearchChanged);
-    
   }
 
   @override
@@ -67,22 +54,6 @@ class _MapScreenState extends State<MapScreen> {
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.trim();
-      if (_searchQuery.isEmpty) {
-        _filteredRestaurants = List.from(widget.restaurants);
-      } else {
-        _filteredRestaurants = widget.restaurants
-            .where((r) =>
-                r.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-            .toList();
-      }
-      _setRestaurantMarkers(_filteredRestaurants);
-      // If only one match, center map on it
-      if (_filteredRestaurants.length == 1) {
-        final r = _filteredRestaurants.first;
-        final lat = double.tryParse(r.latitude) ?? 0.0;
-        final lng = double.tryParse(r.longitude) ?? 0.0;
-        _mapController.move(latlong2.LatLng(lat, lng), _currentZoom);
-      }
     });
   }
 
@@ -95,8 +66,6 @@ class _MapScreenState extends State<MapScreen> {
       setState(() {
         _userLocation = latlong2.LatLng(position.latitude, position.longitude);
       });
-      _setRestaurantMarkers(_filteredRestaurants);
-      // Center map on user location
       _mapController.move(_userLocation!, _currentZoom);
     } catch (e) {
       // Could not get location, ignore for now
@@ -348,7 +317,7 @@ class _MapScreenState extends State<MapScreen> {
                       MaterialPageRoute(
                         builder: (context) => RestaurantDetailsScreen(
                           restaurant: restaurant,
-                          cuisines: widget.cuisines,
+                          cuisines: const [],
                         ),
                       ),
                     );
@@ -418,19 +387,49 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initialLatLng = widget.restaurants.isNotEmpty
-        ? latlong2.LatLng(
-            double.tryParse(widget.restaurants.first.latitude) ?? 0.0,
-            double.tryParse(widget.restaurants.first.longitude) ?? 0.0,
-          )
-        : const latlong2.LatLng(0, 0);
+    final restaurantProvider = Provider.of<RestaurantProvider>(context);
+    final restaurants = restaurantProvider.restaurants;
+    final isLoading = restaurantProvider.isLoading;
+    final error = restaurantProvider.error;
+
+    // Set initial map center and markers when data is available
+    if (restaurants.isNotEmpty && _restaurantMarkers.isEmpty) {
+      final initialLatLng = latlong2.LatLng(
+        double.tryParse(restaurants.first.latitude) ?? 0.0,
+        double.tryParse(restaurants.first.longitude) ?? 0.0,
+      );
+      _mapCenter = initialLatLng;
+      _filteredRestaurants = List.from(restaurants);
+      _setRestaurantMarkers(_filteredRestaurants);
+      _initUserLocation();
+    }
+
+    // Update filtered restaurants on search
+    if (_searchQuery.isNotEmpty && restaurants.isNotEmpty) {
+      _filteredRestaurants = restaurants
+          .where(
+              (r) => r.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
+      _setRestaurantMarkers(_filteredRestaurants);
+    } else if (_searchQuery.isEmpty && restaurants.isNotEmpty) {
+      _filteredRestaurants = List.from(restaurants);
+      _setRestaurantMarkers(_filteredRestaurants);
+    }
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (error != null) {
+      return Center(child: Text('Error: $error'));
+    }
+
     return Scaffold(
       body: Stack(
         children: [
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: initialLatLng,
+              initialCenter: _mapCenter,
               initialZoom: _currentZoom,
               onPositionChanged: (pos, hasGesture) {
                 setState(() {
