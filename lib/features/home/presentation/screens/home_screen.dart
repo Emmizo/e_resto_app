@@ -16,6 +16,7 @@ import '../../../../core/services/database_helper.dart';
 import '../../../../core/services/dio_service.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../restaurant/data/models/restaurant_model.dart';
+import '../../../restaurant/data/restaurant_provider.dart';
 import '../../../restaurant/presentation/screens/restaurant_details_screen.dart';
 
 class CuisineCategory {
@@ -94,6 +95,10 @@ class HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<RestaurantProvider>(context, listen: false)
+          .fetchRestaurants(context);
+    });
     _fetchCategories();
     _fetchRestaurants();
     _searchController.addListener(_onSearchChanged);

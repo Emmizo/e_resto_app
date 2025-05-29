@@ -25,6 +25,7 @@ import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/profile/presentation/screens/saved_addresses_screen.dart';
 import 'features/reservation/presentation/screens/my_reservations_screen.dart';
 import 'features/reservation/presentation/screens/reservation_screen.dart';
+import 'features/restaurant/data/restaurant_provider.dart';
 import 'features/restaurant/presentation/screens/favorite_restaurants_screen.dart';
 import 'firebase_options.dart';
 
@@ -47,6 +48,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => ActionQueueProvider()),
         ChangeNotifierProvider(create: (_) => AddressProvider(dio)),
+        ChangeNotifierProvider(create: (_) => RestaurantProvider()),
       ],
       child: MyApp(prefs: prefs),
     ),

@@ -8,6 +8,7 @@ import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../order/data/models/order_model.dart';
 import '../../../order/data/order_service.dart';
 import '../../../profile/data/address_provider.dart';
+import '../../../restaurant/data/restaurant_provider.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -321,28 +322,27 @@ class _CartSummaryState extends State<_CartSummary> {
     );
   }
 
-  void _showPayLaterForm(BuildContext parentContext) async {
-    final cartProvider =
-        Provider.of<CartProvider>(parentContext, listen: false);
-    final cartTotal = cartProvider.total;
-    final cartItems = cartProvider.items;
-    showDialog(
-      context: parentContext,
-      barrierColor: Colors.black.withValues(alpha: 0.3),
-      builder: (context) => PayLaterDialog(
-        parentContext: parentContext,
-        cartTotal: cartTotal,
-        cartItems: cartItems,
-        cartProvider: cartProvider,
-      ),
-    );
-  }
-
   void _showPayNowForm(BuildContext parentContext) async {
     final cartProvider =
         Provider.of<CartProvider>(parentContext, listen: false);
+    final addressProvider =
+        Provider.of<AddressProvider>(parentContext, listen: false);
     final cartTotal = cartProvider.total;
     final cartItems = cartProvider.items;
+    final defaultAddress = addressProvider.defaultAddress;
+    final addressController =
+        TextEditingController(text: defaultAddress?.fullAddress ?? '');
+    // Get restaurantId from first cart item
+    final restaurantId =
+        cartItems.isNotEmpty ? cartItems.first.restaurantId : null;
+    final restaurants =
+        Provider.of<RestaurantProvider>(context, listen: false).restaurants;
+    final restaurant = restaurants.firstWhere(
+      (r) => r.id.toString() == restaurantId,
+      orElse: () => restaurants.first,
+    );
+    final acceptsDelivery = restaurant.acceptsDelivery == 1;
+
     showDialog(
       context: parentContext,
       barrierColor: Colors.black.withValues(alpha: 0.3),
@@ -351,6 +351,41 @@ class _CartSummaryState extends State<_CartSummary> {
         cartTotal: cartTotal,
         cartItems: cartItems,
         cartProvider: cartProvider,
+        acceptsDelivery: acceptsDelivery,
+      ),
+    );
+  }
+
+  void _showPayLaterForm(BuildContext parentContext) async {
+    final cartProvider =
+        Provider.of<CartProvider>(parentContext, listen: false);
+    final addressProvider =
+        Provider.of<AddressProvider>(parentContext, listen: false);
+    final cartTotal = cartProvider.total;
+    final cartItems = cartProvider.items;
+    final defaultAddress = addressProvider.defaultAddress;
+    final addressController =
+        TextEditingController(text: defaultAddress?.fullAddress ?? '');
+    // Get restaurantId from first cart item
+    final restaurantId =
+        cartItems.isNotEmpty ? cartItems.first.restaurantId : null;
+    final restaurants =
+        Provider.of<RestaurantProvider>(context, listen: false).restaurants;
+    final restaurant = restaurants.firstWhere(
+      (r) => r.id.toString() == restaurantId,
+      orElse: () => restaurants.first,
+    );
+    final acceptsDelivery = restaurant.acceptsDelivery == 1;
+
+    showDialog(
+      context: parentContext,
+      barrierColor: Colors.black.withValues(alpha: 0.3),
+      builder: (context) => PayLaterDialog(
+        parentContext: parentContext,
+        cartTotal: cartTotal,
+        cartItems: cartItems,
+        cartProvider: cartProvider,
+        acceptsDelivery: acceptsDelivery,
       ),
     );
   }
@@ -502,9 +537,11 @@ class _OrderDetailsStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DropdownButtonFormField<String>(
-          value: orderType,
+          value: orderType.isNotEmpty ? orderType : null,
           decoration: const InputDecoration(labelText: 'Order Type'),
           items: [
+            const DropdownMenuItem(
+                value: null, child: Text('Select Order Type')),
             const DropdownMenuItem(value: 'dine_in', child: Text('Dine In')),
             const DropdownMenuItem(value: 'takeaway', child: Text('Takeaway')),
             if (acceptsDelivery)
@@ -516,53 +553,54 @@ class _OrderDetailsStep extends StatelessWidget {
           },
         ),
         const SizedBox(height: 12),
-        TextField(
-          controller: addressController,
-          decoration: InputDecoration(
-            labelText: orderType == 'delivery'
-                ? 'Delivery Address'
-                : 'Restaurant Address',
-            hintText: orderType == 'delivery'
-                ? 'Enter your delivery address'
-                : 'Restaurant address will appear here',
-            prefixIcon: const Icon(Icons.location_on_outlined),
-            suffixIcon: addressError != null
-                ? const Icon(Icons.error, color: Colors.red)
-                : null,
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
-                width: 1.2,
+        if (orderType != null && orderType.isNotEmpty)
+          TextField(
+            controller: addressController,
+            decoration: InputDecoration(
+              labelText: orderType == 'delivery'
+                  ? 'Delivery Address'
+                  : 'Restaurant Address',
+              hintText: orderType == 'delivery'
+                  ? 'Enter your delivery address'
+                  : 'Restaurant address will appear here',
+              prefixIcon: const Icon(Icons.location_on_outlined),
+              suffixIcon: addressError != null
+                  ? const Icon(Icons.error, color: Colors.red)
+                  : null,
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
-                width: 1.2,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
-                width: 2,
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
               ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 1.2,
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 1.2,
+                ),
               ),
+              errorText: addressError,
             ),
-            errorText: addressError,
+            enabled: true,
           ),
-          enabled: true,
-        ),
         if (orderType == 'delivery' && addressController.text.isEmpty) ...[
           Padding(
             padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
@@ -1199,6 +1237,7 @@ class PayLaterDialog extends StatefulWidget {
   final double cartTotal;
   final List cartItems;
   final CartProvider cartProvider;
+  final bool acceptsDelivery;
 
   const PayLaterDialog({
     super.key,
@@ -1206,6 +1245,7 @@ class PayLaterDialog extends StatefulWidget {
     required this.cartTotal,
     required this.cartItems,
     required this.cartProvider,
+    required this.acceptsDelivery,
   });
 
   @override
@@ -1226,23 +1266,39 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
   late TextEditingController instructionsController;
   late TextEditingController tipController;
 
-  String orderType = 'delivery';
+  String orderType = '';
+
+  void _setAddressForOrderType(String? type) {
+    final addressProvider =
+        Provider.of<AddressProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (type == 'delivery') {
+      addressController.text =
+          (addressProvider.defaultAddress?.fullAddress.isNotEmpty == true)
+              ? addressProvider.defaultAddress!.fullAddress
+              : (authProvider.user?.address ?? '');
+    } else if (type == 'dine_in' || type == 'takeaway') {
+      addressController.text = widget.cartItems.isNotEmpty
+          ? widget.cartItems.first.restaurantAddress
+          : '';
+    } else {
+      addressController.text = '';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    final addressProvider =
-        Provider.of<AddressProvider>(context, listen: false);
+    Provider.of<AddressProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userEmail = authProvider.user?.email ?? '';
     final userPhone = authProvider.user?.phoneNumber ?? '';
-    final defaultAddress = addressProvider.defaultAddress;
-    addressController =
-        TextEditingController(text: defaultAddress?.fullAddress ?? '');
+    addressController = TextEditingController();
     phoneController = TextEditingController(text: userPhone);
     emailController = TextEditingController(text: userEmail);
     instructionsController = TextEditingController();
     tipController = TextEditingController();
+    _setAddressForOrderType(orderType);
   }
 
   @override
@@ -1261,6 +1317,19 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
     final cartItems = widget.cartItems;
     final cartProvider = widget.cartProvider;
     final parentContext = widget.parentContext;
+    final addressProvider = Provider.of<AddressProvider>(context);
+
+    // Auto-fill address if orderType is delivery and address is empty
+    if (orderType == 'delivery' &&
+        addressController.text.isEmpty &&
+        addressProvider.defaultAddress != null) {
+      addressController.text = addressProvider.defaultAddress!.fullAddress;
+    }
+
+    // Ensure orderType is valid for the dropdown
+    if (!widget.acceptsDelivery && orderType == 'delivery') {
+      orderType = 'dine_in';
+    }
 
     return Dialog(
       backgroundColor: Theme.of(context).dialogTheme.backgroundColor ??
@@ -1323,23 +1392,20 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                             tipController: tipController,
                             onOrderTypeChanged: (val) async {
                               setState(() => orderType = val);
+                              _setAddressForOrderType(val);
                               final addressProvider =
                                   Provider.of<AddressProvider>(context,
                                       listen: false);
                               final authProvider = Provider.of<AuthProvider>(
                                   context,
                                   listen: false);
-                              final defaultAddress =
-                                  addressProvider.defaultAddress;
-                              await Future.delayed(
-                                  Duration.zero); // ensure async gap
-                              if (!mounted) return;
                               if (val == 'delivery') {
                                 final user = authProvider.user;
-                                if (defaultAddress != null &&
-                                    defaultAddress.fullAddress.isNotEmpty) {
-                                  addressController.text =
-                                      defaultAddress.fullAddress;
+                                if (addressProvider.defaultAddress != null &&
+                                    addressProvider.defaultAddress!.fullAddress
+                                        .isNotEmpty) {
+                                  addressController.text = addressProvider
+                                      .defaultAddress!.fullAddress;
                                 } else if (user != null &&
                                     (user.address?.isNotEmpty ?? false)) {
                                   addressController.text = user.address ?? '';
@@ -1360,7 +1426,7 @@ class _PayLaterDialogState extends State<PayLaterDialog> {
                             addressError: addressError,
                             phoneError: phoneError,
                             cartItems: cartItems.cast<CartItem>(),
-                            acceptsDelivery: true,
+                            acceptsDelivery: widget.acceptsDelivery,
                           )
                         : _ReviewStep(
                             cartTotal: cartTotal,
@@ -1550,6 +1616,7 @@ class PayNowDialog extends StatefulWidget {
   final double cartTotal;
   final List cartItems;
   final CartProvider cartProvider;
+  final bool acceptsDelivery;
 
   const PayNowDialog({
     super.key,
@@ -1557,6 +1624,7 @@ class PayNowDialog extends StatefulWidget {
     required this.cartTotal,
     required this.cartItems,
     required this.cartProvider,
+    required this.acceptsDelivery,
   });
 
   @override
@@ -1582,8 +1650,26 @@ class _PayNowDialogState extends State<PayNowDialog> {
   late TextEditingController cardCvvController;
   late TextEditingController mobileMoneyController;
 
-  String orderType = 'delivery';
+  String orderType = '';
   String paymentMethod = 'visa';
+
+  void _setAddressForOrderType(String? type) {
+    final addressProvider =
+        Provider.of<AddressProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (type == 'delivery') {
+      addressController.text =
+          (addressProvider.defaultAddress?.fullAddress?.isNotEmpty == true)
+              ? addressProvider.defaultAddress!.fullAddress
+              : (authProvider.user?.address ?? '');
+    } else if (type == 'dine_in' || type == 'takeaway') {
+      addressController.text = widget.cartItems.isNotEmpty
+          ? widget.cartItems.first.restaurantAddress
+          : '';
+    } else {
+      addressController.text = '';
+    }
+  }
 
   @override
   void initState() {
@@ -1593,9 +1679,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userEmail = authProvider.user?.email ?? '';
     final userPhone = authProvider.user?.phoneNumber ?? '';
-    final defaultAddress = addressProvider.defaultAddress;
-    addressController =
-        TextEditingController(text: defaultAddress?.fullAddress ?? '');
+    addressController = TextEditingController();
     phoneController = TextEditingController(text: userPhone);
     emailController = TextEditingController(text: userEmail);
     instructionsController = TextEditingController();
@@ -1604,6 +1688,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
     cardExpiryController = TextEditingController();
     cardCvvController = TextEditingController();
     mobileMoneyController = TextEditingController();
+    _setAddressForOrderType(orderType);
   }
 
   @override
@@ -1626,6 +1711,14 @@ class _PayNowDialogState extends State<PayNowDialog> {
     final cartItems = widget.cartItems;
     final cartProvider = widget.cartProvider;
     final parentContext = widget.parentContext;
+    final addressProvider = Provider.of<AddressProvider>(context);
+
+    // Auto-fill address if orderType is delivery and address is empty
+    if (orderType == 'delivery' &&
+        addressController.text.isEmpty &&
+        addressProvider.defaultAddress != null) {
+      addressController.text = addressProvider.defaultAddress!.fullAddress;
+    }
 
     return Dialog(
       backgroundColor: Theme.of(context).dialogTheme.backgroundColor ??
@@ -1695,20 +1788,20 @@ class _PayNowDialogState extends State<PayNowDialog> {
                             tipController: tipController,
                             onOrderTypeChanged: (val) async {
                               setState(() => orderType = val);
+                              _setAddressForOrderType(val);
                               final addressProvider =
                                   Provider.of<AddressProvider>(context,
                                       listen: false);
                               final authProvider = Provider.of<AuthProvider>(
                                   context,
                                   listen: false);
-                              final defaultAddress =
-                                  addressProvider.defaultAddress;
                               if (val == 'delivery') {
                                 final user = authProvider.user;
-                                if (defaultAddress != null &&
-                                    defaultAddress.fullAddress.isNotEmpty) {
-                                  addressController.text =
-                                      defaultAddress.fullAddress;
+                                if (addressProvider.defaultAddress != null &&
+                                    addressProvider.defaultAddress!.fullAddress
+                                        .isNotEmpty) {
+                                  addressController.text = addressProvider
+                                      .defaultAddress!.fullAddress;
                                 } else if (user != null &&
                                     (user.address?.isNotEmpty ?? false)) {
                                   addressController.text = user.address ?? '';
@@ -1729,7 +1822,7 @@ class _PayNowDialogState extends State<PayNowDialog> {
                             addressError: addressError,
                             phoneError: phoneError,
                             cartItems: cartItems.cast<CartItem>(),
-                            acceptsDelivery: true,
+                            acceptsDelivery: widget.acceptsDelivery,
                           )
                         : step == 1
                             ? _PaymentStep(
