@@ -72,6 +72,7 @@ dependencies:
   path: any
   flutter_slidable: ^4.0.0
   http: any
+  pusher_channels_flutter: ^2.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
