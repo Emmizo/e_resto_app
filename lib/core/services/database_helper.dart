@@ -127,3 +127,26 @@ class DatabaseHelper {
     }
   }
 }
+
+class RestaurantTable {
+  final int id;
+  final int restaurantId;
+  final String tableNumber;
+  final String status;
+
+  RestaurantTable({
+    required this.id,
+    required this.restaurantId,
+    required this.tableNumber,
+    required this.status,
+  });
+
+  factory RestaurantTable.fromJson(Map<String, dynamic> json) {
+    return RestaurantTable(
+      id: json['id'],
+      restaurantId: json['restaurant_id'],
+      tableNumber: json['table_number'],
+      status: json['status'],
+    );
+  }
+}

@@ -604,7 +604,7 @@ class HomeScreenState extends State<HomeScreen>
                 if (_userLat == null || _userLng == null) {
                   return const SizedBox.shrink();
                 }
-                // If location is available, filter by distance (5 km)
+                // If location is available, filter by distance (8 km)
                 final List<PromoBanner> nearBanners =
                     _promoBanners.where((banner) {
                   final restaurant = restaurants.firstWhere(
@@ -643,7 +643,7 @@ class HomeScreenState extends State<HomeScreen>
                     lng,
                   );
 
-                  return dist < 5000;
+                  return dist < 8000;
                 }).toList();
                 if (nearBanners.isEmpty) {
                   return const SizedBox.shrink();

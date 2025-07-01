@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
 
 import '../../../../core/providers/cart_provider.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
@@ -9,6 +10,7 @@ import '../../../order/data/models/order_model.dart';
 import '../../../order/data/order_service.dart';
 import '../../../profile/data/address_provider.dart';
 import '../../../restaurant/data/restaurant_provider.dart';
+import '../../../../core/services/database_helper.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -514,6 +516,7 @@ class _OrderDetailsStep extends StatelessWidget {
   final String? errorMessage;
   final String? addressError;
   final String? phoneError;
+  final String? tableError;
   final List<CartItem> cartItems;
   final bool acceptsDelivery;
   const _OrderDetailsStep({
@@ -527,6 +530,7 @@ class _OrderDetailsStep extends StatelessWidget {
     this.errorMessage,
     this.addressError,
     this.phoneError,
+    this.tableError,
     required this.cartItems,
     required this.acceptsDelivery,
   });
@@ -2068,5 +2072,96 @@ class _PayNowDialogState extends State<PayNowDialog> {
       }
     }
     return allDietary.toList();
+  }
+}
+
+class TableSelector extends StatefulWidget {
+  final int restaurantId;
+  final void Function(RestaurantTable?) onTableSelected;
+  const TableSelector(
+      {required this.restaurantId, required this.onTableSelected, super.key});
+
+  @override
+  State<TableSelector> createState() => _TableSelectorState();
+}
+
+class _TableSelectorState extends State<TableSelector> {
+  List<RestaurantTable> tables = [];
+  RestaurantTable? selectedTable;
+  bool loading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAvailableTables(widget.restaurantId).then((result) {
+      setState(() {
+        tables = result;
+        loading = false;
+      });
+    }).catchError((e) {
+      setState(() {
+        error = e.toString();
+        loading = false;
+      });
+    });
+  }
+
+  Future<List<RestaurantTable>> fetchAvailableTables(int restaurantId) async {
+    final response = await Dio().get('http://localhost:8000/api/v1/tables');
+    final List data = response.data;
+    print('Fetched tables from API:');
+    print(data);
+    final filtered = data
+        .map((json) => RestaurantTable.fromJson(json))
+        .where((table) =>
+            table.restaurantId == restaurantId && table.status == 'available')
+        .toList();
+    print('Filtered tables for restaurantId $restaurantId: $filtered');
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const CircularProgressIndicator();
+    if (error != null) {
+      return Text('Error loading tables: $error',
+          style: const TextStyle(color: Colors.red));
+    }
+    final hasTables = tables.isNotEmpty;
+    if (!hasTables) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+              'No available tables for this restaurant (ID: ${widget.restaurantId})',
+              style: const TextStyle(color: Colors.orange)),
+          const SizedBox(height: 8),
+          const Text('Standing'),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select Table', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        DropdownButton<RestaurantTable?>(
+          value: selectedTable,
+          hint: const Text('Choose a table'),
+          isExpanded: true,
+          items: [
+            ...tables.map((table) => DropdownMenuItem(
+                  value: table,
+                  child: Text('Table ${table.tableNumber}'),
+                )),
+          ],
+          onChanged: (table) {
+            setState(() => selectedTable = table);
+            widget.onTableSelected(table);
+          },
+        ),
+      ],
+    );
   }
 }

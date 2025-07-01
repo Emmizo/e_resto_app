@@ -127,6 +127,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
+  List<RestaurantTable> _selectedTables = [];
 
   @override
   void initState() {
@@ -216,6 +217,9 @@ class _ReservationScreenState extends State<ReservationScreen> {
           'phone_number': _phoneController.text,
           'special_requests': _notesController.text,
         };
+        if (_selectedTables.isNotEmpty) {
+          data['table_ids'] = _selectedTables.map((t) => t.id).toList();
+        }
         if (!isOnline) {
           // Queue the reservation in SQLite
           final db = await DatabaseHelper().db;
@@ -412,6 +416,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                           );
                         }
                       },
+                restaurantId: widget.restaurantId ?? 1,
               ),
             ),
           ),
@@ -460,6 +465,7 @@ class _ReservationForm extends StatelessWidget {
   final VoidCallback onSelectTime;
   final ValueChanged<int> onGuestsChanged;
   final VoidCallback? onSubmit;
+  final int restaurantId;
 
   const _ReservationForm({
     required this.formKey,
@@ -474,6 +480,7 @@ class _ReservationForm extends StatelessWidget {
     required this.onSelectTime,
     required this.onGuestsChanged,
     required this.onSubmit,
+    required this.restaurantId,
   });
 
   @override
@@ -576,9 +583,22 @@ class _ReservationForm extends StatelessWidget {
           ).animate().fadeIn(delay: 1000.ms).slideX(),
           const SizedBox(height: 24),
           const _SectionTitle(
+            title: 'Select Table(s)',
+            icon: Icons.table_restaurant,
+          ).animate().fadeIn(delay: 1400.ms).slideX(),
+          const SizedBox(height: 8),
+          MultiTableSelector(
+            restaurantId: restaurantId,
+            onTablesSelected: (tables) {
+              // You may need to use a callback or state management to pass this up
+              // For now, this is a placeholder for integration
+            },
+          ),
+          const SizedBox(height: 24),
+          const _SectionTitle(
             title: 'Contact Information',
             icon: Icons.person,
-          ).animate().fadeIn(delay: 1200.ms).slideX(),
+          ).animate().fadeIn(delay: 1600.ms).slideX(),
           const SizedBox(height: 8),
           TextFormField(
             controller: nameController,
@@ -595,7 +615,7 @@ class _ReservationForm extends StatelessWidget {
               }
               return null;
             },
-          ).animate().fadeIn(delay: 1400.ms).slideX(),
+          ).animate().fadeIn(delay: 1800.ms).slideX(),
           const SizedBox(height: 16),
           TextFormField(
             controller: phoneController,
@@ -612,12 +632,12 @@ class _ReservationForm extends StatelessWidget {
               }
               return null;
             },
-          ).animate().fadeIn(delay: 1600.ms).slideX(),
+          ).animate().fadeIn(delay: 2000.ms).slideX(),
           const SizedBox(height: 24),
           const _SectionTitle(
             title: 'Additional Notes',
             icon: Icons.note,
-          ).animate().fadeIn(delay: 1800.ms).slideX(),
+          ).animate().fadeIn(delay: 2200.ms).slideX(),
           const SizedBox(height: 8),
           TextFormField(
             controller: notesController,
@@ -628,7 +648,7 @@ class _ReservationForm extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-          ).animate().fadeIn(delay: 2000.ms).slideX(),
+          ).animate().fadeIn(delay: 2400.ms).slideX(),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
@@ -653,9 +673,105 @@ class _ReservationForm extends StatelessWidget {
                     )
                   : const Text('Confirm Reservation'),
             ),
-          ).animate().fadeIn(delay: 2200.ms).slideY(),
+          ).animate().fadeIn(delay: 2600.ms).slideY(),
         ],
       ),
+    );
+  }
+}
+
+class MultiTableSelector extends StatefulWidget {
+  final int restaurantId;
+  final void Function(List<RestaurantTable>) onTablesSelected;
+  const MultiTableSelector(
+      {required this.restaurantId, required this.onTablesSelected, super.key});
+
+  @override
+  State<MultiTableSelector> createState() => _MultiTableSelectorState();
+}
+
+class _MultiTableSelectorState extends State<MultiTableSelector> {
+  List<RestaurantTable> tables = [];
+  List<RestaurantTable> selectedTables = [];
+  bool loading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAvailableTables(widget.restaurantId).then((result) {
+      setState(() {
+        tables = result;
+        loading = false;
+      });
+    }).catchError((e) {
+      setState(() {
+        error = e.toString();
+        loading = false;
+      });
+    });
+  }
+
+  Future<List<RestaurantTable>> fetchAvailableTables(int restaurantId) async {
+    print('Fetching tables for restaurantId: $restaurantId');
+    final response = await Dio().get('http://localhost:8000/api/v1/tables');
+    final List data = response.data;
+    print('Fetched tables: $data');
+    final filtered = data
+        .map((json) => RestaurantTable.fromJson(json))
+        .where((table) =>
+            table.restaurantId == restaurantId && table.status == 'available')
+        .toList();
+    print('Filtered tables for restaurantId $restaurantId: $filtered');
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const CircularProgressIndicator();
+    if (error != null) {
+      return Text('Error loading tables: $error',
+          style: const TextStyle(color: Colors.red));
+    }
+    final hasTables = tables.isNotEmpty;
+    if (!hasTables) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+              'No available tables for this restaurant (ID: ${widget.restaurantId})',
+              style: const TextStyle(color: Colors.orange)),
+          const SizedBox(height: 8),
+          const Text('Standing'),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select Table(s)', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: tables.map((table) {
+            final isSelected = selectedTables.contains(table);
+            return FilterChip(
+              label: Text('Table ${table.tableNumber}'),
+              selected: isSelected,
+              onSelected: (val) {
+                setState(() {
+                  if (val) {
+                    selectedTables.add(table);
+                  } else {
+                    selectedTables.remove(table);
+                  }
+                });
+                widget.onTablesSelected(selectedTables);
+              },
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

@@ -11,129 +11,61 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/restaurant/data/models/restaurant_model.dart';
 import '../constants/api_endpoints.dart';
+import '../constants/pusher_config.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
 
-  late PusherChannelsFlutter _pusherClient;
+  PusherChannelsFlutter? _pusher;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
-  // Pusher configuration
-  static const String _pusherKey = '533a426f56eae061277d5';
-  static const String _pusherCluster = 'mt1';
 
   NotificationService._internal();
 
   Future<void> initialize(BuildContext context) async {
     await _requestPermission();
     await _initLocalNotifications();
-    await _setupPusher();
+    await _setupPusher(context);
+  }
+
+  Future<void> _setupPusher(BuildContext context) async {
+    _pusher = PusherChannelsFlutter.getInstance();
+    await _pusher?.init(
+      apiKey: 'YOUR_PUSHER_KEY',
+      cluster: 'YOUR_PUSHER_CLUSTER',
+      onEvent: (event) => _onPusherEvent(context, event),
+      onSubscriptionSucceeded: (String channelName, dynamic data) {},
+      onConnectionStateChange: (String currentState, String previousState) {},
+      onError: (String message, int? code, dynamic e) {},
+    );
+    await _pusher?.subscribe(channelName: 'your-channel');
+    await _pusher?.connect();
+  }
+
+  void _onPusherEvent(BuildContext context, PusherEvent event) {
+    // You can parse event.data and show a dialog/snackbar
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New Notification'),
+        content: Text(event.data ?? ''),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _requestPermission() async {
-    if (Platform.isAndroid) {
-      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      await androidImplementation?.requestNotificationsPermission();
-    }
+    // No-op for in-app notifications
   }
 
   Future<void> _initLocalNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings();
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-    await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        _handleNotificationTap(response);
-      },
-    );
-  }
-
-  Future<void> _setupPusher() async {
-    // Initialize Pusher client
-    _pusherClient = PusherChannelsFlutter.getInstance();
-    await _pusherClient.init(
-      apiKey: _pusherKey,
-      cluster: _pusherCluster,
-      onEvent: (event) {
-        if (event.eventName == 'notification') {
-          final data = jsonDecode(event.data);
-          _showLocalNotification(
-            data['title'] ?? 'New Notification',
-            data['body'] ?? 'You have a new notification',
-            payload: jsonEncode(data),
-          );
-        }
-      },
-    );
-
-    // Subscribe to channels
-    await _pusherClient.subscribe(channelName: 'notifications');
-
-    // Connect to Pusher
-    await _pusherClient.connect();
-  }
-
-  void _handleNotificationTap(NotificationResponse response) {
-    if (response.payload != null) {
-      try {
-        final data = jsonDecode(response.payload!);
-        // Handle different notification types
-        if (data['type'] == 'reservation_status' &&
-            data['reservation_id'] != null) {
-          // Navigate to reservation details
-        }
-        // Add more types as needed
-      } catch (e) {
-        // Handle error
-      }
-    }
-  }
-
-  Future<void> _showLocalNotification(
-    String title,
-    String body, {
-    String? payload,
-  }) async {
-    final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'smart_task_channel',
-      'Smart Task Notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-      enableLights: true,
-      color: Color.fromARGB(255, 255, 0, 0),
-      ledColor: Color.fromARGB(255, 255, 0, 0),
-      ledOnMs: 1000,
-      ledOffMs: 500,
-    );
-    const iOSPlatformChannelSpecifics = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    const platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-    await _flutterLocalNotificationsPlugin.show(
-      id,
-      title,
-      body,
-      platformChannelSpecifics,
-      payload: payload,
-    );
+    // No-op for in-app notifications
   }
 
   static bool _nearbyRestaurantAlerts = true;
@@ -233,11 +165,11 @@ class NotificationService {
   }
 
   Future<void> subscribeToChannel(String channelName) async {
-    await _pusherClient.subscribe(channelName: channelName);
+    await _pusher?.subscribe(channelName: channelName);
   }
 
   Future<void> unsubscribeFromChannel(String channelName) async {
-    await _pusherClient.unsubscribe(channelName: channelName);
+    await _pusher?.unsubscribe(channelName: channelName);
   }
 
   Future<void> sendNotification({
@@ -247,5 +179,53 @@ class NotificationService {
   }) async {
     // This would typically be handled by your backend
     // The client can only subscribe to channels and receive notifications
+  }
+
+  Future<void> addInterest(String interest) async {
+    // Pusher Beams methods are removed as per the new implementation
+  }
+
+  Future<void> removeInterest(String interest) async {
+    // Pusher Beams methods are removed as per the new implementation
+  }
+
+  Future<List<String>> getInterests() async {
+    // Pusher Beams methods are removed as per the new implementation
+    return [];
+  }
+
+  Future<void> _showLocalNotification(
+    String title,
+    String body, {
+    String? payload,
+  }) async {
+    final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'smart_task_channel',
+      'Smart Task Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+      enableLights: true,
+      color: Color.fromARGB(255, 255, 0, 0),
+      ledColor: Color.fromARGB(255, 255, 0, 0),
+      ledOnMs: 1000,
+      ledOffMs: 500,
+    );
+    const iOSPlatformChannelSpecifics = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iOSPlatformChannelSpecifics,
+    );
+    await _flutterLocalNotificationsPlugin.show(
+      id,
+      title,
+      body,
+      platformChannelSpecifics,
+      payload: payload,
+    );
   }
 }

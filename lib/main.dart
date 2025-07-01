@@ -8,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/providers/action_queue_provider.dart';
 import 'core/providers/cart_provider.dart';
 import 'core/providers/connectivity_provider.dart';
+import 'core/providers/realtime_data_provider.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/screens/pusher_test_screen.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
@@ -49,6 +51,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ActionQueueProvider()),
         ChangeNotifierProvider(create: (_) => AddressProvider(dio)),
         ChangeNotifierProvider(create: (_) => RestaurantProvider()),
+        ChangeNotifierProvider(create: (_) => RealtimeDataProvider(prefs)),
       ],
       child: MyApp(prefs: prefs),
     ),
@@ -84,6 +87,7 @@ class MyApp extends StatelessWidget {
             '/settings': (context) => const NotificationPreferencesScreen(),
             '/signup': (context) => const SignupScreen(),
             '/login': (context) => const LoginScreen(),
+            '/pusher-test': (context) => const PusherTestScreen(),
           },
         );
       },

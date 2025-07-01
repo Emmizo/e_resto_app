@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/providers/cart_provider.dart';
+import '../../../../core/providers/realtime_data_provider.dart';
 import '../../../../core/services/dio_service.dart';
+import '../../../../core/widgets/realtime_notification_widget.dart';
 import '../../../auth/domain/providers/auth_provider.dart';
 import '../../../cart/presentation/screens/cart_screen.dart';
 import '../../../order/data/models/order_model.dart';
@@ -27,6 +29,29 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   void initState() {
     super.initState();
     _fetchOrders();
+    _setupRealtimeUpdates();
+  }
+
+  void _setupRealtimeUpdates() {
+    // Subscribe to real-time updates for all orders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final realtimeProvider = context.read<RealtimeDataProvider>();
+
+      // Subscribe to order updates for all orders
+      for (final order in _orders) {
+        realtimeProvider.subscribeToOrder(order.id.toString());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Unsubscribe from order updates when leaving the screen
+    final realtimeProvider = context.read<RealtimeDataProvider>();
+    for (final order in _orders) {
+      realtimeProvider.unsubscribeFromOrder(order.id.toString());
+    }
+    super.dispose();
   }
 
   Future<void> _fetchOrders() async {
@@ -308,218 +333,249 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Order History')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline,
-                          size: 64, color: Colors.red[300]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Something went wrong',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          // Real-time status bar
+          const RealtimeStatusBar(),
+
+          // Real-time notifications
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: RealtimeNotificationWidget(),
+          ),
+
+          // Main content
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline,
+                                size: 64, color: Colors.red[300]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Something went wrong',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'We couldn\'t load your orders. Please try again later.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey[600],
+                            const SizedBox(height: 8),
+                            Text(
+                              'We couldn\'t load your orders. Please try again later.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                              textAlign: TextAlign.center,
                             ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _fetchOrders,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : _orders.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.receipt_long,
-                              size: 64, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No Orders Found',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "You haven't placed any orders yet.",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: Colors.grey[600],
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _orders.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 14),
-                      itemBuilder: (context, index) {
-                        final order = _orders[index];
-                        final isCompleted =
-                            order.status.toLowerCase() == 'completed';
-                        final isCancelled =
-                            order.status.toLowerCase() == 'cancelled';
-                        return Card(
-                          elevation: isCompleted ? 2 : 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          color: isCompleted
-                              ? Colors.green[50]
-                              : isCancelled
-                                  ? Colors.grey[200]
-                                  : Colors.white,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(18),
-                            onTap: () => _showOrderDetails(order),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: order.restaurant.image.isNotEmpty
-                                            ? Image.network(
-                                                fixImageUrl(
-                                                    order.restaurant.image),
-                                                width: 54,
-                                                height: 54,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error,
-                                                        stackTrace) =>
-                                                    Container(
-                                                  width: 54,
-                                                  height: 54,
-                                                  color: Colors.grey[200],
-                                                  child: const Icon(
-                                                      Icons.restaurant,
-                                                      color: Colors.grey),
-                                                ),
-                                              )
-                                            : Container(
-                                                width: 54,
-                                                height: 54,
-                                                color: Colors.grey[200],
-                                                child: const Icon(
-                                                    Icons.restaurant,
-                                                    color: Colors.grey),
-                                              ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: _fetchOrders,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _orders.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.receipt_long,
+                                    size: 64, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No Orders Found',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "You haven't placed any orders yet.",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.grey[600],
+                                      ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _orders.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 14),
+                            itemBuilder: (context, index) {
+                              final order = _orders[index];
+                              final isCompleted =
+                                  order.status.toLowerCase() == 'completed';
+                              final isCancelled =
+                                  order.status.toLowerCase() == 'cancelled';
+                              return Card(
+                                elevation: isCompleted ? 2 : 1,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                color: isCompleted
+                                    ? Colors.green[50]
+                                    : isCancelled
+                                        ? Colors.grey[200]
+                                        : Colors.white,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () => _showOrderDetails(order),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  order.restaurant.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleMedium
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 17,
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              child: order.restaurant.image
+                                                      .isNotEmpty
+                                                  ? Image.network(
+                                                      fixImageUrl(order
+                                                          .restaurant.image),
+                                                      width: 54,
+                                                      height: 54,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                              error,
+                                                              stackTrace) =>
+                                                          Container(
+                                                        width: 54,
+                                                        height: 54,
+                                                        color: Colors.grey[200],
+                                                        child: const Icon(
+                                                            Icons.restaurant,
+                                                            color: Colors.grey),
                                                       ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                if (isCancelled) ...[
-                                                  const SizedBox(width: 6),
-                                                  const Icon(Icons.cancel,
-                                                      color: Colors.red,
-                                                      size: 20),
-                                                ]
-                                              ],
+                                                    )
+                                                  : Container(
+                                                      width: 54,
+                                                      height: 54,
+                                                      color: Colors.grey[200],
+                                                      child: const Icon(
+                                                          Icons.restaurant,
+                                                          color: Colors.grey),
+                                                    ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                _OrderTypeChip(
-                                                    orderType: order.orderType),
-                                                const SizedBox(width: 8),
-                                                _OrderStatusChip(
-                                                    status: order.status),
-                                              ],
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        order.restaurant.name,
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .titleMedium
+                                                            ?.copyWith(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 17,
+                                                            ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                      if (isCancelled) ...[
+                                                        const SizedBox(
+                                                            width: 6),
+                                                        const Icon(Icons.cancel,
+                                                            color: Colors.red,
+                                                            size: 20),
+                                                      ]
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Row(
+                                                    children: [
+                                                      _OrderTypeChip(
+                                                          orderType:
+                                                              order.orderType),
+                                                      const SizedBox(width: 8),
+                                                      _OrderStatusChip(
+                                                          status: order.status),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.attach_money,
-                                          size: 18, color: Colors.grey[700]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Total: ₣${order.total}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.attach_money,
+                                                size: 18,
+                                                color: Colors.grey[700]),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Total: ₣${order.total}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.calendar_today,
-                                          size: 16, color: Colors.grey[700]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Placed: ${order.createdAt.toLocal()}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: Colors.grey[700],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today,
+                                                size: 16,
+                                                color: Colors.grey[700]),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Placed: ${order.createdAt.toLocal()}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: Colors.grey[700],
+                                                  ),
                                             ),
-                                      ),
-                                    ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+          ),
+        ],
+      ),
     );
   }
 }
