@@ -24,6 +24,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   List<OrderModel> _orders = [];
   bool _isLoading = true;
   String? _error;
+  // Cache the provider so we don't look it up from `context` during `dispose()`.
+  // Looking up ancestors in `dispose()` is unsafe and triggers assertions.
+  RealtimeDataProvider? _realtimeProvider;
 
   @override
   void initState() {
@@ -32,10 +35,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     _setupRealtimeUpdates();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // `didChangeDependencies` is a safe place to read inherited widgets.
+    _realtimeProvider ??= context.read<RealtimeDataProvider>();
+  }
+
   void _setupRealtimeUpdates() {
     // Subscribe to real-time updates for all orders
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final realtimeProvider = context.read<RealtimeDataProvider>();
+      final realtimeProvider = _realtimeProvider;
+      if (realtimeProvider == null || !mounted) return;
 
       // Subscribe to order updates for all orders
       for (final order in _orders) {
@@ -47,9 +58,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void dispose() {
     // Unsubscribe from order updates when leaving the screen
-    final realtimeProvider = context.read<RealtimeDataProvider>();
-    for (final order in _orders) {
-      realtimeProvider.unsubscribeFromOrder(order.id.toString());
+    final realtimeProvider = _realtimeProvider;
+    if (realtimeProvider != null) {
+      for (final order in _orders) {
+        realtimeProvider.unsubscribeFromOrder(order.id.toString());
+      }
     }
     super.dispose();
   }

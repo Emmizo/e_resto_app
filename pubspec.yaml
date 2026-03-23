@@ -34,57 +34,60 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  provider: ^6.1.1
+  provider: ^6.1.5+1
   shared_preferences: ^2.2.2
-  google_maps_flutter: ^2.5.3
-  dio: ^5.4.0
-  google_sign_in: ^6.1.6
+  google_maps_flutter: ^2.14.0
+  dio: ^5.9.0
+  google_sign_in: ^7.2.0
   flutter_facebook_auth: ^7.1.2
-  flutter_secure_storage: ^9.0.0
-  google_fonts: ^6.1.0
-  flutter_svg: ^2.0.9
+  flutter_secure_storage: ^10.0.0
+  # Dart/Flutter 3.11+ has stricter const-evaluation rules; google_fonts 6.2.1
+  # fails during `const` analysis. 6.3.2+ fixes the FontWeight const-map issue.
+  google_fonts: 6.3.2
+  flutter_svg: ^2.2.3
   cached_network_image: ^3.3.0
   shimmer: ^3.0.0
   lottie: ^3.3.1
-  flutter_local_notifications: ^19.1.0
-  geolocator: ^14.0.0
-  permission_handler: ^12.0.0+1
+  flutter_local_notifications: ^19.5.0
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
   flutter_rating_bar: ^4.0.1
   intl: ^0.20.2
   flutter_animate: ^4.5.0
-  flutter_lints: ^5.0.0
-  uuid: ^4.3.3
-  image_picker: ^1.0.7
-  image_cropper: ^9.1.0
+  uuid: ^4.5.2
+  image_picker: ^1.2.1
+  image_cropper: ^11.0.0
   # photofilters: ^2.2.0 # Uncomment if you want to use filters
-  firebase_core: ^3.13.0
-  firebase_messaging: ^15.2.5
-  cloud_firestore: ^5.6.7
-  firebase_auth: ^5.5.3
-  carousel_slider: ^5.0.0
-  connectivity_plus: ^6.1.4
+  firebase_core: ^4.2.1
+  firebase_messaging: ^16.0.4
+  cloud_firestore: ^6.1.0
+  firebase_auth: ^6.1.2
+  carousel_slider: ^5.1.1
+  connectivity_plus: ^7.0.0
   sqflite: ^2.3.2
   path_provider: ^2.1.2
-  local_auth: ^2.1.6
-  flutter_map: ^8.1.1
+  local_auth: ^2.3.0
+  flutter_map: ^8.2.2
   latlong2: ^0.9.1
   flutter_native_timezone: ^2.0.0
-  path: any
-  flutter_slidable: ^4.0.0
-  http: any
-  pusher_channels_flutter: ^2.4.0
-  pusher_beams: ^1.1.2
+  path: ^1.9.0
+  flutter_slidable: ^4.0.3
+  http: ^1.2.0
+  pusher_channels_flutter: ^2.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  mockito: ^5.4.2
-  build_runner: ^2.4.8
+  flutter_lints: ^6.0.0
+  mockito: ^5.6.1
+  build_runner: ^2.10.4
   integration_test:
     sdk: flutter
   flutter_gherkin: ^2.0.0
-  sqflite_common_ffi: ^2.3.5
+  sqflite_common_ffi: ^2.3.6
+  gherkin: ^2.0.8
+  sqflite_common: ^2.5.6
 
-  # The "flutter_lints" package below contains a set of recommended lints to
+  # The "flutter_lints" package above contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
@@ -94,14 +97,6 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
-  gherkin: any
-  
-  sqflite_common: any
-  connectivity_plus_platform_interface: any
-  geolocator_platform_interface: any
- 
-  # flutter_driver: any  # Removed because it does not support null safety and Dart 3.8.0
-  plugin_platform_interface: any
 flutter:
 
   # The following line ensures that the Material Icons font is
