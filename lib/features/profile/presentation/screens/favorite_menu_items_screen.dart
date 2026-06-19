@@ -272,7 +272,7 @@ class _FavoriteMenuItemsScreenState extends State<FavoriteMenuItemsScreen> {
                                 ),
                               ),
                               Text(
-                                '₣${menuItem['price']}',
+                                'RWF ${menuItem['price']}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,

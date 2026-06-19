@@ -1250,7 +1250,7 @@ class _MenuItemCardState extends State<_MenuItemCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '₣${item.price}',
+                            'RWF ${item.price}',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium

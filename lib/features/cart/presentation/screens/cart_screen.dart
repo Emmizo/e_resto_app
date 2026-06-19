@@ -1093,7 +1093,7 @@ class _ReviewStep extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyMedium),
                     subtitle: Text('Qty: ${item.quantity}',
                         style: Theme.of(context).textTheme.bodySmall),
-                    trailing: Text('₣${item.total.toStringAsFixed(2)}',
+                    trailing: Text('RWF ${item.total.toStringAsFixed(2)}',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -1108,7 +1108,7 @@ class _ReviewStep extends StatelessWidget {
                           .textTheme
                           .titleMedium
                           ?.copyWith(fontWeight: FontWeight.bold)),
-                  Text('₣${cartTotal.toStringAsFixed(2)}',
+                  Text('RWF ${cartTotal.toStringAsFixed(2)}',
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium

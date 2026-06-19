@@ -24,44 +24,43 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   List<OrderModel> _orders = [];
   bool _isLoading = true;
   String? _error;
-  // Cache the provider so we don't look it up from `context` during `dispose()`.
-  // Looking up ancestors in `dispose()` is unsafe and triggers assertions.
   RealtimeDataProvider? _realtimeProvider;
+  final Set<String> _subscribedOrderIds = {};
+
+  static const _activeStatuses = {'pending', 'preparing', 'ready'};
 
   @override
   void initState() {
     super.initState();
     _fetchOrders();
-    _setupRealtimeUpdates();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // `didChangeDependencies` is a safe place to read inherited widgets.
     _realtimeProvider ??= context.read<RealtimeDataProvider>();
   }
 
-  void _setupRealtimeUpdates() {
-    // Subscribe to real-time updates for all orders
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final realtimeProvider = _realtimeProvider;
-      if (realtimeProvider == null || !mounted) return;
+  Future<void> _subscribeToActiveOrders() async {
+    final provider = _realtimeProvider;
+    if (provider == null || !mounted) return;
 
-      // Subscribe to order updates for all orders
-      for (final order in _orders) {
-        realtimeProvider.subscribeToOrder(order.id.toString());
+    for (final order in _orders) {
+      final id = order.id.toString();
+      if (_activeStatuses.contains(order.status.toLowerCase()) &&
+          !_subscribedOrderIds.contains(id)) {
+        await provider.subscribeToOrder(id);
+        _subscribedOrderIds.add(id);
       }
-    });
+    }
   }
 
   @override
   void dispose() {
-    // Unsubscribe from order updates when leaving the screen
-    final realtimeProvider = _realtimeProvider;
-    if (realtimeProvider != null) {
-      for (final order in _orders) {
-        realtimeProvider.unsubscribeFromOrder(order.id.toString());
+    final provider = _realtimeProvider;
+    if (provider != null) {
+      for (final id in _subscribedOrderIds) {
+        provider.unsubscribeFromOrder(id);
       }
     }
     super.dispose();
@@ -98,6 +97,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         });
         _isLoading = false;
       });
+      await _subscribeToActiveOrders();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Orders loaded successfully!')),
@@ -142,7 +142,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('Total: ₣${order.total}',
+                Text('Total: RWF ${order.total}',
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
@@ -237,7 +237,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text('₣${item['price']}',
+                          Text('RWF ${item['price']}',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -551,7 +551,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                                 color: Colors.grey[700]),
                                             const SizedBox(width: 4),
                                             Text(
-                                              'Total: ₣${order.total}',
+                                              'Total: RWF ${order.total}',
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .bodyMedium
